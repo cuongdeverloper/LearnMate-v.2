@@ -7,6 +7,7 @@ import { FaStar } from "react-icons/fa";
 import { FaBookmark, FaShoppingBag } from "react-icons/fa";
 import { toast } from "react-toastify"; // Import toast
 import "../../scss/TutorListPage.scss";
+import axios2 from "axios";
 
 const classSubjectsMap = {
   1: ["Math", "Tiếng Việt"],
@@ -48,30 +49,30 @@ export default function TutorListPage() {
 
   // Hàm để lấy danh sách gia sư đã lưu từ backend
   const fetchSavedTutorIds = useCallback(async () => {
-    // Chỉ kiểm tra sự tồn tại của accessToken
-    if (!accessToken) {
-      setSavedTutorIds([]);
-      return;
-    }
-    try {
-      const res = await axios.get(`/learner/saved-tutors`, {
+    // // Chỉ kiểm tra sự tồn tại của accessToken
+    // if (!accessToken) {
+    //   setSavedTutorIds([]);
+    //   return;
+    // }
+    // try {
+      const res = await axios2.get(`http://localhost:6060/api/learner/saved-tutors`, {
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
       });
       // API trả về mảng các đối tượng tutor, ta chỉ cần ID của chúng
       setSavedTutorIds(res.map((tutor) => tutor._id));
-    } catch (error) {
-      console.error("Lỗi khi lấy danh sách gia sư đã lưu:", error);
-      if (error.response && error.response.status === 401) {
-        toast.error(
-          "Phiên đăng nhập của bạn đã hết hạn. Vui lòng đăng nhập lại."
-        ); // Thay thế alert
-        navigate("/login");
-      }
-      setSavedTutorIds([]);
-    }
-  }, [accessToken, navigate]);
+    // } catch (error) {
+    //   console.error("Lỗi khi lấy danh sách gia sư đã lưu:", error);
+    //   if (error.response && error.response.status === 401) {
+    //     toast.error(
+    //       "Phiên đăng nhập của bạn đã hết hạn. Vui lòng đăng nhập lại."
+    //     ); // Thay thế alert
+    //     navigate("/login");
+    //   }
+    //   setSavedTutorIds([]);
+    // }
+  }, [ navigate]);
 
   useEffect(() => {
     fetchTutors();

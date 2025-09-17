@@ -7,8 +7,11 @@ import "aos/dist/aos.css";
 import { useEffect } from "react";
 import TutorListPage from "./pages/Booking/tutorPage";
 import SavedTutorsPage from "./pages/Booking/SavedTutorPage";
+import TutorProfilePage from "./pages/Tutor/TutorProfilePage";
 import Header from "./pages/Layout/Header/Header";
 import Footer from "./pages/Layout/Footer/Footer";
+import BookingHistoryPage from "./pages/User/BookingHistory";
+import BookingPage from "./pages/Booking/bookingPage";
 import ProtectedRoute from "./ProtectRoutes";
 const AppLayout = ({ children }) => {
   const location = useLocation();
@@ -66,7 +69,25 @@ const Layout = () => {
               </ProtectedRoute>
             }
           />
+          <Route path="/tutors/:id" element={<TutorProfilePage />} />
+          <Route
+            path="/book/:tutorId"
+            element={
+              <ProtectedRoute allowedRoles={['student','tutor']}>
+                <BookingPage />
+                <Route
+            path="/user/bookinghistory"
+            element={
+              <ProtectedRoute allowedRoles={['tutor', 'student']}>
+                <BookingHistoryPage />
+              </ProtectedRoute>
+            }
+          />
+              </ProtectedRoute>
+            }
+          />
        </Routes>
+
       </BrowserRouter>
     </Suspense>
   );
