@@ -1,0 +1,873 @@
+/* MyCourses.scss */
+
+.my-courses-container {
+  padding: 2rem;
+  font-family: 'Arial', sans-serif;
+  max-width: 1200px;
+  margin: 0 auto;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+
+  .section-title {
+    font-size: 2.2rem;
+    color: #2c3e50;
+    margin-bottom: 1.5rem;
+    text-align: center;
+    font-weight: 700;
+  }
+
+  .section-subtitle {
+    font-size: 1.6rem;
+    color: #34495e;
+    margin-top: 2.5rem;
+    margin-bottom: 1.5rem;
+    text-align: center;
+    font-weight: 600;
+  }
+
+  /* --- TAB STYLES --- */
+  .tabs-navigation {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 2rem;
+    border-bottom: 1px solid #eee;
+  }
+
+  .tab-button {
+    background-color: #f8f8f8;
+    border: none;
+    padding: 12px 25px;
+    cursor: pointer;
+    font-size: 1.1em;
+    font-weight: bold;
+    color: #555;
+    border-bottom: 3px solid transparent;
+    transition: all 0.3s ease;
+    flex-grow: 1; // Makes buttons take equal width
+    text-align: center;
+    max-width: 250px; // Limit max width for each tab
+
+    &:hover {
+      background-color: #eaeaea;
+      color: #0056b3;
+    }
+
+    &.active {
+      background-color: #e0f2f7;
+      color: #0056b3;
+      border-bottom-color: #0056b3;
+    }
+  }
+  /* --- END TAB STYLES --- */
+
+  .bookings-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+
+    .no-bookings {
+      grid-column: 1 / -1; // Span across all columns
+      text-align: center;
+      padding: 1rem;
+      border-radius: 5px;
+      font-style: italic;
+      font-size: 1.1rem;
+      color: #7f8c8d;
+      border: 1px dashed #bdc3c7;
+      background-color: #f0f3f5;
+    }
+
+    .booking-card {
+      background-color: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06);
+      padding: 16px 20px;
+      transition: transform 0.2s ease;
+      border-left: 6px solid #4e73df;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 180px;
+
+      &:hover {
+        transform: translateY(-2px);
+      }
+
+      p {
+        margin: 6px 0;
+        font-size: 1rem;
+        color: #34495e;
+
+        strong {
+          color: #2c3e50;
+        }
+      }
+
+      .view-materials-button,
+      .finish-course-button,
+      .review-button {
+        margin-top: 10px;
+        margin-right: 10px;
+        background-color: #4e73df;
+        color: white;
+        padding: 8px 14px;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: background 0.3s;
+        width: fit-content; // Adjust width to content
+
+        &:hover {
+          background-color: #375ac2;
+        }
+      }
+      
+      .finish-course-button {
+        background-color: #4CAF50;
+        &:hover {
+          background-color: #45a049;
+        }
+      }
+
+      &.completed {
+        border-left: 6px solid #2ecc71;
+        background: linear-gradient(120deg, #e9f7ef, #ffffff);
+        opacity: 0.9;
+
+        p {
+          color: #555;
+        }
+
+        .completed-message {
+          font-weight: 500;
+          color: #27ae60;
+          background-color: #d4efdf;
+          padding: 6px 10px;
+          border-radius: 6px;
+          margin-top: 10px;
+          display: inline-block;
+          font-size: 0.9rem;
+        }
+
+        .review-button {
+          background-color: #f39c12;
+
+          &:hover {
+            background-color: #e67e22;
+          }
+        }
+        .view-materials-button {
+          background-color: #95a5a6; /* Grey out the button */
+          &:hover {
+            background-color: #7f8c8d;
+          }
+        }
+      }
+    }
+  }
+
+  .week-navigation {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding: 0.8rem 1.5rem;
+    background-color: #ecf0f1;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+
+    .nav-button {
+      background-color: #2ecc71;
+      color: white;
+      padding: 0.7rem 1.5rem;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 1rem;
+      transition: background-color 0.3s ease;
+
+      &:hover {
+        background-color: #27ae60;
+      }
+
+      &:disabled {
+        background-color: #b0c7b6;
+        cursor: not-allowed;
+      }
+    }
+
+    span {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #2c3e50;
+    }
+  }
+
+  .loading-message,
+  .error-message {
+    text-align: center;
+    padding: 2rem;
+    font-size: 1.1rem;
+    color: #7f8c8d;
+    background-color: #e9ecef;
+    border-radius: 8px;
+    margin-top: 2rem;
+  }
+
+  .error-message {
+    color: #e74c3c;
+    background-color: #f8d7da;
+    border: 1px solid #f5c6cb;
+  }
+
+  .weekly-schedule-grid {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    overflow: hidden;
+    background-color: #ffffff;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+
+    .grid-header {
+      display: flex;
+      background-color: #3498db;
+      color: white;
+      font-weight: bold;
+      border-bottom: 1px solid #2980b9;
+
+      .grid-header-day {
+        flex: 1;
+        padding: 0.8rem 0.5rem;
+        text-align: center;
+        border-right: 1px solid rgba(255, 255, 255, 0.2);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+
+        &:last-child {
+          border-right: none;
+        }
+
+        .weekday {
+          font-size: 0.9rem;
+          margin-bottom: 0.2rem;
+        }
+        .date {
+          font-size: 1.1rem;
+        }
+      }
+    }
+
+    .grid-body {
+      display: flex;
+      min-height: 350px; // Ensure minimum height
+      flex-grow: 1; // Allows columns to expand
+
+      .grid-day-column {
+        flex: 1;
+        border-right: 1px solid #eee;
+        padding: 1rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem; // Space between slots
+        align-items: center; // Center slots horizontally
+        background-color: #fdfefe; // Slightly off-white for body
+
+        &:last-child {
+          border-right: none;
+        }
+
+        .no-schedule {
+          color: #b0b0b0;
+          font-style: italic;
+          font-size: 0.9rem;
+          text-align: center;
+          margin-top: 1rem;
+        }
+
+        .schedule-slot {
+          position: relative; // Needed for positioning the attendance button
+          background-color: #e8f5e9; // Light green for slots
+          border: 1px solid #c8e6c9;
+          border-left: 5px solid #4caf50; // Accent left border
+          padding: 0.7rem 1rem;
+          border-radius: 6px;
+          font-size: 0.9rem;
+          color: #388e3c; // Darker green text
+          width: 100%; // Take full width of column
+          box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+          display: flex;
+          flex-direction: column;
+          gap: 0.3rem;
+
+          // Style for attended sessions
+          &.attended {
+            background-color: #d4edda; // Lighter green for attended slots
+            border-color: #28a745; // Green border for attended
+            border-left-color: #28a745; // Darker green accent
+          }
+
+          .time {
+            font-weight: 600;
+            color: #1b5e20; // Even darker green for time
+          }
+          .tutor-name {
+            font-size: 0.8rem;
+            color: #555;
+            margin-top: 0.2rem;
+          }
+
+          .attendance-button {
+            position: absolute;
+            top: 0.4rem;
+            right: 0.4rem;
+            width: 28px; // Fixed width for a circle
+            height: 28px; // Fixed height for a circle
+            border-radius: 50%; // Make it circular
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: white; // Default text color
+            cursor: pointer;
+            transition: background-color 0.2s ease, transform 0.2s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+            &:hover {
+              transform: scale(1.05);
+            }
+
+            &.attended-btn {
+              background-color: #28a745; // Green for marked attendance
+              &:hover {
+                background-color: #218838;
+              }
+            }
+
+            &.not-attended-btn {
+              background-color: #dc3545; // Red for not attended
+              &:hover {
+                background-color: #c82333;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  /* --- START Confirmation Modal Styles --- */
+  .confirmation-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    opacity: 0;
+    animation: fadeIn 0.3s forwards;
+  }
+
+  .confirmation-modal-content {
+    background-color: #ffffff;
+    padding: 0;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    text-align: center;
+    max-width: 450px;
+    width: 90%;
+    transform: translateY(-20px);
+    animation: slideIn 0.3s forwards cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    overflow: hidden;
+  }
+
+  .confirmation-modal-header {
+    background-color: #f0f2f5;
+    padding: 20px 30px;
+    border-bottom: 1px solid #e0e0e0;
+    margin-bottom: 25px;
+
+    h2 {
+      margin: 0;
+      font-size: 1.3em;
+      color: #34495e;
+      font-weight: 600;
+    }
+  }
+
+  .confirmation-modal-content p {
+    padding: 0 30px;
+    margin-bottom: 30px;
+    font-size: 1.1em; // Adjusted from 1.25em for better fit
+    color: #34495e;
+    line-height: 1.6;
+    font-weight: 500;
+  }
+
+  .confirmation-modal-actions {
+    padding-bottom: 30px;
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+  }
+
+  .confirmation-modal-actions button {
+    padding: 12px 30px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1.05em;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    min-width: 120px;
+  }
+
+  .confirmation-modal-actions .confirm-btn {
+    background-color: #28a745;
+    color: white;
+    &:hover {
+      background-color: #218838;
+      transform: translateY(-3px);
+      box-shadow: 0 5px 15px rgba(40, 167, 69, 0.3);
+    }
+    &:active {
+      transform: translateY(0);
+      box-shadow: none;
+    }
+  }
+
+  .confirmation-modal-actions .cancel-btn {
+    background-color: #dc3545;
+    color: white;
+    &:hover {
+      background-color: #c82333;
+      transform: translateY(-3px);
+      box-shadow: 0 5px 15px rgba(220, 53, 69, 0.3);
+    }
+    &:active {
+      transform: translateY(0);
+      box-shadow: none;
+    }
+  }
+  /* --- END Confirmation Modal Styles --- */
+
+  /* --- START Materials Modal Styles --- */
+  .materials-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    animation: fadeIn 0.3s forwards;
+  }
+
+  .materials-modal-content {
+    background-color: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    max-width: 600px; /* Larger max-width for materials */
+    width: 90%;
+    max-height: 80vh; /* Limit height and allow scrolling */
+    overflow-y: auto;
+    animation: slideIn 0.3s forwards cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    display: flex;
+    flex-direction: column;
+  }
+
+  .materials-modal-header {
+    background-color: #f0f2f5;
+    padding: 20px 30px;
+    border-bottom: 1px solid #e0e0e0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    h2 {
+      margin: 0;
+      font-size: 1.4em;
+      color: #34495e;
+      font-weight: 600;
+    }
+    .close-btn {
+      background: none;
+      border: none;
+      font-size: 2em;
+      cursor: pointer;
+      color: #777;
+      line-height: 1;
+      padding: 0;
+      transition: color 0.2s ease;
+      &:hover {
+        color: #333;
+      }
+    }
+  }
+
+  .materials-modal-body {
+    padding: 25px 30px;
+    flex-grow: 1; // Allow body to take available space
+  }
+
+  .materials-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    .material-item {
+      background-color: #f9f9f9;
+      border: 1px solid #e5e5e5;
+      border-radius: 8px;
+      padding: 15px 20px;
+      margin-bottom: 15px;
+      &:last-child {
+        margin-bottom: 0;
+      }
+      .material-title {
+        margin-top: 0;
+        margin-bottom: 8px;
+        font-size: 1.15em;
+        color: #2c3e50;
+        font-weight: 600;
+      }
+      .material-description {
+        font-size: 0.95em;
+        color: #555;
+        margin-bottom: 10px;
+      }
+      .material-link {
+        display: inline-block;
+        color: #3498db;
+        text-decoration: none;
+        font-weight: 500;
+        font-size: 0.9em;
+        &:hover {
+          text-decoration: underline;
+        }
+      }
+      .material-type {
+        background-color: #e0e0e0;
+        color: #666;
+        padding: 3px 8px;
+        border-radius: 4px;
+        font-size: 0.75em;
+        margin-left: 8px;
+      }
+    }
+  }
+
+  .no-materials {
+    text-align: center;
+    color: #7f8c8d;
+    font-style: italic;
+    padding: 20px;
+  }
+  /* --- END Materials Modal Styles --- */
+
+  /* Keyframe Animations (used by both modals) */
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  @keyframes slideIn {
+    from { transform: translateY(-50px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+
+  // Responsive adjustments
+  @media (max-width: 768px) {
+    .my-courses-container {
+      padding: 1rem;
+    }
+
+    .section-title {
+      font-size: 1.8rem;
+    }
+    .section-subtitle {
+      font-size: 1.4rem;
+    }
+
+    .weekly-schedule-grid {
+      .grid-header {
+        .grid-header-day {
+          padding: 0.5rem 0.3rem;
+          .weekday {
+            font-size: 0.8rem;
+          }
+          .date {
+            font-size: 0.9rem;
+          }
+        }
+      }
+      .grid-body {
+        flex-direction: column;
+        .grid-day-column {
+          border-right: none;
+          border-bottom: 1px solid #eee;
+          &:last-child {
+            border-bottom: none;
+          }
+          .schedule-slot {
+            font-size: 0.85rem;
+            padding: 0.6rem 0.8rem;
+          }
+        }
+      }
+    }
+
+    .week-navigation {
+      flex-direction: column;
+      gap: 0.8rem;
+      .nav-button {
+        width: 100%;
+        text-align: center;
+      }
+    }
+
+    /* Modals responsive adjustments */
+    .confirmation-modal-content, .materials-modal-content {
+      padding: 25px 20px;
+      .confirmation-modal-header h2, .materials-modal-header h2 {
+        font-size: 1.1em;
+      }
+      .confirmation-modal-content p {
+        font-size: 1.1em;
+      }
+      .confirmation-modal-actions button {
+        padding: 10px 20px;
+        font-size: 0.9em;
+        min-width: unset;
+      }
+    }
+  }
+}
+.report-button {
+  background-color: #f44336;
+  color: #fff;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  margin-left: 10px;
+  transition: background-color 0.3s ease;
+
+  &:hover {
+    background-color: #d32f2f;
+  }
+
+  &.reported {
+    background-color: #9e9e9e;
+    cursor: not-allowed;
+  }
+}
+
+.booking-actions {
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+  margin-top: 10px;
+}
+.report-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.5); // nền đen mờ
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.report-modal-content {
+  background-color: #fff;
+  padding: 24px;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 500px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  animation: fadeIn 0.3s ease-in-out;
+
+  h3 {
+    margin-top: 0;
+    font-size: 20px;
+    margin-bottom: 16px;
+  }
+
+  textarea {
+    width: 100%;
+    height: 120px;
+    padding: 12px;
+    font-size: 14px;
+    resize: vertical;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    font-family: inherit;
+  }
+
+  .button-group {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+
+    button {
+      padding: 8px 16px;
+      font-size: 14px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+
+      &:first-child {
+        background-color: #ccc;
+        color: #333;
+
+        &:hover {
+          background-color: #bbb;
+        }
+      }
+
+      &:last-child {
+        background-color: #d9534f;
+        color: white;
+
+        &:hover {
+          background-color: #c9302c;
+        }
+      }
+    }
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+// ReportModal.scss
+
+.report-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.report-modal-content {
+  background: #fff;
+  border-radius: 10px;
+  padding: 24px;
+  width: 90%;
+  max-width: 500px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+
+  h3 {
+    margin-bottom: 16px;
+    font-size: 20px;
+    font-weight: bold;
+  }
+
+  textarea {
+    width: 100%;
+    height: 120px;
+    padding: 12px;
+    font-size: 14px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    resize: none;
+    margin-bottom: 20px;
+    &:focus {
+      border-color: #4a90e2;
+      outline: none;
+    }
+  }
+
+  .modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+
+    button {
+      padding: 8px 16px;
+      border-radius: 6px;
+      border: none;
+      font-size: 14px;
+      cursor: pointer;
+      transition: background 0.2s;
+
+      &:first-child {
+        background: #e0e0e0;
+        color: #333;
+
+        &:hover {
+          background: #d5d5d5;
+        }
+      }
+
+      &:last-child {
+        background: #007bff;
+        color: white;
+
+        &:hover {
+          background: #0056b3;
+        }
+      }
+    }
+  }
+}
+.booking-card {
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 15px;
+  background-color: #fff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+
+  &.completed {
+      border-left: 5px solid #28a745 !important; /* Viền xanh lá cho khóa học hoàn tất */
+      opacity: 0.8;
+  }
+
+  /* Style cho booking đã báo cáo */
+  &.reported {
+      border: 1px solid #e74c3c; /* Viền đỏ nhạt, vẫn giữ để tạo điểm nhấn */
+      background-color: rgba(231, 76, 60, 0.08) !important; /* Nền đỏ nhạt, trong suốt khoảng 8% */
+      box-shadow: 0 2px 4px rgba(231, 76, 60, 0.15) !important; /* Bóng đỏ nhạt hơn */
+
+      .report-button.reported {
+          background-color: #95a5a6 !important; /* Màu xám nhạt cho nút "Đã báo cáo" */
+          color: #fff;
+          cursor: not-allowed !important;
+          &:hover {
+              background-color: #95a5a6 !important;
+          }
+      }
+  }
+}
