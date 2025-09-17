@@ -14,8 +14,7 @@ const timeSlotSchema = new mongoose.Schema({
 const tutorSchema = new mongoose.Schema({
   user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   bio: String,
-  subjects: [String],
-  classes: [Number],
+  subjects: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Subject' }],
   pricePerHour: Number,
   experience: String,
   education: String,

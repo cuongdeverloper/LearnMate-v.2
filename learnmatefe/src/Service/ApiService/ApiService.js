@@ -172,18 +172,7 @@ const ApiGetMessageByConversationId = async (conversationId) => {
   }
 };
 
-const ApiCreateConversation = async (receiverId) => {
-  const response = await axios.post('/conversation', { receiverId });
-  return response;
-};
 
-export const createBooking = (payload) => {
-  axios.post(`/booking/${payload.tutorId}`, payload);
-};
-
-export const getTutors = (params) => {
-  return axios.get('/tutors', { params });
-};
 
 const fetchTutorsBySubjects = async (subjectsArray) => {
   try {
@@ -242,40 +231,8 @@ const fetchStudentsApi = async () => {
   }
 };
 
-const getTutorById = async (tutorId) => {
-  try {
-    const response = await axios.get(`/tutors/${tutorId}`);
-    return response;
-  } catch (error) {
-    console.error('Lỗi khi lấy thông tin gia sư:', error);
-    return null;
-  }
-};
 
-const getUserBalance = async () => {
-  try {
-    const token = Cookies.get("accessToken");
 
-    if (!token) {
-      console.warn("Không có token, không thể lấy số dư người dùng");
-      return null;
-    }
-
-    const response = await axios.get('/me/info', {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-    if (response.user?.balance !== undefined) {
-      return response.user.balance;
-    } else {
-      throw new Error("Không có thông tin số dư trong phản hồi");
-    }
-  } catch (error) {
-    console.error("Lỗi khi lấy số dư người dùng:", error);
-    return null;
-  }
-};
 const getBookingDetailsById = async (bookingId) => {
   try {
     const response = await axios.get(`/bookings/${bookingId}`);
@@ -866,15 +823,6 @@ export const createReview = async (data) => {
   }
 };
 
-export const getReviewsByTutor = async (tutorId) => {
-  try {
-    const response = await axios.get(`/review/tutor/${tutorId}`);
-    return response;
-  } catch (error) {
-    console.error("Error fetching reviews by tutor:", error);
-    throw error;
-  }
-};
 
 export const getReviewsByCourse = async (courseId) => {
   try {
@@ -1115,7 +1063,7 @@ export const updateTutorActiveStatus = async (active) => {
 export {
   ApiLogin, sendOTPApi, ApiRegister, loginWGoogle, requestPasswordResetApi, resetPasswordApi,
   ApiGetUserByUserId, ApiMarkMessagesAsSeen, ApiSendMessage, getConversationApi, ApiGetMessageByConversationId, fetchTutorsBySubjects
-  , ApiCreateConversation, uploadMaterial, fetchPendingBookings, getMaterialsForBooking, respondBooking,
+  , uploadMaterial, fetchPendingBookings, getMaterialsForBooking, respondBooking,
   cancelBooking,
   getTutorSchedule,fetchScheduleDataApi,fetchBookingsApi,
   createSchedule,fetchBookingDetailsApi,
@@ -1123,8 +1071,7 @@ export {
   deleteSchedule,
   getTeachingProgress,
   updateTeachingProgress,fetchBusySlotsByBookingId,
-  fetchStudentsApi,
-  getTutorById, getUserBalance, getBookingDetailsById, getBusySlotsByBookingId,
+  fetchStudentsApi, getBookingDetailsById, getBusySlotsByBookingId,
   addBookingSlots,
   getMyBookings, finishBooking, getMyWeeklySchedules, markScheduleAttendance,
   getMaterialsByBookingId, fetchNotificationsApi, fetchUnreadCountApi,

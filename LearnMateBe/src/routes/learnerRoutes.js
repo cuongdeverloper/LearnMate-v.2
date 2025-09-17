@@ -3,6 +3,8 @@ const routerApi = express.Router();
 const { checkAccessToken, createRefreshToken, createJWT } = require('../middleware/JWTAction');
 
 const tutorController = require('../controller/User/TutorController');
+const bookingController = require('../controller/Booking/bookingController');
+const profileController = require('../controller/User/ProfileController');
 routerApi.get('/tutors', tutorController.getTutors);             // GET /api/tutors
 routerApi.get('/tutors/:id', tutorController.getTutorById);       // GET /api/tutors/:id
 
@@ -10,5 +12,15 @@ routerApi.get('/tutors/:id', tutorController.getTutorById);       // GET /api/tu
 routerApi.get('/saved-tutors', checkAccessToken, tutorController.getSavedTutors);
 routerApi.post('/saved-tutors/:tutorId', checkAccessToken, tutorController.addSavedTutor);
 routerApi.delete('/saved-tutors/:tutorId', checkAccessToken, tutorController.removeSavedTutor);
+
+
+routerApi.post('/bookings/:tutorId', checkAccessToken, bookingController.createBooking);
+
+routerApi.get('/profile', checkAccessToken, profileController.getProfile);
+routerApi.put('/update-profile', checkAccessToken, profileController.updateProfile);
+
+routerApi.post('/bookings/:tutorId', checkAccessToken, bookingController.createBooking);
+routerApi.patch("/bookings/:bookingId/cancel", checkAccessToken, bookingController.cancelBooking);
+routerApi.get('/bookings/:id', bookingController.getBookingById);
 
 module.exports = routerApi;
