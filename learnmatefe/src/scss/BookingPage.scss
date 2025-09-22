@@ -1,0 +1,316 @@
+// Variables for consistent theming (optional but good practice)
+$primary-color: #007bff;
+$primary-dark: #0056b3;
+$accent-color: #4CAF50; // Confirm button
+$danger-color: #f44336; // Cancel button
+$text-dark: #222;
+$text-medium: #444;
+$text-light: #555;
+$background-light: #f4f6f8;
+$background-card: #fdfdfd;
+$background-tutor-info: #f5f7fa;
+$border-color: #ccc;
+$shadow-light: rgba(0, 0, 0, 0.05);
+$shadow-medium: rgba(0, 0, 0, 0.1);
+
+.booking-wrapper {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  padding: 40px 20px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: $background-light; // Added a light background to the wrapper
+
+  .side-panel {
+    width: 300px;
+    background: $background-card; // Changed from f4f6f8 for consistency
+    padding: 25px; // Slightly more padding
+    border-radius: 16px;
+    box-shadow: 0 6px 15px $shadow-light;
+    font-size: 15px; // Slightly larger font
+    color: $text-light;
+    display: flex;
+    flex-direction: column; // Align content vertically
+    justify-content: flex-start; // Align content to the top
+
+    h3 {
+      font-size: 20px; // Slightly larger heading
+      margin-bottom: 15px; // More space below heading
+      color: $text-dark;
+      font-weight: 600;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.08); // Subtle separator
+      padding-bottom: 10px; // Space below separator
+    }
+
+    ul {
+      list-style: none;
+      padding-left: 0;
+      flex-grow: 1; // Allow list to take available space
+
+      li {
+        margin-bottom: 12px; // More vertical space between list items
+        line-height: 1.6;
+        color: $text-medium; // Darker text for readability
+      }
+    }
+  }
+
+  .booking-container {
+    max-width: 700px;
+    width: 100%;
+
+    .booking-card {
+      background-color: $background-card;
+      border-radius: 16px;
+      box-shadow: 0 10px 25px $shadow-medium;
+      padding: 30px; // More padding for a spacious feel
+
+      h2 {
+        font-size: 30px; // Larger main heading
+        font-weight: 700;
+        text-align: center;
+        margin-bottom: 30px; // More space below heading
+        color: $primary-color; // Use primary color for heading
+        text-transform: uppercase; // Make it stand out
+      }
+
+      .tutor-confirm {
+        display: flex;
+        gap: 20px; // More space between avatar and details
+        align-items: center;
+        margin-bottom: 30px; // More space below tutor info
+        background: $background-tutor-info;
+        padding: 20px; // More padding
+        border-radius: 12px;
+        border: 1px solid rgba(0, 0, 0, 0.05); // Subtle border
+
+        .avatar {
+          width: 100px; // Slightly larger avatar
+          height: 100px;
+          border-radius: 50%;
+          object-fit: cover;
+          border: 3px solid $primary-color; // Thicker, primary colored border
+          box-shadow: 0 4px 10px rgba(0, 123, 255, 0.2); // Subtle shadow
+        }
+
+        .tutor-details {
+          h3 {
+            font-size: 24px; // Larger tutor name
+            font-weight: 700; // Bolder name
+            color: $text-dark;
+            margin-bottom: 8px; // Space below name
+          }
+
+          p {
+            margin: 6px 0; // More space between details
+            color: $text-light;
+            font-size: 15px; // Slightly larger text
+          }
+          strong {
+            color: $text-medium; // Bolder strong text
+          }
+        }
+      }
+
+      .form-group {
+        margin-bottom: 25px; // More space between form groups
+
+        label {
+          display: block;
+          font-weight: 600; // Bolder label
+          margin-bottom: 10px; // More space below label
+          color: $text-medium;
+          font-size: 16px; // Larger label font
+        }
+
+        input,
+        textarea { // Apply styles to both input and textarea
+          width: 100%;
+          padding: 12px 16px; // More padding
+          border: 1px solid $border-color;
+          border-radius: 8px;
+          font-size: 16px;
+          transition: border-color 0.3s, box-shadow 0.3s;
+          box-sizing: border-box; // Include padding in width calculation
+
+          &:focus {
+            outline: none;
+            border-color: $primary-color;
+            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25); // Stronger focus shadow
+          }
+        }
+
+        textarea {
+          resize: vertical; // Allow vertical resizing
+          min-height: 90px; // Set a minimum height
+        }
+      }
+
+      .btn-booking {
+        width: 100%;
+        padding: 14px; // More padding for a larger button
+        background-color: $primary-color;
+        color: white;
+        font-weight: bold;
+        font-size: 18px; // Larger font
+        border: none;
+        border-radius: 8px;
+        transition: background-color 0.3s, transform 0.2s; // Add transform for hover effect
+        cursor: pointer;
+        margin-top: 15px; // Space above button
+
+        &:hover:not(:disabled) {
+          background-color: $primary-dark;
+          transform: translateY(-2px); // Slight lift on hover
+        }
+
+        &:disabled {
+          background-color: #999;
+          cursor: not-allowed;
+          opacity: 0.8;
+        }
+      }
+    }
+  }
+}
+
+/* Responsive for smaller screens */
+@media (max-width: 1024px) {
+  .booking-wrapper {
+    flex-direction: column;
+    padding: 20px;
+    gap: 20px; // Reduce gap on smaller screens
+
+    .side-panel {
+      width: 100%;
+      margin-bottom: 0; // Remove margin as gap handles spacing
+      padding: 20px; // Adjust padding for smaller screens
+    }
+
+    .booking-container {
+      max-width: 100%;
+      .booking-card {
+        padding: 25px; // Adjust padding for smaller screens
+      }
+    }
+  }
+}
+
+/* Modal specific styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.6); // Darker overlay
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  backdrop-filter: blur(3px); // Subtle blur effect
+}
+
+.modal-content {
+  background-color: white !important;
+  padding: 2.5rem; // More padding
+  border-radius: 12px !important; // More rounded corners
+  max-width: 450px; // Slightly wider modal
+  width: 90% !important;
+  text-align: center;
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2); // Stronger shadow
+  animation: fadeInScale 0.3s ease-out; // Add animation
+
+  h3 {
+    font-size: 26px; // Larger modal title
+    color: $text-dark;
+    margin-bottom: 1.5rem; // More space below title
+    font-weight: 700;
+  }
+
+  p {
+    font-size: 16px;
+    color: $text-medium;
+    line-height: 1.6;
+    margin-bottom: 1rem; // Space for the note if present
+  }
+}
+
+.modal-actions {
+  margin-top: 2rem; // More space above buttons
+  display: flex;
+  justify-content: center; // Center the buttons
+  gap: 15px; // Space between buttons
+}
+
+.btn {
+  padding: 0.8rem 2rem; // Larger buttons
+  font-size: 1rem;
+  cursor: pointer;
+  border-radius: 6px !important; // Slightly more rounded buttons
+  font-weight: 600;
+  transition: all 0.3s ease; // Smooth transitions for buttons
+  min-width: 120px; // Ensure consistent button width
+}
+
+.btn-confirm {
+  background-color: $accent-color !important;
+  color: white !important;
+  border: none;
+
+  &:hover {
+    background-color: darken($accent-color, 10%) !important;
+    transform: translateY(-1px);
+  }
+}
+
+.btn-cancel {
+  background-color: $danger-color !important;
+  color: white !important;
+  border: none !important;
+
+  &:hover {
+    background-color: darken($danger-color, 10%) !important;
+    transform: translateY(-1px);
+  }
+}
+
+// Keyframe animation for modal
+@keyframes fadeInScale {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.guarantee-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 10px;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+.guarantee-item {
+  background: #f9f9f9;
+  border-left: 4px solid #4caf50;
+  padding: 12px 16px;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+}
+
+.guarantee-item h4 {
+  margin: 0 0 6px 0;
+  font-size: 16px;
+  color: #333;
+}
+
+.guarantee-item p {
+  margin: 0;
+  font-size: 14px;
+  color: #555;
+}

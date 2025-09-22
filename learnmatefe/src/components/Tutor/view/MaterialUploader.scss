@@ -1,0 +1,110 @@
+.material-uploader {
+  background-color: #fefce8;
+  padding: 2rem;
+  border-radius: 12px;
+  font-family: 'Segoe UI', sans-serif;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  max-width: 700px;
+  margin: 0 auto;
+
+  h3 {
+    font-size: 1.6rem;
+    font-weight: 600;
+    color: #f59e0b;
+    margin-bottom: 1.5rem;
+    text-align: center;
+  }
+
+  .form-upload {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    background: #fff7ed;
+    padding: 1.5rem;
+    border-radius: 10px;
+    border: 1px solid #fcd34d;
+
+    select,
+    input {
+      padding: 0.65rem 0.9rem;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.2s;
+
+      &:focus {
+        border-color: #f59e0b;
+      }
+    }
+
+    button {
+      background-color: #f59e0b;
+      color: white;
+      padding: 0.65rem 1rem;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background-color 0.2s;
+
+      &:hover {
+        background-color: #d97706;
+      }
+
+      &:disabled {
+        background-color: #fcd34d;
+        cursor: not-allowed;
+      }
+    }
+  }
+
+  .material-list {
+    margin-top: 2rem;
+    background-color: #fff;
+    padding: 1.5rem;
+    border-radius: 10px;
+    border: 1px solid #e5e7eb;
+
+    h4 {
+      font-size: 1.2rem;
+      color: #374151;
+      margin-bottom: 1rem;
+      border-bottom: 1px solid #fcd34d;
+      padding-bottom: 0.5rem;
+    }
+
+    p {
+      font-style: italic;
+      color: #6b7280;
+    }
+
+    .material-item {
+      padding: 0.75rem 1rem;
+      border: 1px solid #fcd34d;
+      border-radius: 8px;
+      margin-bottom: 1rem;
+      background-color: #fef9c3;
+
+      div {
+        font-size: 14px;
+        margin-bottom: 4px;
+
+        b {
+          color: #6b7280;
+          margin-right: 0.5rem;
+        }
+
+        a {
+          color: #2563eb;
+          text-decoration: underline;
+
+          &:hover {
+            color: #1d4ed8;
+          }
+        }
+      }
+    }
+  }
+}
