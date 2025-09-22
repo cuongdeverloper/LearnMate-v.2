@@ -2,7 +2,8 @@ const Tutor = require('../../modal/Tutor');
 const User = require('../../modal/User');
 const SavedTutor = require('../../modal/SavedTutor');
 
-// 🔍 Lấy danh sách tutor có filter
+const Subject = require('../../modal/Subject'); // import Subject model
+
 exports.getTutors = async (req, res) => {
   try {
     const { name, subject, subjects, minPrice, maxPrice, minRating, class: classGrade } = req.query;
@@ -10,46 +11,52 @@ exports.getTutors = async (req, res) => {
     let filter = {};
     let userFilter = {};
 
-    // Lọc theo tên tutor (User)
+    // Lọc theo tên tutor
     if (name) {
-      userFilter.username = { $regex: name, $options: 'i' };
+      userFilter.username = { $regex: name, $options: "i" };
     }
 
-    // ✅ Lọc theo nhiều môn học
+    // ✅ Lọc theo nhiều môn
     if (subjects) {
-      const subjectList = decodeURIComponent(subjects).split(',').map(s => s.trim());
-      filter.subjects = { $in: subjectList };
+      const subjectNames = decodeURIComponent(subjects).split(",").map(s => s.trim());
+      const subjectDocs = await Subject.find({ name: { $in: subjectNames } });
+      const subjectIds = subjectDocs.map(s => s._id);
+      filter.subjects = { $in: subjectIds };
     } else if (subject) {
-      // Lọc theo 1 môn học duy nhất
-      filter.subjects = { $regex: subject, $options: 'i' };
+      const subjectDoc = await Subject.findOne({ name: { $regex: subject, $options: "i" } });
+      if (subjectDoc) {
+        filter.subjects = subjectDoc._id;
+      } else {
+        return res.json({ success: true, tutors: [] }); // không tìm thấy môn -> trả về rỗng
+      }
     }
 
-    // Lọc theo class (lớp)
+    // ✅ Lọc theo class
     if (classGrade) {
       filter.classes = Number(classGrade);
     }
 
-    // Lọc theo khoảng giá
+    // ✅ Lọc theo giá
     if (minPrice || maxPrice) {
       filter.pricePerHour = {};
       if (minPrice) filter.pricePerHour.$gte = Number(minPrice);
       if (maxPrice) filter.pricePerHour.$lte = Number(maxPrice);
     }
 
-    // Lọc theo rating
+    // ✅ Lọc theo rating
     if (minRating) {
       filter.rating = { $gte: Number(minRating) };
     }
 
-    // Truy vấn
-    let tutors = await Tutor.find(filter).populate({
-      path: 'user',
-      match: userFilter,
-      select: 'username email image phoneNumber gender',
-    });
+    let tutors = await Tutor.find(filter)
+      .populate({
+        path: "user",
+        match: userFilter,
+        select: "username email image phoneNumber gender",
+      })
+      .populate("subjects", "name"); // 👈 lấy tên môn học
 
-    // Bỏ tutor không có user match
-    tutors = tutors.filter(tutor => tutor.user !== null);
+    tutors = tutors.filter((tutor) => tutor.user !== null);
 
     res.json({ success: true, tutors });
   } catch (err) {
@@ -57,12 +64,13 @@ exports.getTutors = async (req, res) => {
   }
 };
 
-
 exports.getTutorById = async (req, res) => {
   try {
     const tutor = await Tutor.findById(req.params.tutorId)
     .populate('user', 'username email image phoneNumber gender')
+    .populate('subjects', 'name') // ✅ lấy tên môn học
     .select('subjects classes pricePerHour description rating bio location education certifications');
+  
   
 
     if (!tutor) return res.status(404).json({ success: false, message: 'Tutor not found' });

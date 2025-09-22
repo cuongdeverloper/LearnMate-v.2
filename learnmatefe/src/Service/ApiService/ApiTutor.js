@@ -4,7 +4,7 @@ import Cookies from 'js-cookie';
 
 const getTutorById = async (tutorId) => {
     try {
-      const response = await axios.get(`/tutors/${tutorId}`);
+      const response = await axios.get(`/api/learner/tutors/${tutorId}`);
       return response;
     } catch (error) {
       console.error('Lỗi khi lấy thông tin gia sư:', error);
@@ -13,7 +13,7 @@ const getTutorById = async (tutorId) => {
   };
 const getReviewsByTutor = async (tutorId) => {
     try {
-      const response = await axios.get(`/review/tutor/${tutorId}`);
+      const response = await axios.get(`/api/tutor/review/${tutorId}`);
       return response;
     } catch (error) {
       console.error("Error fetching reviews by tutor:", error);

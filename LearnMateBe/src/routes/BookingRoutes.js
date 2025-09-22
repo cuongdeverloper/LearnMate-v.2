@@ -4,7 +4,7 @@ const bookingController = require('../controller/Booking/bookingController');
 const scheduleController = require('../controller/Schedule/ScheduleController');
 const { checkAccessToken } = require('../middleware/JWTAction');
 
-RouteBooking.get("/bookings/user/:userId", bookingController.getUserBookingHistory);
+RouteBooking.get("/user/:userId", bookingController.getUserBookingHistory);
 RouteBooking.get("/bookings/my-courses",checkAccessToken, bookingController.getApprovedBookingsForLearner);
 RouteBooking.patch("/bookings/:bookingId/cancel", checkAccessToken, bookingController.cancelBooking);
 RouteBooking.get('/bookings/:id', bookingController.getBookingById);

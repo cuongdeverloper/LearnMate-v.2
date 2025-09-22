@@ -5,6 +5,8 @@ const { checkAccessToken, createRefreshToken, createJWT } = require('../middlewa
 const tutorController = require('../controller/User/TutorController');
 const bookingController = require('../controller/Booking/bookingController');
 const profileController = require('../controller/User/ProfileController');
+const paymentController = require('../controller/Payment/PaymentController');
+
 routerApi.get('/tutors', tutorController.getTutors);             // GET /api/tutors
 routerApi.get('/tutors/:tutorId', tutorController.getTutorById);       // GET /api/tutors/:id
 
@@ -22,5 +24,8 @@ routerApi.put('/update-profile', checkAccessToken, profileController.updateProfi
 routerApi.post('/bookings/:tutorId', checkAccessToken, bookingController.createBooking);
 routerApi.patch("/bookings/:bookingId/cancel", checkAccessToken, bookingController.cancelBooking);
 routerApi.get('/bookings/:id', bookingController.getBookingById);
+
+
+routerApi.get('/me/info', checkAccessToken,paymentController.getUserInfo); 
 
 module.exports = routerApi;

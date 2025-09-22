@@ -64,7 +64,7 @@ const Layout = () => {
           } />
         <Route/>
         <Route
-            path="/tutors"
+            path="/tutor"
             element={
               <ProtectedRoute allowedRoles={['student', 'admin','tutor']}>
                 <AppLayout>
@@ -74,7 +74,7 @@ const Layout = () => {
           />
                   <Route/>
         <Route
-            path="/tutors/profile/:tutorId"
+            path="/tutor/profile/:tutorId"
             element={
               <ProtectedRoute allowedRoles={['student', 'admin','tutor']}>
                 <AppLayout>
