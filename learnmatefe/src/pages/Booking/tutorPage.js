@@ -50,11 +50,11 @@ export default function TutorListPage() {
   // Hàm để lấy danh sách gia sư đã lưu từ backend
   const fetchSavedTutorIds = useCallback(async () => {
     // // Chỉ kiểm tra sự tồn tại của accessToken
-    // if (!accessToken) {
-    //   setSavedTutorIds([]);
-    //   return;
-    // }
-    // try {
+    if (!accessToken) {
+      setSavedTutorIds([]);
+      return;
+    }
+    try {
       const res = await axios2.get(`http://localhost:6060/api/learner/saved-tutors`, {
         headers: {
           Authorization: `Bearer ${accessToken}`,
@@ -62,16 +62,16 @@ export default function TutorListPage() {
       });
       // API trả về mảng các đối tượng tutor, ta chỉ cần ID của chúng
       setSavedTutorIds(res.map((tutor) => tutor._id));
-    // } catch (error) {
-    //   console.error("Lỗi khi lấy danh sách gia sư đã lưu:", error);
-    //   if (error.response && error.response.status === 401) {
-    //     toast.error(
-    //       "Phiên đăng nhập của bạn đã hết hạn. Vui lòng đăng nhập lại."
-    //     ); // Thay thế alert
-    //     navigate("/login");
-    //   }
-    //   setSavedTutorIds([]);
-    // }
+    } catch (error) {
+      console.error("Lỗi khi lấy danh sách gia sư đã lưu:", error);
+      if (error.response && error.response.status === 401) {
+        toast.error(
+          "Phiên đăng nhập của bạn đã hết hạn. Vui lòng đăng nhập lại."
+        ); // Thay thế alert
+        navigate("/login");
+      }
+      setSavedTutorIds([]);
+    }
   }, [ navigate]);
 
   useEffect(() => {
@@ -336,7 +336,7 @@ export default function TutorListPage() {
                     <div
                       key={tutor._id}
                       className="tutor-card"
-                      onClick={() => navigate(`/tutors/${tutor._id}`)}
+                      onClick={() => navigate(`/tutors/profile/${tutor._id}`)}
                     >
                       <img
                         className="tutor-avatar"

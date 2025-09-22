@@ -6,7 +6,7 @@ const tutorController = require('../controller/User/TutorController');
 const bookingController = require('../controller/Booking/bookingController');
 const profileController = require('../controller/User/ProfileController');
 routerApi.get('/tutors', tutorController.getTutors);             // GET /api/tutors
-routerApi.get('/tutors/:id', tutorController.getTutorById);       // GET /api/tutors/:id
+routerApi.get('/tutors/:tutorId', tutorController.getTutorById);       // GET /api/tutors/:id
 
 // --- NEW ROUTES FOR SAVED TUTORS  ---
 routerApi.get('/saved-tutors', checkAccessToken, tutorController.getSavedTutors);

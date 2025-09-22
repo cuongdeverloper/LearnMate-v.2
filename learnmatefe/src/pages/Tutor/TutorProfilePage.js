@@ -7,17 +7,17 @@ import { toast } from "react-toastify";
 import "./TutorProfilePage.scss";
 
 export default function TutorProfilePage() {
-  const { id } = useParams();
+  const { tutorId } = useParams();
   const [tutor, setTutor] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
     fetchTutor();
-  }, [id]);
+  }, [tutorId]);
 
   const fetchTutor = async () => {
     try {
-      const res = await axios.get(`/api/learner/tutors/${id}`);
+      const res = await axios.get(`/api/learner/tutors/${tutorId}`);
       setTutor(res.tutor);
     } catch (error) {
       console.error("Lỗi khi lấy thông tin gia sư:", error);
