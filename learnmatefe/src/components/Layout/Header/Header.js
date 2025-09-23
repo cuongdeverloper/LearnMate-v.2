@@ -42,7 +42,7 @@ const Header = () => {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const res = await axios.get('/profile', {
+        const res = await axios.get('/api/learner/profile', {
           headers: {
             Authorization: `Bearer ${accessToken}`,
           },

@@ -4,7 +4,7 @@ import ScheduleManager from './view/ScheduleManager';
 import ProgressTracker from './view/ProgressTracker';
 import MaterialUploader from './view/MaterialUploader';
 import './TutorDashboard.scss';
-import BookingSchedule from '../Booking/Schedule/BookingSchedule';
+import BookingSchedule from '../../pages/Booking/Schedule/BookingSchedule';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { doLogout } from '../../redux/action/userAction';

@@ -5,7 +5,7 @@ import "../../scss/BookingHistory.scss";
 import { FaCheckCircle, FaTimesCircle, FaClock, FaTrashAlt } from "react-icons/fa";
 import { ToastContainer, toast } from 'react-toastify'; // Import ToastContainer và toast
 import 'react-toastify/dist/ReactToastify.css'; // Import CSS của react-toastify
-import Header from "../Layout/Header/Header";
+import Header from "../../components/Layout/Header/Header";
 
 // Component Modal đơn giản (có thể thay thế bằng thư viện UI khác)
 const ConfirmModal = ({ show, onClose, onConfirm, message }) => {
@@ -44,7 +44,7 @@ const BookingHistoryPage = () => {
         setLoading(true);
         setError(null);
         try {
-            const res = await axios.get(`/api/learner/bookings/user/${userId}`, {
+            const res = await axios.get(`/api/booking/user/${userId}`, {
                 headers: { Authorization: `Bearer ${token}` },
             });
             const sortedBookings = (res.bookings || []).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));

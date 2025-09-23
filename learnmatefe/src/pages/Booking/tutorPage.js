@@ -7,7 +7,6 @@ import { FaStar } from "react-icons/fa";
 import { FaBookmark, FaShoppingBag } from "react-icons/fa";
 import { toast } from "react-toastify"; // Import toast
 import "../../scss/TutorListPage.scss";
-import axios2 from "axios";
 
 const classSubjectsMap = {
   1: ["Math", "Tiếng Việt"],
@@ -50,29 +49,29 @@ export default function TutorListPage() {
   // Hàm để lấy danh sách gia sư đã lưu từ backend
   const fetchSavedTutorIds = useCallback(async () => {
     // // Chỉ kiểm tra sự tồn tại của accessToken
-    // if (!accessToken) {
-    //   setSavedTutorIds([]);
-    //   return;
-    // }
-    // try {
-      const res = await axios2.get(`http://localhost:6060/api/learner/saved-tutors`, {
+    if (!accessToken) {
+      setSavedTutorIds([]);
+      return;
+    }
+    try {
+      const res = await axios.get(`/api/learner/saved-tutors`, {
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
       });
       // API trả về mảng các đối tượng tutor, ta chỉ cần ID của chúng
-      setSavedTutorIds(res.map((tutor) => tutor._id));
-    // } catch (error) {
-    //   console.error("Lỗi khi lấy danh sách gia sư đã lưu:", error);
-    //   if (error.response && error.response.status === 401) {
-    //     toast.error(
-    //       "Phiên đăng nhập của bạn đã hết hạn. Vui lòng đăng nhập lại."
-    //     ); // Thay thế alert
-    //     navigate("/login");
-    //   }
-    //   setSavedTutorIds([]);
-    // }
-  }, [ navigate]);
+      setSavedTutorIds((res.data || []).map((tutor) => tutor?._id));
+    } catch (error) {
+      console.error("Lỗi khi lấy danh sách gia sư đã lưu:", error);
+      if (error.response && error.response.status === 401) {
+        toast.error(
+          "Phiên đăng nhập của bạn đã hết hạn. Vui lòng đăng nhập lại."
+        ); // Thay thế alert
+        navigate("/login");
+      }
+      setSavedTutorIds([]);
+    }
+  }, [navigate]);
 
   useEffect(() => {
     fetchTutors();
@@ -111,9 +110,13 @@ export default function TutorListPage() {
         )
       );
 
-      const res = await axios.get("/api/learner/tutors", { params: cleanFilters });
-      
-      const activeTutors = (res.tutors || []).filter(tutor => tutor.active === true);
+      const res = await axios.get("/api/learner/tutors", {
+        params: cleanFilters,
+      });
+
+      const activeTutors = (res.tutors || []).filter(
+        (tutor) => tutor.active === true
+      );
       setTutors(activeTutors);
     } catch (error) {
       toast.error("Lấy danh sách tutor thất bại"); // Thay thế alert
@@ -143,7 +146,8 @@ export default function TutorListPage() {
   };
 
   const handleFilterChange = (e) => {
-    setFilters((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+    const { name, value } = e.target;
+    setFilters((prev) => ({ ...prev, [name]: value ?? "" }));
   };
 
   const handleFilterApply = () => {
@@ -169,11 +173,14 @@ export default function TutorListPage() {
 
     try {
       if (isAlreadySaved) {
-        const res = await axios.delete(`/api/learner/saved-tutors/${tutor._id}`, {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        });
+        const res = await axios.delete(
+          `/api/learner/saved-tutors/${tutor._id}`,
+          {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+            },
+          }
+        );
         setSavedTutorIds((prev) => prev.filter((id) => id !== tutor._id));
         toast.success(res.message || "Đã xóa gia sư khỏi danh sách lưu."); // Thay thế alert, thêm fallback message
       } else {
@@ -281,7 +288,7 @@ export default function TutorListPage() {
                     id="minPrice"
                     type="number"
                     name="minPrice"
-                    value={filters.minPrice}
+                    value={filters.minPrice ?? ""}
                     onChange={handleFilterChange}
                     placeholder="VND"
                   />
@@ -292,7 +299,7 @@ export default function TutorListPage() {
                     id="maxPrice"
                     type="number"
                     name="maxPrice"
-                    value={filters.maxPrice}
+                    value={filters.maxPrice ?? ""}
                     onChange={handleFilterChange}
                     placeholder="VND"
                   />
@@ -306,7 +313,7 @@ export default function TutorListPage() {
                     step="0.1"
                     min="0"
                     max="5"
-                    value={filters.minRating}
+                    value={filters.minRating ?? ""}
                     onChange={handleFilterChange}
                     placeholder="0.0 - 5.0"
                   />
@@ -336,7 +343,7 @@ export default function TutorListPage() {
                     <div
                       key={tutor._id}
                       className="tutor-card"
-                      onClick={() => navigate(`/tutors/${tutor._id}`)}
+                      onClick={() => navigate(`/tutor/profile/${tutor._id}`)}
                     >
                       <img
                         className="tutor-avatar"
@@ -359,7 +366,8 @@ export default function TutorListPage() {
                         </div>
                         <p>
                           <strong>Môn dạy:</strong>{" "}
-                          {tutor.subjects?.join(", ") || "Đang cập nhật"}
+                          {tutor.subjects?.map((s) => s.name).join(", ") ||
+                            "Đang cập nhật"}
                         </p>
                         <p className="tutor-desc">
                           {tutor.bio ||
