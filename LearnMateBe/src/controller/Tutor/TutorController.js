@@ -3,6 +3,8 @@ const Schedule = require('../../modal/Schedule');
 const Material = require('../../modal/Material');
 const Progress = require('../../modal/Progress');
 const Tutor = require('../../modal/Tutor');
+const uploadCloud = require('../../config/cloudinaryConfig');
+const uploadDocs = require('../../config/cloudinaryDocxConfig');
 
 // Accept or reject booking
 const respondBooking = async (req, res) => {
@@ -103,8 +105,7 @@ const createSchedule = async (req, res) => {
 const getSchedule = async (req, res) => {
   try {
     const tutorUserId = req.params.tutorId;
-    const tutor = await Tutor.findOne({ user: tutorUserId });
-    const schedule = await Schedule.find({ tutorId: tutor._id })
+    const schedule = await Schedule.find({ tutorId: tutorUserId })
       .populate('learnerId', 'username email'); 
     res.status(200).json(schedule);
   } catch (err) {
@@ -156,27 +157,40 @@ const getProgress = async (req, res) => {
 // Upload material
 const uploadMaterial = async (req, res) => {
   try {
-    const { bookingId, title, description, fileUrl } = req.body;
+    const { bookingId, title, description, fileType } = req.body;
+    const fileUrl = req.file?.path || req.file?.secure_url;
 
-    if (!fileUrl || !bookingId) {
-      return res.status(400).json({ message: 'Missing fileUrl or bookingId' });
+    if (!bookingId || !title || !fileUrl) {
+      return res.status(400).json({
+        errorCode: 1,
+        message: 'bookingId, title and file are required.'
+      });
     }
 
-    const material = new Material({
+    const newMaterial = new Material({
       bookingId,
-      title: title || 'Untitled',
-      description: description || '',
-      fileUrl,
-      fileType: 'link',
+      title,
+      description,
+      fileType: fileType || 'other',
+      fileUrl
     });
 
-    await material.save();
-    res.status(201).json({ message: 'Upload thành công', data: material });
-  } catch (err) {
-    console.error('Upload material error:', err);
-    res.status(500).json({ error: err.message });
+    await newMaterial.save();
+    res.status(201).json({
+      errorCode: 0, // ✅ success
+      message: 'Material uploaded successfully',
+      material: newMaterial
+    });
+  } catch (error) {
+    console.error('Save Material Error:', error);
+    res.status(500).json({
+      errorCode: 1, // ❌ error
+      message: 'Error saving material',
+      error: error.message
+    });
   }
 };
+
 
 // Get materials by booking
 const getMaterials = async (req, res) => {

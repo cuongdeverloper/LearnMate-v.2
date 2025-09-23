@@ -7,6 +7,7 @@ const BookingController = require('../controller/Booking/bookingController');
 const ReviewController = require('../controller/Review/ReviewController');
 const { checkAccessToken } = require('../middleware/JWTAction');
 const { getAllStudents } = require('../controller/User/UserController');
+const uploadDocs = require('../config/cloudinaryDocxConfig');
 
 RouterTutor.post('/bookings/respond', tutorCtrl.respondBooking);
 RouterTutor.post('/bookings/cancel', tutorCtrl.cancelBooking);
@@ -20,7 +21,12 @@ RouterTutor.delete('/schedule/:id', tutorCtrl.deleteSchedule);
 RouterTutor.post('/progress', tutorCtrl.updateProgress);
 RouterTutor.get('/progress/:studentId', tutorCtrl.getProgress);
 
-RouterTutor.post('/material/upload', uploadCloud.single('file'), tutorCtrl.uploadMaterial);
+// RouterTutor.post('/material/upload', tutorCtrl.uploadMaterial);
+RouterTutor.post(
+  '/material/upload',
+  uploadDocs.single('file'),   
+  tutorCtrl.uploadMaterial     
+);
 RouterTutor.get('/material/:bookingId', tutorCtrl.getMaterials);
 
 
@@ -34,7 +40,6 @@ RouterTutor.post(
 
 RouterTutor.get('/tutor/applications', checkAccessToken, TutorApplication.getTutorApplications);
 RouterTutor.get('/tutor/:tutorId/bookings', checkAccessToken,BookingController.getAllBookingsByTutorId);
-RouterTutor.post('/tutor/material/upload', checkAccessToken, tutorCtrl.uploadMaterial);
 RouterTutor.get('/materials/booking/:bookingId', checkAccessToken,tutorCtrl.getMaterials);
 RouterTutor.get('/students', getAllStudents);  
 

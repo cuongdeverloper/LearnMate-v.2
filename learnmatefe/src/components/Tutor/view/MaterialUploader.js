@@ -7,18 +7,23 @@ import dayjs from 'dayjs';
 
 const MaterialUploader = () => {
   const tutorId = useSelector(state => state.user?.account?.id);
-  const [fileUrl, setFileUrl] = useState('');
+  const [file, setFile] = useState(null);
   const [description, setDescription] = useState('');
   const [title, setTitle] = useState('');
   const [bookingId, setBookingId] = useState('');
   const [materials, setMaterials] = useState([]);
   const [bookings, setBookings] = useState([]);
 
+  // Load bookings cho tutor
   const loadBookings = async () => {
     if (!tutorId) return;
     try {
       const res = await getTutorSchedule(tutorId);
-      setBookings(res);
+      // Loại bỏ duplicate bookingId
+      const uniqueBookings = Array.isArray(res)
+        ? [...new Map(res.map(bk => [bk.bookingId, bk])).values()]
+        : [];
+      setBookings(uniqueBookings);
     } catch {
       setBookings([]);
     }
@@ -28,6 +33,7 @@ const MaterialUploader = () => {
     loadBookings();
   }, [tutorId]);
 
+  // Load materials khi chọn booking
   useEffect(() => {
     const fetchMaterials = async () => {
       if (!bookingId) {
@@ -37,9 +43,10 @@ const MaterialUploader = () => {
 
       try {
         const res = await getMaterialsForBooking(bookingId);
-        console.log(res)
-        const list = res;
-        setMaterials(Array.isArray(list) ? list : []);
+        const list = Array.isArray(res?.data) ? res.data : [];
+        // Loại bỏ duplicate _id
+        const uniqueMaterials = [...new Map(list.map(mat => [mat._id, mat])).values()];
+        setMaterials(uniqueMaterials);
       } catch (error) {
         console.error("❌ Error in fetchMaterials:", error);
         setMaterials([]);
@@ -50,36 +57,33 @@ const MaterialUploader = () => {
   }, [bookingId]);
 
   const handleUpload = async () => {
-    if (!fileUrl || !title || !bookingId) {
-      toast.warn('Vui lòng nhập đầy đủ thông tin');
-      return;
-    }
+  if (!file || !title || !bookingId) {
+    toast.warn('Vui lòng nhập đầy đủ thông tin');
+    return;
+  }
 
-    try {
-      console.log('▶️ Uploading:', { bookingId, title, description, fileUrl });
+  try {
+    const res = await uploadMaterial({ bookingId, title, description, file });
+    console.log(res)
+    if (res.errorCode === 0) {
+      toast.success('Tải tài liệu thành công');
+      setFile(null);
+      setTitle('');
+      setDescription('');
 
-      const res = await uploadMaterial({
-        bookingId,
-        title: title.trim(),
-        description: description.trim(),
-        fileUrl: fileUrl.trim()
-      });
-      if (res.errorCode === 0) {
-        toast.success('Tải tài liệu thành công');
-        setFileUrl('');
-        setTitle('');
-        setDescription('');
-        const res1 = await getMaterialsForBooking(bookingId);
-        console.log(res1)
-        setMaterials(res1.data || []);
-      } else {
-        toast.error(res.message || 'Lỗi upload');
-      }
-    } catch (err) {
-      toast.error('Lỗi hệ thống khi upload');
-      console.error('Upload error:', err);
+      // Refresh materials
+      const materialsRes = await getMaterialsForBooking(bookingId);
+      const list = Array.isArray(materialsRes?.data) ? materialsRes.data : [];
+      const uniqueMaterials = [...new Map(list.map(mat => [mat._id, mat])).values()];
+      setMaterials(uniqueMaterials);
+    } else {
+      toast.error(res.message || 'Lỗi upload');
     }
-  };
+  } catch (err) {
+    toast.error('Lỗi hệ thống khi upload');
+    console.error('Upload error:', err);
+  }
+};
 
 
   return (
@@ -88,18 +92,16 @@ const MaterialUploader = () => {
       <div className="form-upload">
         <select value={bookingId} onChange={e => setBookingId(e.target.value)}>
           <option value="">-- Chọn booking --</option>
-          {(bookings || []).map(bk => (
-            <option key={bk.bookingId} value={bk.bookingId}>
+          {(bookings || []).map((bk, index) => (
+            <option key={`${bk.bookingId}-${index}`} value={bk.bookingId}>
               {dayjs(bk.date).format('DD/MM/YYYY - HH:mm')} - {bk.learnerId?.username || 'Học viên'}
             </option>
           ))}
         </select>
 
         <input
-          type="text"
-          placeholder="Nhập link tài liệu (file URL)"
-          value={fileUrl}
-          onChange={e => setFileUrl(e.target.value)}
+          type="file"
+          onChange={e => setFile(e.target.files[0])}
         />
         <input
           type="text"
@@ -119,8 +121,8 @@ const MaterialUploader = () => {
       <div className="material-list">
         <h4>Danh sách tài liệu đã upload</h4>
         {materials.length === 0 && <p>Chưa có tài liệu nào.</p>}
-        {(materials || []).map(mat => (
-          <div key={mat._id} className="material-item">
+        {(materials || []).map((mat, index) => (
+          <div key={`${mat._id}-${index}`} className="material-item">
             <div><b>_id:</b> {mat._id}</div>
             <div><b>bookingId:</b> {mat.bookingId}</div>
             <div><b>title:</b> {mat.title}</div>
