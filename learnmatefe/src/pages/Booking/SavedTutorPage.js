@@ -22,12 +22,12 @@ export default function SavedTutorsPage() {
             return;
         }
         try {
-            const res = await axios.get(`/me/saved-tutors`, {
+            const res = await axios.get(`/api/learner/saved-tutors`, {
                 headers: {
                     Authorization: `Bearer ${accessToken}`,
                 },
             });
-            setSavedTutors(res || []);
+            setSavedTutors(res.data || []);
         } catch (error) {
             console.error("Lỗi khi lấy danh sách gia sư đã lưu:", error);
             if (error.response && error.response.status === 401) {

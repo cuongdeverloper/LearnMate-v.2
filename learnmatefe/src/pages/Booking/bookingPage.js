@@ -9,7 +9,7 @@ import {   ApiCreateConversation } from '../../Service/ApiService/ApiChat';
 import {   getUserBalance } from '../../Service/ApiService/ApiUser';
 import {   getReviewsByTutor, getTutorById } from '../../Service/ApiService/ApiTutor';
 
-import Header from '../Layout/Header/Header';
+import Header from '../../components/Layout/Header/Header';
 
 export default function BookingPage() {
   const { tutorId } = useParams();
