@@ -1,31 +1,49 @@
 import axios from '../../Service/AxiosCustomize';
 import Cookies from 'js-cookie';
 
-export const uploadMaterial = async ({ bookingId, title, description, fileUrl }) => {
+export const uploadMaterial = async ({ bookingId, title, description, file }) => {
   try {
     const token = Cookies.get("accessToken");
+
     if (!token) {
       window.open("/signin", "_blank");
       return { errorCode: 1, message: 'Unauthorized' };
     }
 
-    const payload = { bookingId, title, description, fileUrl };
+    if (!file) {
+      return { errorCode: 1, message: 'File is required' };
+    }
 
-    const response = await axios.post('/api/tutor/tutor/material/upload', payload, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-    });
+    const formData = new FormData();
+    formData.append('bookingId', bookingId);
+    formData.append('title', title);
+    formData.append('description', description || '');
+    formData.append('file', file); 
+    // call API upload
+    const response = await axios.post(
+      '/api/tutor/material/upload',
+      formData,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data'
+        },
+      }
+    );
+   
+    // kiểm tra response
     console.log(response)
-    if (response) {
+    if (response.errorCode === 0) {
       return { errorCode: 0, data: response.data };
     } else {
-      return { errorCode: 1, message: response.message || 'Upload failed' };
+      return { errorCode: 1, message: response?.message || 'Upload failed' };
     }
   } catch (error) {
     console.error("Error uploading material:", error);
-    return { errorCode: 1, message: error?.response?.message || 'Failed to upload material' };
+
+    // lấy message từ backend nếu có
+    const msg = error?.response?.data?.message || error.message || 'Failed to upload material';
+    return { errorCode: 1, message: msg };
   }
 };
 
