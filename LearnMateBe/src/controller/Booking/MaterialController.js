@@ -66,5 +66,43 @@ exports.getMaterialsByBookingId = async (req, res) => {
     res.status(500).json({ message: 'Server error when fetching materials.' });
   }
 };
+exports.getMaterials = async (req, res) => {
+  try {
+    const list = await Material.find({ bookingId: req.params.bookingId });
+    res.status(200).json(list);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
 
+exports.downloadMaterial = async (req, res) => {
+  try {
+    const { materialId } = req.params;
+    // Tìm material từ DB
+    const material = await Material.findById(materialId);
+    if (!material) {
+      return res.status(404).json({ message: "Material not found" });
+    }
 
+    // Kiểm tra quyền: chỉ student đã booking mới được tải
+    if (!req.user) {
+      return res.status(403).json({ message: "Unauthorized" });
+    }
+
+    // Gọi Cloudinary link để stream file về client
+    const response = await axios.get(material.fileUrl, {
+      responseType: "arraybuffer",
+    });
+
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename="${material.title}.${material.fileType}"`
+    );
+    res.setHeader("Content-Type", response.headers["content-type"]);
+
+    return res.send(response.data);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Error downloading file" });
+  }
+};

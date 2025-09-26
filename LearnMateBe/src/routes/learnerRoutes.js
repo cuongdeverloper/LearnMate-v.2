@@ -6,6 +6,8 @@ const tutorController = require('../controller/User/TutorController');
 const bookingController = require('../controller/Booking/bookingController');
 const profileController = require('../controller/User/ProfileController');
 const paymentController = require('../controller/Payment/PaymentController');
+const scheduleController = require('../controller/Schedule/ScheduleController');
+const materialController = require('../controller/Booking/MaterialController');
 
 routerApi.get('/tutors', tutorController.getTutors);             // GET /api/tutors
 routerApi.get('/tutors/:tutorId', tutorController.getTutorById);       // GET /api/tutors/:id
@@ -27,5 +29,9 @@ routerApi.get('/bookings/:id', bookingController.getBookingById);
 
 
 routerApi.get('/me/info', checkAccessToken,paymentController.getUserInfo); 
+routerApi.get("/me/my-courses",checkAccessToken, bookingController.getApprovedBookingsForLearner);
 
+routerApi.get('/schedule/my-weekly-schedules', checkAccessToken, scheduleController.getLearnerWeeklySchedules);
+routerApi.get('/materials/booking/:bookingId', checkAccessToken, materialController.getMaterials);
+routerApi.get('/materials/download/:materialId', checkAccessToken, materialController.getMaterials);
 module.exports = routerApi;

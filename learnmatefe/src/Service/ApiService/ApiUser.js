@@ -25,5 +25,72 @@ const getUserBalance = async () => {
       return null;
     }
   };
-
-  export{getUserBalance}
+  const ApiChangePassword = async (oldPassword, newPassword, confirmPassword) => {
+    const token = Cookies.get("accessToken");
+  
+    if (!token) {
+      throw new Error("Access token not found");
+    }
+  
+    try {
+      const response = await axios.post('/api/learner/change-password',
+        { oldPassword, newPassword, confirmPassword },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      return response;
+    } catch (error) {
+      console.error("Change password failed:", error);
+      throw error;
+    }
+  };
+  const ApiUpdateProfile = async (form) => {
+    const formData = new FormData();
+    Object.entries(form).forEach(([key, value]) => {
+      if (value !== null) {
+        formData.append(key, value);
+      }
+    });
+  
+    const access_token = Cookies.get('accessToken'); 
+  
+    if (!access_token) {
+      throw new Error('Access token not found');
+    }
+  
+    try {
+      const response = await axios.put('/api/learner/update-profile', formData, {
+        headers: {
+          Authorization: `Bearer ${access_token}`,
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      return response;
+    } catch (error) {
+      console.error("Update profile failed:", error);
+      throw error;
+    }
+  };
+  const ApiGetProfile = async () => {
+    const token = Cookies.get("accessToken");
+  
+    if (!token) {
+      throw new Error("No access token found");
+    }
+  
+    try {
+      const response = await axios.get('/api/learner/profile', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      return response;
+    } catch (error) {
+      console.error("Error fetching profile:", error);
+      throw error;
+    }
+  };
+  export{getUserBalance,ApiChangePassword,ApiUpdateProfile,ApiGetProfile}

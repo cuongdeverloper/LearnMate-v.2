@@ -1,0 +1,260 @@
+/* Base Styles */
+:root {
+  // Keep CSS variables for runtime access if needed elsewhere,
+  // but define Sass variables for Sass functions.
+  --primary-color: #007bff; // Blue for primary actions
+  --secondary-color: #6c757d; // Grey for secondary actions
+  --warning-color: #ffc107; // Yellow for edit/warning
+  --success-color: #28a745; // Green for success
+  --danger-color: #dc3545; // Red for danger
+  --text-color: #333;
+  --light-grey: #f8f9fa;
+  --white: #ffffff;
+  --border-color: #e0e0e0;
+  --shadow-light: rgba(0, 0, 0, 0.08);
+  --shadow-medium: rgba(0, 0, 0, 0.15);
+}
+
+// Define Sass variables for colors that will be manipulated by Sass functions
+$primary-sass: #007bff;
+$secondary-sass: #6c757d;
+$warning-sass: #ffc107;
+$success-sass: #28a745;
+$danger-sass: #dc3545;
+$white-sass: #ffffff; // If you plan to lighten/darken white
+$text-sass: #333;
+
+
+.profile-page-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start; // Align to the top, not center vertically
+  min-height: calc(100vh - 120px); // Adjust based on Header/Footer height
+  padding: 30px 20px;
+  background-color: var(--light-grey);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: var(--text-color);
+  box-sizing: border-box; // Include padding in element's total width and height
+  // Để trải dài hơn, bạn có thể tăng padding hoặc giảm max-width của card con
+}
+
+.profile-loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: calc(100vh - 120px);
+  font-size: 1.2em;
+  color: var(--secondary-color);
+}
+
+/* Profile Card Styling */
+.profile-card {
+  background-color: var(--white);
+  border-radius: 12px;
+  box-shadow: 0 8px 25px var(--shadow-light);
+  padding: 40px;
+  width: 100%;
+  // Thay đổi giá trị max-width ở đây để làm rộng hơn. Ví dụ: 900px hoặc 1000px
+  max-width: 900px; /* Tăng chiều rộng tối đa */
+  text-align: center;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+
+  &:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 12px 30px var(--shadow-medium);
+  }
+
+  .profile-card-title {
+      font-size: 2.2em;
+      color: var(--primary-color);
+      margin-bottom: 30px;
+      font-weight: 700;
+  }
+}
+
+/* Avatar Section */
+.avatar-section {
+  margin-bottom: 30px;
+
+  .avatar {
+      width: 150px;
+      height: 150px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 5px solid var(--primary-color); // Use CSS variable here
+      box-shadow: 0 0 15px var(--shadow-light);
+      transition: transform 0.3s ease;
+
+      &:hover {
+          transform: scale(1.05);
+      }
+  }
+}
+
+/* Information Grid */
+.info-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px 30px;
+  text-align: left;
+  margin-bottom: 40px;
+
+  @media (min-width: 768px) {
+      grid-template-columns: repeat(2, 1fr); // Two columns on larger screens
+  }
+  // Khi tăng max-width của card, bạn có thể cân nhắc thêm cột cho info-grid
+  @media (min-width: 992px) { /* Ví dụ: trên màn hình lớn hơn, hiển thị 3 cột */
+      grid-template-columns: repeat(3, 1fr);
+  }
+
+
+  .info-item {
+      display: flex;
+      flex-direction: column;
+      padding: 15px 0;
+      border-bottom: 1px dashed var(--border-color);
+
+      // Điều chỉnh border-bottom để phù hợp với số cột mới
+      &:last-child,
+      &:nth-last-child(2) {
+          @media (min-width: 768px) {
+              border-bottom: 1px dashed var(--border-color); /* Giữ lại border-bottom */
+          }
+      }
+      // Loại bỏ border cho các item cuối cùng trong hàng
+      @media (min-width: 992px) {
+          &:nth-last-child(-n+3) { /* Loại bỏ border cho 3 item cuối cùng khi có 3 cột */
+              border-bottom: none;
+          }
+      }
+      @media (min-width: 768px) and (max-width: 991px) {
+          &:nth-last-child(-n+2) { /* Loại bỏ border cho 2 item cuối cùng khi có 2 cột */
+              border-bottom: none;
+          }
+      }
+      @media (max-width: 767px) {
+          &:last-child {
+              border-bottom: none;
+          }
+      }
+
+
+      label {
+          font-weight: 600;
+          color: var(--secondary-color);
+          margin-bottom: 8px;
+          font-size: 0.95em;
+          display: block; // Ensures label takes full width
+      }
+
+      span {
+          font-size: 1.1em;
+          color: var(--text-color);
+          word-break: break-word; // Prevent long words from overflowing
+      }
+  }
+}
+
+/* Button Group */
+.button-group {
+  display: flex;
+  flex-wrap: wrap; // Allow buttons to wrap to the next line
+  justify-content: center;
+  gap: 15px; // Space between buttons
+  margin-top: 30px; // Space above buttons
+
+  .btn {
+      padding: 12px 25px;
+      border: none;
+      border-radius: 8px;
+      font-size: 1em;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+      min-width: 150px; // Ensure buttons have a minimum width
+
+      &:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 4px 10px var(--shadow-light);
+      }
+
+      &-edit {
+          background-color: var(--warning-color); // Use CSS variable for base color
+          color: var(--white);
+
+          &:hover {
+              background-color: darken($warning-sass, 8%); // Use Sass variable for darken
+          }
+      }
+
+      &-change-password {
+          background-color: var(--primary-color); // Use CSS variable for base color
+          color: var(--white);
+
+          &:hover {
+              background-color: darken($primary-sass, 8%); // Use Sass variable for darken
+          }
+      }
+
+      &-apply-tutor {
+          background-color: var(--secondary-color); // Use CSS variable for base color
+          color: var(--white);
+
+          &:hover {
+              background-color: darken($secondary-sass, 8%); // Use Sass variable for darken
+          }
+      }
+  }
+}
+
+/* Responsive Adjustments */
+@media (max-width: 767px) {
+  .profile-card {
+      padding: 30px 20px;
+      margin: 20px 10px; // Add some margin on smaller screens
+      max-width: 100%; // Cho phép card chiếm toàn bộ chiều rộng trên màn hình nhỏ
+  }
+
+  .profile-card-title {
+      font-size: 1.8em;
+  }
+
+  .avatar-section .avatar {
+      width: 120px;
+      height: 120px;
+  }
+
+  .info-grid {
+      gap: 15px;
+  }
+
+  .info-item {
+      padding: 12px 0;
+  }
+
+  .button-group {
+      flex-direction: column; // Stack buttons vertically
+      .btn {
+          width: 100%; // Make buttons full width
+          max-width: 300px; // Limit max width for stacked buttons
+      }
+  }
+}
+
+@media (max-width: 480px) {
+  .profile-card {
+      padding: 25px 15px;
+  }
+
+  .profile-card-title {
+      font-size: 1.6em;
+  }
+
+  .info-item label {
+      font-size: 0.9em;
+  }
+
+  .info-item span {
+      font-size: 1em;
+  }
+}

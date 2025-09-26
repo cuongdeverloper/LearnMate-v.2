@@ -4,7 +4,7 @@ import { useSelector } from "react-redux";
 import { FaShoppingBag, FaComments, FaChalkboardTeacher } from "react-icons/fa";
 import axios from "../../../Service/AxiosCustomize";
 import "./Header.scss";
-import { getTutorActiveStatus, updateTutorActiveStatus } from "../../../Service/ApiService/ApiService";
+import { getTutorActiveStatus, updateTutorActiveStatus } from "../../../Service/ApiService/ApiTutor";
 import { Button } from "antd";
 
 const Header = () => {
