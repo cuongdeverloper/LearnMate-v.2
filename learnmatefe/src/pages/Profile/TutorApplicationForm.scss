@@ -1,0 +1,300 @@
+/* TutorApplicationForm.scss */
+
+.application-container {
+    max-width: 850px; // Tăng chiều rộng tối đa
+    margin: 40px auto;
+    padding: 35px; // Tăng padding
+    border-radius: 12px; // Bo góc mềm mại hơn
+    background-color: #ffffff;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08); // Bóng đổ rõ hơn, sâu hơn
+  
+    h2 {
+      text-align: center;
+      color: #2c3e50; // Màu chữ tối hơn, sang trọng hơn
+      margin-bottom: 35px;
+      font-size: 2.2em; // Tăng kích thước chữ
+      font-weight: 700; // Đậm hơn
+      letter-spacing: 0.5px;
+      position: relative;
+      padding-bottom: 10px;
+  
+      &:after { // Đường kẻ dưới tiêu đề
+        content: '';
+        position: absolute;
+        left: 50%;
+        bottom: 0;
+        transform: translateX(-50%);
+        height: 3px;
+        width: 60px;
+        background-color: #3498db; // Màu xanh chủ đạo
+        border-radius: 2px;
+      }
+    }
+  
+    form {
+      display: flex;
+      flex-direction: column;
+  
+      label {
+        font-weight: 600; // Đậm vừa
+        margin-top: 20px; // Khoảng cách trên lớn hơn
+        margin-bottom: 8px;
+        color: #34495e; // Màu chữ label
+        font-size: 1.05em;
+      }
+  
+      input[type="text"],
+      input[type="number"],
+      textarea {
+        width: 100%;
+        padding: 12px 15px; // Tăng padding
+        border: 1px solid #dcdcdc; // Màu border nhạt hơn
+        border-radius: 8px; // Bo góc
+        margin-bottom: 20px; // Khoảng cách dưới lớn hơn
+        font-size: 1.0em;
+        color: #333;
+        box-sizing: border-box;
+        transition: all 0.3s ease; // Hiệu ứng hover/focus
+  
+        &:focus {
+          border-color: #3498db; // Highlight khi focus
+          box-shadow: 0 0 8px rgba(52, 152, 219, 0.2); // Bóng đổ nhẹ
+          outline: none;
+        }
+      }
+  
+      textarea {
+        min-height: 100px; // Tăng chiều cao tối thiểu
+        resize: vertical;
+      }
+  
+      .checkbox-group {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px; // Tăng khoảng cách giữa các checkbox
+        margin-bottom: 25px; // Khoảng cách dưới lớn hơn
+        padding: 15px; // Tăng padding
+        border-radius: 10px; // Bo góc
+        background-color: #f8f9fa; // Nền nhẹ nhàng
+  
+        label {
+          font-weight: normal;
+          margin: 0;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          padding: 8px 12px; // Padding cho mỗi label checkbox
+          border-radius: 6px;
+          background-color: #e9ecef; // Nền cho từng checkbox
+          transition: all 0.2s ease;
+          user-select: none; // Ngăn chọn văn bản
+  
+          &:hover {
+            background-color: #dee2e6;
+          }
+  
+          input[type="checkbox"] {
+            margin-right: 8px;
+            min-width: 16px; // Kích thước cố định cho checkbox
+            min-height: 16px;
+            accent-color: #3498db; // Màu mặc định của checkbox khi được chọn (Chrome/Edge)
+            cursor: pointer;
+          }
+        }
+  
+        &.class-selection {
+          background-color: #eaf6ff; // Nền xanh nhạt hơn
+          border: 1px solid #bbdffd; // Border xanh nhạt
+          box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05); // Bóng đổ inset nhẹ
+  
+          label {
+            background-color: #d1e7fd;
+            &:hover {
+              background-color: #b8daff;
+            }
+          }
+        }
+  
+        &.subject-selection {
+          flex-direction: column;
+          background-color: #f0f4f7; // Nền xám xanh nhạt cho phần môn học
+          border: 1px solid #dde7ed;
+          box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
+  
+          .class-subject-group {
+            border: 1px solid #d4dde2; // Border nhẹ hơn
+            border-radius: 8px;
+            padding: 15px 20px;
+            margin-bottom: 15px;
+            background-color: #ffffff;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05); // Bóng đổ nhẹ cho từng nhóm lớp
+            transition: all 0.3s ease;
+  
+            &:hover {
+              transform: translateY(-2px); // Hiệu ứng nhấc nhẹ
+              box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            }
+  
+            h3 {
+              margin-top: 0;
+              margin-bottom: 12px;
+              color: #2980b9; // Màu xanh đậm hơn cho tiêu đề lớp
+              font-size: 1.25em; // Kích thước lớn hơn
+              font-weight: 700;
+              border-bottom: 2px solid #e0eaf1; // Đường kẻ đậm hơn
+              padding-bottom: 8px;
+            }
+  
+            .subjects-for-class {
+              display: flex;
+              flex-wrap: wrap;
+              gap: 10px;
+            }
+  
+            // Ví dụ: Phong cách riêng cho các lớp cấp 3
+            &.class-10, &.class-11, &.class-12 {
+              background-color: #fff9e6; // Vàng nhạt hơn
+              border-color: #ffeb99;
+  
+              h3 {
+                color: #d35400; // Cam đậm
+              }
+              label {
+                background-color: #ffeeb3;
+                &:hover {
+                  background-color: #ffe480;
+                }
+              }
+            }
+  
+            // Ví dụ: Phong cách riêng cho các lớp cấp 2
+            &.class-6, &.class-7, &.class-8, &.class-9 {
+              background-color: #eafbed; // Xanh lá nhạt
+              border-color: #b7e9c0;
+  
+              h3 {
+                color: #27ae60; // Xanh lá cây đậm
+              }
+              label {
+                background-color: #d9f3de;
+                &:hover {
+                  background-color: #c0ebd0;
+                }
+              }
+            }
+          }
+        }
+      }
+  
+      .time-slot-grid {
+        display: grid;
+        grid-template-columns: 100px repeat(6, 1fr); // Tăng chiều rộng cột ngày, 6 cột thời gian cố định
+        gap: 1px;
+        border: 1px solid #ccc;
+        background-color: #eee;
+        margin-bottom: 25px; // Khoảng cách dưới lớn hơn
+        border-radius: 8px; // Bo góc
+  
+        .grid-header, .grid-row {
+          display: contents;
+        }
+  
+        .grid-header > div, .day-label, .slot-cell {
+          background-color: #fff;
+          padding: 12px; // Tăng padding
+          text-align: center;
+          border: 1px solid #eee;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-weight: 500; // Đậm vừa
+          color: #555;
+        }
+  
+        .grid-header > div {
+          background-color: #e9eef2; // Nền header nhẹ nhàng hơn
+          font-weight: 600;
+          color: #333;
+        }
+  
+        .day-label {
+          background-color: #f5f8fb; // Nền cột ngày nhẹ hơn
+          font-weight: 600;
+          color: #333;
+        }
+  
+        .slot-cell {
+          cursor: pointer;
+          transition: background-color 0.2s ease;
+  
+          &:hover {
+            background-color: #eef7ff; // Nền xanh nhạt khi hover
+          }
+          input[type="checkbox"] {
+            margin: 0;
+            cursor: pointer;
+            transform: scale(1.3); // Kích thước checkbox lớn hơn
+            accent-color: #2ecc71; // Màu xanh lá khi chọn
+          }
+        }
+      }
+  
+      input[type="file"] {
+        padding: 10px;
+        border: 1px solid #dcdcdc;
+        border-radius: 8px;
+        background-color: #f8f8f8;
+        cursor: pointer;
+        margin-bottom: 25px; // Khoảng cách dưới
+      }
+  
+      .btn-primary {
+        background-color: #28a745; // Màu xanh lá cây nổi bật
+        color: white;
+        padding: 14px 25px; // Tăng padding
+        border: none;
+        border-radius: 8px; // Bo góc
+        cursor: pointer;
+        font-size: 1.2em; // Kích thước chữ lớn hơn
+        font-weight: 600;
+        transition: background-color 0.3s ease, transform 0.2s ease; // Thêm hiệu ứng transform
+        margin-top: 25px; // Khoảng cách trên lớn hơn
+        align-self: center; // Nút ra giữa
+        width: 50%; // Chiều rộng nút
+        max-width: 250px;
+  
+        &:hover {
+          background-color: #218838; // Màu đậm hơn khi hover
+          transform: translateY(-2px); // Hiệu ứng nhấc nhẹ
+          box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+  
+        &:active {
+          transform: translateY(0);
+          box-shadow: none;
+        }
+      }
+    }
+  
+    .application-message {
+      margin-top: 30px; // Khoảng cách trên
+      padding: 18px;
+      border-radius: 8px;
+      text-align: center;
+      font-weight: 600;
+      font-size: 1.1em;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  
+      &.success {
+        background-color: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+      }
+  
+      &.error {
+        background-color: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+      }
+    }
+  }
