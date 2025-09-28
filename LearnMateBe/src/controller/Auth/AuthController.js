@@ -333,43 +333,51 @@ const resetPassword = async (req, res) => {
   }
 };
 
+
 const changePassword = async (req, res) => {
   try {
-    const userId = req.user.id; 
-    const { currentPassword, newPassword } = req.body;
+    const userId = req.user.id || req.user._id; // lấy từ middleware auth (decode từ accessToken)
+    const { oldPassword, newPassword, confirmPassword } = req.body;
 
-    if (!currentPassword || !newPassword) {
-      return res.status(200).json({
+    if (!oldPassword || !newPassword || !confirmPassword) {
+      return res.status(400).json({
         errorCode: 1,
-        message: 'Current password and new password are required',
+        message: 'All fields are required',
       });
     }
 
-    const userRecord = await user.findById(userId);
-    if (!userRecord) {
-      return res.status(200).json({
+    if (newPassword !== confirmPassword) {
+      return res.status(400).json({
         errorCode: 2,
+        message: 'New password and confirm password do not match',
+      });
+    }
+
+    const userRecord = await User.findById(userId);
+    if (!userRecord) {
+      return res.status(404).json({
+        errorCode: 3,
         message: 'User not found',
       });
     }
 
-    const isPasswordValid = await bcrypt.compare(currentPassword, userRecord.password);
-    if (!isPasswordValid) {
-      return res.status(200).json({
-        errorCode: 3,
-        message: 'Current password is incorrect',
+    const isMatch = await bcrypt.compare(oldPassword, userRecord.password);
+    if (!isMatch) {
+      return res.status(400).json({
+        errorCode: 4,
+        message: 'Old password is incorrect',
       });
     }
 
     const isSamePassword = await bcrypt.compare(newPassword, userRecord.password);
     if (isSamePassword) {
-      return res.status(200).json({
-        errorCode: 4,
+      return res.status(400).json({
+        errorCode: 5,
         message: 'New password cannot be the same as the old password',
       });
     }
 
-    userRecord.password = newPassword
+    userRecord.password = newPassword;
     await userRecord.save();
 
     return res.status(200).json({
@@ -377,10 +385,10 @@ const changePassword = async (req, res) => {
       message: 'Password changed successfully',
     });
   } catch (error) {
-    console.error('Change password error:', error);
+    console.error('Change Password error:', error);
     return res.status(500).json({
-      errorCode: 5,
-      message: 'An error occurred during password change',
+      errorCode: 6,
+      message: 'An error occurred while changing password',
     });
   }
 };
