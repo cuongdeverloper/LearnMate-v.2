@@ -33,7 +33,7 @@ const getUserBalance = async () => {
     }
   
     try {
-      const response = await axios.post('/api/learner/change-password',
+      const response = await axios.post('/change-password',
         { oldPassword, newPassword, confirmPassword },
         {
           headers: {
