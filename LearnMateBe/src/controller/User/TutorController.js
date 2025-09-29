@@ -67,11 +67,8 @@ exports.getTutors = async (req, res) => {
 exports.getTutorById = async (req, res) => {
   try {
     const tutor = await Tutor.findById(req.params.tutorId)
+    .populate('subjects', 'name classLevel') 
     .populate('user', 'username email image phoneNumber gender')
-    .populate('subjects', 'name') // ✅ lấy tên môn học
-    .select('subjects classes pricePerHour description rating bio location education certifications');
-  
-  
 
     if (!tutor) return res.status(404).json({ success: false, message: 'Tutor not found' });
 
