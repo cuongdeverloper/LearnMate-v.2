@@ -1,8 +1,11 @@
 const Booking = require('../../modal/Booking');
-const User = require('../../modal/User'); // giả sử đây là model user
+const User = require('../../modal/User'); 
 const Schedule = require('../../modal/Schedule'); 
 const FinancialHistory = require('../../modal/FinancialHistory');
 const TutorAvailability = require('../../modal/TutorAvailability');
+
+const Report = require('../../modal/Report');
+
 
 exports.getBookingById = async (req, res) => {
   try {
@@ -320,7 +323,6 @@ exports.getAllBookingsByTutorId = async (req, res) => {
   }
 };
 
-const Report = require('../../modal/Report');
 exports.createReport = async (req, res) => {
   const { targetType, targetId, reason } = req.body;
 

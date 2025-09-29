@@ -20,6 +20,9 @@ import TutorProfilePage from "./pages/Tutor/TutorProfilePage";
 import MyCourses from "./pages/User/MyCourse";
 import Profile from "./pages/Profile/Profile";
 import AuthCallback from "./components/Auth/AuthCallback";
+import EnterOTPRegister from "./components/Auth/Sign up/OTP/EnterOTPRegister";
+import RequestPasswordReset from "./components/Auth/reset password/RequestPasswordReset";
+import ResetPassword from "./components/Auth/reset password/ResetPassword";
 
 const AppLayout = ({ children }) => {
   const location = useLocation();
@@ -58,6 +61,13 @@ const Layout = () => {
           <Route path="/" element={<StudentHomePage />} />
           <Route path="/signup" element={<SignUp />} />
           <Route path="/signin" element={<SignIn />} />
+          <Route path="/otp-verify" element={<EnterOTPRegister />} />
+          <Route path="auth/callback" element={<AuthCallback />} />
+          <Route path="/forgot-password" element={
+                <RequestPasswordReset />
+           } />
+          <Route path="/reset-password" element={
+              <ResetPassword />} />
           <Route
             path="/TutorDashboard"
             element={
