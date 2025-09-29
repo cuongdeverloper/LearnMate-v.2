@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import "./ResetPassword.scss"
-import { resetPasswordApi } from '../../../Service/ApiService';
+import { resetPasswordApi } from '../ApiAuth';
 
 const ResetPassword = () => {
     const [searchParams] = useSearchParams();

@@ -37,3 +37,21 @@ export const ApiRegister = async (username, email, password, phoneNumber, gender
     throw error;
   }
 };
+
+export const requestPasswordResetApi = async (email) => {
+  try {
+    const response = await axios.post('/rqreset-password', { email });
+    return response;
+  } catch (error) {
+    console.log(error)
+  }
+};
+
+export const resetPasswordApi = async (token, newPassword) => {
+  try {
+    const response = await axios.post('/reset-password', { token, newPassword });
+    return response;
+  } catch (error) {
+    console.log(error)
+  }
+};

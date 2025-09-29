@@ -4,8 +4,9 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import "./BookingSchedule.scss";
 import { useSelector } from "react-redux";
-import { fetchBookingDetailsApi,  getBookingsByTutorId } from "../../../Service/ApiService/ApiBooking";
 import { fetchBusySlotsByBookingId } from "../../../Service/ApiService/ApiSchedule";
+import { getBookingsByTutorId } from "../../../components/Tutor/ApiTutor";
+import { fetchBookingDetailsApi } from "../../../Service/ApiService/ApiBooking";
 
 const dayNames = ["Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7", "Chủ nhật"];
 const timeSlots = [
