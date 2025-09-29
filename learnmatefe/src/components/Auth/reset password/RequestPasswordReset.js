@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { toast } from 'react-toastify';
 import { FaLock, FaEnvelope } from 'react-icons/fa';
 import "./RequestPasswordReset.scss";
-import { requestPasswordResetApi } from '../../../Service/ApiService';
-
+import { requestPasswordResetApi } from '../ApiAuth';
+import Particles from "../../../Particles";
 const RequestPasswordReset = () => {
     const [email, setEmail] = useState('');
     const [isLoading, setIsLoading] = useState(false);
@@ -31,8 +31,11 @@ const RequestPasswordReset = () => {
 
 
     return (
-      <div className='reset-container'>
-                <div className="request-password-reset">
+      <div className='reset-container' style={{ position: 'relative' }}>
+        <div className="ProfileManage-container-parti" style={{ position: 'absolute', zIndex: 1 }}>
+                <Particles />
+            </div>
+                <div className="request-password-reset" style={{ position: 'relative', zIndex: 100, marginTop: '100px', width: '70%' }}>
             <FaLock className="request-password-reset__lock-icon" />
             <h2 className="request-password-reset__heading">Reset Password</h2>
             <form onSubmit={handleSubmit}>

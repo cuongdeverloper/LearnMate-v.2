@@ -6,45 +6,93 @@ const Tutor = require('../../modal/Tutor');
 const uploadCloud = require('../../config/cloudinaryConfig');
 const uploadDocs = require('../../config/cloudinaryDocxConfig');
 
-// Accept or reject booking
 const respondBooking = async (req, res) => {
-  const { bookingId, action, learnerId } = req.body;
-  if (!['approve', 'rejected', 'cancelled'].includes(action))
-     return res.status(400).json({ message: 'Invalid action' });
+  try {
+    const { bookingId, action, learnerId } = req.body;
 
-  const booking = await Booking.findById(bookingId);
-  if (!booking) return res.status(404).json({ message: 'Booking not found' });
+    // Validate action
+    const validActions = ['approve', 'rejected', 'cancelled'];
+    if (!validActions.includes(action)) {
+      return res.status(400).json({ message: 'Invalid action' });
+    }
 
-  // Only set learnerId if provided
-  if (learnerId !== undefined) {
-    booking.learnerId = learnerId;
+    // Find booking
+    const booking = await Booking.findById(bookingId);
+    if (!booking) {
+      return res.status(404).json({ message: 'Booking not found' });
+    }
+
+    // Update learnerId if provided
+    if (learnerId !== undefined) {
+      booking.learnerId = learnerId;
+    }
+
+    // Update status
+    booking.status = action;
+    await booking.save();
+
+    // Custom message
+    let responseMessage = '';
+    switch (action) {
+      case 'approve':
+        responseMessage = 'Booking has been approved successfully ✅';
+        break;
+      case 'rejected':
+        responseMessage = 'Booking has been rejected ❌';
+        break;
+      case 'cancelled':
+        responseMessage = 'Booking has been cancelled 🛑';
+        break;
+    }
+
+    return res.status(200).json({ message: responseMessage, booking });
+  } catch (error) {
+    console.error('Error responding booking:', error);
+    return res.status(500).json({ message: 'Server error', error: error.message });
   }
-  booking.status = action;
-  await booking.save();
-
-  res.status(200).json({ message: `Booking ${action}` });
 };
 
-// Cancel booking
+
 const cancelBooking = async (req, res) => {
-  const { bookingId, reason } = req.body;
-  const booking = await Booking.findById(bookingId);
-  if (!booking) return res.status(404).json({ message: 'Booking not found' });
+  try {
+    const { bookingId, reason } = req.body;
 
-  if (new Date(booking.startTime) < Date.now()) {
-    return res.status(400).json({ message: 'Too late to cancel' });
+    // Validate request
+    if (!bookingId) {
+      return res.status(400).json({ message: 'bookingId is required' });
+    }
+    if (!reason || reason.trim() === '') {
+      return res.status(400).json({ message: 'Cancellation reason is required' });
+    }
+
+    const booking = await Booking.findById(bookingId);
+    if (!booking) {
+      return res.status(404).json({ message: 'Booking not found' });
+    }
+
+    // Prevent cancelling past bookings
+    if (new Date(booking.startTime) < Date.now()) {
+      return res.status(400).json({ message: 'Too late to cancel this booking' });
+    }
+
+    // Must have learner assigned
+    if (!booking.learnerId) {
+      return res.status(400).json({ message: 'LearnerId is required to cancel booking' });
+    }
+
+    // Update booking
+    booking.status = 'cancelled';
+    booking.cancellationReason = reason;
+    await booking.save();
+
+    return res.status(200).json({
+      message: `Booking has been cancelled 🛑`,
+      booking,
+    });
+  } catch (error) {
+    console.error('Error cancelling booking:', error);
+    return res.status(500).json({ message: 'Server error', error: error.message });
   }
-
-  // Ensure learnerId exists before saving
-  if (!booking.learnerId) {
-    return res.status(400).json({ message: 'learnerId is required to cancel booking' });
-  }
-
-  booking.status = 'cancelled';
-  booking.cancellationReason = reason;
-  await booking.save();
-
-  res.status(200).json({ message: 'Booking cancelled' });
 };
 
 const getPendingBookings = async (req, res) => {

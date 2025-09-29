@@ -93,7 +93,6 @@ export const getBookingsByTutorId = async (tutorId) => {
         Authorization: `Bearer ${token}`,
       },
     });
-
     return response;
   } catch (error) {
     console.error("Error fetching bookings by tutorId:", error);
@@ -122,10 +121,31 @@ export const fetchStudentsApi = async () => {
 export const fetchPendingBookings = (tutorId) => {
   return axios.get(`/api/tutor/bookings/pending/${tutorId}`);
 };
-export const respondBooking = (bookingId, action, learnerId) => {
-  return axios.post(`/api/tutor/bookings/respond`, { bookingId, action, learnerId });
+export const respondBooking = async (bookingId, action, learnerId) => {
+  try {
+    const res = await axios.post(`/api/tutor/bookings/respond`, {
+      bookingId,
+      action,
+      learnerId,
+    });
+    return res; 
+  } catch (error) {
+    console.error('Error responding booking:', error);
+    const msg = error.response?.message || 'Error responding to booking';
+    throw new Error(msg);
+  }
 };
 
-export const cancelBooking = (bookingId, reason) => {
-  return axios.post(`/api/tutor/bookings/cancel`, { bookingId, reason });
+export const cancelBooking = async (bookingId, reason) => {
+  try {
+    const res = await axios.post(`/api/tutor/bookings/cancel`, {
+      bookingId,
+      reason,
+    });
+    return res;
+  } catch (error) {
+    console.error('Error cancelling booking:', error);
+    const msg = error.response?.data?.message || 'Error cancelling booking';
+    throw new Error(msg);
+  }
 };
