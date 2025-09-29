@@ -1,100 +1,156 @@
-.booking-list {
-  background: #fff;
-  border-radius: 12px;
-  padding: 32px 24px;
-  box-shadow: 0 2px 16px rgba(0,0,0,0.07);
-  max-width: 900px;
-  margin: 32px auto;
-}
-
-.booking-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 16px;
-  font-size: 1rem;
-  background: #fafbfc;
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-.booking-table th, .booking-table td {
-  padding: 14px 12px;
-  text-align: left;
-}
-
-.booking-table th {
-  background: #f0f4f8;
+.booking-page {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #fff 0%, #ffeaf6 100%);
+  padding: 40px 20px;
+  font-family: 'Poppins', sans-serif;
   color: #333;
-  font-weight: 600;
 }
 
-.booking-table tr:nth-child(even) {
-  background: #f9fafb;
+/* 🌸 Header */
+.booking-header {
+  text-align: center;
+  margin-bottom: 30px;
+
+  h1 {
+    color: #ff62ad;
+    font-size: 2rem;
+    margin-bottom: 8px;
+    font-weight: 700;
+  }
+
+  p {
+    color: #666;
+    font-size: 1.05rem;
+  }
 }
 
-.booking-table tr:hover {
-  background: #e6f7ff;
+/* 🌸 Container */
+.booking-container {
+  max-width: 900px;
+  margin: 0 auto;
+  display: grid;
+  gap: 20px;
 }
 
-.status {
-  padding: 4px 12px;
-  border-radius: 12px;
-  font-size: 0.95em;
-  font-weight: 500;
-  text-transform: capitalize;
-  display: inline-block;
+/* 🌸 Card Style */
+.booking-card {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 20px 24px;
+  box-shadow: 0 4px 14px rgba(255, 98, 173, 0.15);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all 0.25s ease;
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(255, 98, 173, 0.25);
+  }
 }
 
-.status.pending { background: #fffbe6; color: #ad8b00; }
-.status.approve { background: #e6fffb; color: #08979c; }
-.status.cancelled, .status.rejected { background: #fff1f0; color: #cf1322; }
+/* 🌸 Info */
+.booking-info {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 
-.btn-accept, .btn-reject, .btn-cancel {
-  border: none;
-  outline: none;
-  padding: 8px 16px;
-  margin-right: 8px;
-  border-radius: 6px;
-  font-size: 1em;
-  cursor: pointer;
-  transition: background 0.2s, color 0.2s;
+  h3 {
+    margin: 0;
+    color: #ff62ad;
+    font-size: 1.2rem;
+    font-weight: 600;
+  }
+
+  .status {
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    text-transform: capitalize;
+    display: inline-block;
+    width: fit-content;
+  }
+
+  .status.pending {
+    background: #fff5cc;
+    color: #d4b106;
+  }
+
+  .status.approve {
+    background: #ffeaf6;
+    color: #ff62ad;
+    border: 1px solid #ffb6d6;
+  }
+
+  .status.cancelled,
+  .status.rejected {
+    background: #fff1f0;
+    color: #cf1322;
+  }
 }
 
-.btn-accept {
-  background: #52c41a;
-  color: #fff;
-}
-.btn-accept:hover {
-  background: #389e0d;
+/* 🌸 Buttons */
+.booking-actions {
+  display: flex;
+  gap: 10px;
+
+  button {
+    border: none;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 0.95rem;
+  }
+
+  .btn-accept {
+    background: #ff62ad;
+    color: #fff;
+
+    &:hover {
+      background: #ff3f98;
+    }
+  }
+
+  .btn-reject {
+    background: #ffc4da;
+    color: #fff;
+
+    &:hover {
+      background: #ff99c5;
+    }
+  }
 }
 
-.btn-reject {
-  background: #faad14;
-  color: #fff;
-}
-.btn-reject:hover {
-  background: #d48806;
+/* 🌸 Empty state */
+.empty-state {
+  text-align: center;
+  color: #999;
+  padding: 60px 20px;
+
+  img {
+    width: 120px;
+    opacity: 0.85;
+    margin-bottom: 16px;
+  }
+
+  p {
+    font-size: 1.1rem;
+  }
 }
 
-.btn-cancel {
-  background: #ff4d4f;
-  color: #fff;
-}
-.btn-cancel:hover {
-  background: #a8071a;
-}
-
+/* 🌸 Responsive */
 @media (max-width: 700px) {
-  .booking-list {
-    padding: 12px 2px;
+  .booking-card {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
   }
-  .booking-table th, .booking-table td {
-    padding: 8px 4px;
-    font-size: 0.95em;
-  }
-  .booking-table {
-    font-size: 0.95em;
-    overflow-x: auto;
-    display: block;
+
+  .booking-actions {
+    width: 100%;
+    justify-content: flex-end;
   }
 }

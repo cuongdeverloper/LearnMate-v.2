@@ -1,4 +1,4 @@
-$primary: #4a90e2;
+$primary: #fff;
 $accent: #50e3c2;
 $background: linear-gradient(135deg, #e0f7fa, #fce4ec);
 $whiteGlass: rgba(255, 255, 255, 0.15);
@@ -13,8 +13,10 @@ $lightText: #888;
   align-items: center;
   justify-content: center;
   height: 100vh;
-  background: $background;
+  // ❌ background: $background; // Xóa hoặc comment dòng này
   padding: 20px;
+  position: relative; // thêm dòng này nếu chưa có
+  z-index: 2; // đảm bảo form nổi trên particles
 }
 
 .signin-form {
@@ -73,7 +75,7 @@ $lightText: #888;
       background: $primary;
       border: none;
       border-radius: 14px;
-      color: #fff;
+      color: #333;
       font-size: 16px;
       font-weight: 600;
       cursor: pointer;

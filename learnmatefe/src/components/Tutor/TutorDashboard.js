@@ -116,7 +116,6 @@ const TutorDashboard = () => {
                     console.error('Failed to load logout icon:', LogoutIcon);
                     e.target.style.display = 'none';
                   }}
-                  onLoad={() => console.log('✓ Loaded logout icon')}
                 />
                 Đăng xuất
               </button>
@@ -149,7 +148,6 @@ const TutorDashboard = () => {
                       console.error(`Failed to load icon for ${item.label}:`, item.icon);
                       e.target.style.display = 'none';
                     }}
-                    onLoad={() => console.log(`✓ Loaded icon for ${item.label}`)}
                   />
                 </div>
                 <div className="nav-content">
