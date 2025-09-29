@@ -314,3 +314,187 @@ $shadow-medium: rgba(0, 0, 0, 0.1);
   font-size: 14px;
   color: #555;
 }
+/* Weekly schedule grid */
+.week-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+
+  button {
+    padding: 6px 12px;
+    background: $primary-color;
+    border: none;
+    color: white;
+    border-radius: 6px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+
+    &:hover {
+      background: $primary-dark;
+    }
+  }
+
+  span {
+    font-weight: 600;
+    color: $text-dark;
+    font-size: 15px;
+  }
+}
+
+.weekly-schedule-grid {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid $border-color;
+  border-radius: 8px;
+  overflow: hidden;
+
+  .grid-header {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    background: $primary-color;
+    color: white;
+    text-align: center;
+    font-weight: 600;
+    padding: 10px 0;
+
+    .grid-header-day {
+      font-size: 14px;
+    }
+  }
+
+  .grid-body {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    min-height: 160px;
+    border-top: 1px solid $border-color;
+
+    .grid-day-column {
+      border-right: 1px solid $border-color;
+      padding: 6px;
+      font-size: 13px;
+      text-align: center;
+
+      &:last-child {
+        border-right: none;
+      }
+
+      .no-schedule {
+        color: $text-light;
+        font-style: italic;
+        margin: 8px 0;
+      }
+
+      .schedule-slot {
+        background: #f9f9f9;
+        padding: 6px 8px;
+        margin: 4px 0;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 13px;
+        transition: all 0.2s;
+
+        &:hover {
+          background: lighten($primary-color, 40%);
+          color: $text-dark;
+        }
+
+        &.selected {
+          background: $primary-color;
+          color: white;
+          font-weight: 600;
+        }
+      }
+    }
+  }
+}
+
+/* Review list */
+.review-list {
+  padding-left: 0;
+  margin: 0;
+
+  li {
+    padding: 10px 12px;
+    border-bottom: 1px solid #eee;
+    border-radius: 6px;
+    background: #fafafa;
+    transition: background 0.2s;
+
+    &:hover {
+      background: #f1f1f1;
+    }
+  }
+}
+
+/* Select styling */
+select {
+  width: 100%;
+  padding: 12px 16px;
+  border-radius: 8px;
+  border: 1px solid $border-color;
+  font-size: 16px;
+  background: white;
+  cursor: pointer;
+  transition: border-color 0.3s, box-shadow 0.3s;
+
+  &:focus {
+    outline: none;
+    border-color: $primary-color;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+  }
+}
+.schedule-slot {
+  background: #f9f9f9;
+  padding: 6px 8px;
+  margin: 4px 0;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: all 0.2s;
+  border: 1px solid transparent;
+
+  &:hover {
+    background: lighten($primary-color, 40%);
+    color: $text-dark;
+  }
+
+  &.available {
+    background: #e8f5e9;
+    color: #2e7d32;
+    border: 1px solid #a5d6a7;
+  }
+
+  &.selected {
+    background: $primary-color;
+    color: white;
+    font-weight: 600;
+    border: 2px solid $primary-dark;
+  }
+
+  &.booked {
+    background: #fff; // để nền trắng nổi bật khung đỏ
+    color: #c62828;
+    cursor: not-allowed;
+    border: 2px solid #e53935; // khung đỏ đậm
+    font-weight: 600;
+  }
+
+  &.not-available {
+    background: #d06868 !important;
+    color: #333;
+    cursor: not-allowed;
+    border: 1px dashed #e53935;
+  }
+
+  .slot-time {
+    font-weight: 600;
+    margin-bottom: 2px;
+  }
+
+  .slot-status {
+    font-size: 12px;
+    font-style: italic;
+  }
+}

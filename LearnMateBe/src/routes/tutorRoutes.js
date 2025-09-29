@@ -42,7 +42,7 @@ RouterTutor.get('/tutor/applications', checkAccessToken, TutorApplication.getTut
 RouterTutor.get('/tutor/:tutorId/bookings', checkAccessToken,BookingController.getAllBookingsByTutorId);
 RouterTutor.get('/materials/booking/:bookingId', checkAccessToken,tutorCtrl.getMaterials);
 RouterTutor.get('/students', getAllStudents);  
-
+RouterTutor.get('/:tutorId/availability', tutorCtrl.getTutorAvailability);
 RouterTutor.get('/review/:tutorId', ReviewController.getReviewsByTutor);
 
 module.exports = RouterTutor;
