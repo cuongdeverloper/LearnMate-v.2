@@ -4,9 +4,19 @@ const mongoose = require('mongoose');
 
 const materialSchema = new mongoose.Schema({
   // Liên kết tài liệu này với một booking cụ thể
-  bookingId: {
+  subjectId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Booking',
+    ref: 'Subject',
+    required: true
+  },
+  tutorId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Tutor',
+    required: true
+  },
+    learnerId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
     required: true
   },
   title: {
