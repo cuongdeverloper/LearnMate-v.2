@@ -23,6 +23,7 @@ import AuthCallback from "./components/Auth/AuthCallback";
 import EnterOTPRegister from "./components/Auth/Sign up/OTP/EnterOTPRegister";
 import RequestPasswordReset from "./components/Auth/reset password/RequestPasswordReset";
 import ResetPassword from "./components/Auth/reset password/ResetPassword";
+import Messenger from "./Message Socket/Page/Messenger";
 
 const AppLayout = ({ children }) => {
   const location = useLocation();
@@ -63,6 +64,16 @@ const Layout = () => {
           <Route path="/signin" element={<SignIn />} />
           <Route path="/otp-verify" element={<EnterOTPRegister />} />
           <Route path="auth/callback" element={<AuthCallback />} />
+          <Route path="/messenger" element={
+            // <ProtectedRoute allowedRoles={['tutor', 'student', 'admin']}>
+              <Messenger />
+            // </ProtectedRoute> 
+          }/>
+          <Route path="/messenger/:conversationId" element={
+            // <ProtectedRoute allowedRoles={['tutor', 'student', 'admin']}>
+              <Messenger />
+            // </ProtectedRoute>
+            } />
           <Route path="/forgot-password" element={
                 <RequestPasswordReset />
            } />

@@ -6,10 +6,10 @@ import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import "../../scss/BookingPage.scss";
 import { useSelector } from "react-redux";
-import { ApiCreateConversation } from "../../Service/ApiService/ApiChat";
 import { getUserBalance } from "../../Service/ApiService/ApiUser";
 import { getReviewsByTutor, getTutorById } from "../../Service/ApiService/ApiTutor";
 import Header from "../../components/Layout/Header/Header";
+import { ApiCreateConversation } from "../../Service/ApiService/ApiMessage";
 
 export default function BookingPage() {
   const { tutorId } = useParams();

@@ -93,4 +93,26 @@ const getUserBalance = async () => {
       throw error;
     }
   };
-  export{getUserBalance,ApiChangePassword,ApiUpdateProfile,ApiGetProfile}
+
+  const ApiGetUserByUserId = async (userId) => {
+  try {
+    const token = Cookies.get("accessToken");
+
+    if (!token) {
+      window.open("/signin", "_blank");
+      return;
+    }
+
+    const response = await axios.get(`/api/message/user/${userId}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    return response;
+  } catch (error) {
+    console.error("Error get user:", error);
+    return null;
+  }
+};
+  export{getUserBalance,ApiChangePassword,ApiUpdateProfile,ApiGetProfile,ApiGetUserByUserId}
