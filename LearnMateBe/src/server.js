@@ -14,8 +14,7 @@ const socketIo = require('socket.io');
 const { RouteAuth } = require('./routes/AuthRoutes');
 const RouterTutor = require('./routes/tutorRoutes');
 const RouteBooking = require('./routes/BookingRoutes');
-
-
+const RouteMessage = require('./routes/messageRoutes');
 const app = express();
 const port = process.env.PORT || 8888;
 const hostname = process.env.HOST_NAME || 'localhost';
@@ -59,6 +58,8 @@ app.use('/api/learner', learnerRouter);
 app.use('/', RouteAuth);
 app.use('/api/tutor', RouterTutor);
 app.use('/api/booking', RouteBooking);
+app.use('/api/message', RouteMessage);
+
 app.get("/", (req, res) => {
   res.json("Hello");
 })
