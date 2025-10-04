@@ -45,6 +45,7 @@ const SignIn = () => {
     e.preventDefault();
     try {
       let response = await ApiLogin(email, password);
+      console.log(response);
       if (response.errorCode === 0) {
         toast.success(response.message);
         Cookies.set('accessToken', response.data.access_token, { expires: 1 });
@@ -58,7 +59,7 @@ const SignIn = () => {
         }
         // navigate('/')
       }
-      if (response.errorCode === 3) {
+      if (response.errorCode !== 0) {
         toast.error(response.message)
       }
       else {

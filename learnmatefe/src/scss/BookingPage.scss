@@ -64,6 +64,7 @@ $shadow-medium: rgba(0, 0, 0, 0.1);
       border-radius: 16px;
       box-shadow: 0 10px 25px $shadow-medium;
       padding: 30px; // More padding for a spacious feel
+      flex-direction: column;
 
       h2 {
         font-size: 30px; // Larger main heading
