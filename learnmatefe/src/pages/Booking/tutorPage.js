@@ -60,7 +60,7 @@ export default function TutorListPage() {
         },
       });
       // API trả về mảng các đối tượng tutor, ta chỉ cần ID của chúng
-      setSavedTutorIds((res.data || []).map((tutor) => tutor?._id));
+      setSavedTutorIds((res || []).map((tutor) => tutor?._id));
     } catch (error) {
       console.error("Lỗi khi lấy danh sách gia sư đã lưu:", error);
       if (error.response && error.response.status === 401) {

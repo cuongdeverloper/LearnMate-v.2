@@ -139,55 +139,84 @@ exports.getLearnerWeeklySchedules = async (req, res) => {
     res.status(500).json({ message: 'Server error fetching schedules' });
   }
 };
+// ✅ Mark Attendance & trừ tiền từng buổi
 exports.markAttendance = async (req, res) => {
-    try {
-      const { scheduleId } = req.params;
-      const { attended } = req.body;
-  
-      if (!scheduleId || !scheduleId.match(/^[0-9a-fA-F]{24}$/)) {
-        return res.status(400).json({ message: 'Invalid scheduleId' });
-      }
-  
-      if (!req.user) {
-        return res.status(401).json({ message: 'Unauthorized: User not logged in' });
-      }
-  
-      const schedule = await Schedule.findById(scheduleId);
-      if (!schedule) {
-        return res.status(404).json({ message: 'Schedule slot not found' });
-      }
-  
-      if (schedule.learnerId.toString() !== (req.user.id || req.user._id).toString()) {
-        return res.status(403).json({ message: 'Forbidden: Bạn không có quyền cập nhật lịch trình này.' });
-      }
-  
-      // ✅ Load booking để kiểm tra trạng thái hoàn thành
-      const booking = await Booking.findById(schedule.bookingId);
-      if (!booking) {
-        return res.status(404).json({ message: 'Booking không tồn tại.' });
-      }
-  
-      if (booking.completed) {
-        return res.status(400).json({ message: 'Khóa học đã hoàn thành. Không thể điểm danh thêm.' });
-      }
-  
-      // ✅ Kiểm tra nếu buổi học chưa bắt đầu thì không cho điểm danh
-      const now = new Date(); // UTC
-      const scheduleDatePart = schedule.date.toISOString().split('T')[0];
-      const sessionStartTimeUTC = new Date(`${scheduleDatePart}T${schedule.startTime}:00.000Z`);
-  
-      if (now.getTime() < sessionStartTimeUTC.getTime()) {
-        return res.status(400).json({ message: 'Không thể điểm danh cho buổi học chưa bắt đầu.' });
-      }
-  
-      // ✅ Cập nhật trạng thái điểm danh
-      schedule.attended = attended;
-      await schedule.save();
-  
-      res.json({ message: 'Điểm danh đã được cập nhật thành công', schedule });
-  
-    } catch (error) {
-      console.error("Error marking attendance:", error);
-      res.status(500).json({ message: 'Lỗi server khi cập nhật điểm danh.' });
+  try {
+    const { scheduleId } = req.params;
+    const { attended } = req.body;
+
+    if (!scheduleId || !scheduleId.match(/^[0-9a-fA-F]{24}$/)) {
+      return res.status(400).json({ message: 'Invalid scheduleId' });
     }
-  };
+
+    if (!req.user) {
+      return res.status(401).json({ message: 'Unauthorized: User not logged in' });
+    }
+
+    const schedule = await Schedule.findById(scheduleId);
+    if (!schedule) {
+      return res.status(404).json({ message: 'Schedule slot not found' });
+    }
+
+    if (schedule.learnerId.toString() !== (req.user.id || req.user._id).toString()) {
+      return res.status(403).json({ message: 'Forbidden: Bạn không có quyền cập nhật lịch trình này.' });
+    }
+
+    const booking = await Booking.findById(schedule.bookingId);
+    if (!booking) {
+      return res.status(404).json({ message: 'Booking không tồn tại.' });
+    }
+
+    if (booking.status !== 'active') {
+      return res.status(400).json({ message: 'Booking không còn hiệu lực.' });
+    }
+
+    const now = new Date();
+    const scheduleDatePart = schedule.date.toISOString().split('T')[0];
+    const sessionStartTimeUTC = new Date(`${scheduleDatePart}T${schedule.startTime}:00.000Z`);
+
+    if (now.getTime() < sessionStartTimeUTC.getTime()) {
+      return res.status(400).json({ message: 'Không thể điểm danh cho buổi học chưa bắt đầu.' });
+    }
+
+    // ✅ Update attendance
+    schedule.attended = attended;
+    await schedule.save();
+
+    // ✅ Nếu buổi học được điểm danh thành công → trừ tiền
+    if (attended) {
+      const learner = await User.findById(booking.learnerId);
+
+      if (learner.balance < booking.sessionCost) {
+        return res.status(400).json({ message: 'Số dư không đủ để thanh toán cho buổi học này.' });
+      }
+
+      learner.balance -= booking.sessionCost;
+      await learner.save();
+
+      await FinancialHistory.create({
+        userId: learner._id,
+        amount: booking.sessionCost,
+        balanceChange: -booking.sessionCost,
+        type: 'spend',
+        status: 'paid',
+        description: `Thanh toán buổi học #${booking.paidSessions + 1} cho booking ${booking._id.toString().slice(-6)}`,
+        date: new Date()
+      });
+
+      booking.paidSessions += 1;
+
+      // ✅ Nếu đã đủ số buổi → hoàn tất booking
+      if (booking.paidSessions >= booking.numberOfSessions) {
+        booking.status = 'completed';
+      }
+
+      await booking.save();
+    }
+
+    res.json({ message: 'Điểm danh đã được cập nhật thành công', schedule });
+  } catch (error) {
+    console.error("Error marking attendance:", error);
+    res.status(500).json({ message: 'Lỗi server khi cập nhật điểm danh.' });
+  }
+};
