@@ -81,7 +81,7 @@ exports.getTutorById = async (req, res) => {
 exports.getSavedTutors = async (req, res) => {
   try {
     // req.user.id sẽ đến từ middleware xác thực (ví dụ: từ token JWT)
-    const savedTutors = await SavedTutor.find({ user: req.user.id })
+    const savedTutors = await SavedTutor.find({ user: req.user.id || req.user._id })
     .populate({
       path: 'tutor',
       populate: {
@@ -101,7 +101,7 @@ exports.getSavedTutors = async (req, res) => {
 
 exports.addSavedTutor = async (req, res) => {
   const { tutorId } = req.params;
-  const userId = req.user.id; // Lấy ID người dùng từ token
+  const userId = req.user.id || req.user._id; // Lấy ID người dùng từ token
 
   try {
     // Kiểm tra xem gia sư có tồn tại không
