@@ -76,7 +76,7 @@ const BookingHistoryPage = () => {
         if (!selectedBookingId) return;
 
         try {
-            await axios.patch(`/api/learner/bookings/${selectedBookingId}/cancel`, {}, {
+            await axios.patch(`/api/booking/bookings/${selectedBookingId}/cancel`, {}, {
                 headers: { Authorization: `Bearer ${token}` },
             });
             toast.success("Đã hủy đặt lịch thành công và tiền đã được hoàn lại!");
