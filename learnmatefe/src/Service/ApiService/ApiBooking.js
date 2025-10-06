@@ -92,7 +92,7 @@ export const getMyBookings = async () => {
   };
   export const fetchBookingDetailsApi = async (bookingId) => {
     try {
-      const response = await axios.get(`/bookings/${bookingId}`);
+      const response = await axios.get(`/api/booking/bookings/${bookingId}`);
       return response; 
     } catch (error) {
       console.error("Error fetching booking details:", error);
