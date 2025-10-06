@@ -139,28 +139,37 @@ exports.getUserBookingHistory = async (req, res) => {
 exports.getApprovedBookingsForLearner = async (req, res) => {
   try {
     if (!req.user) {
-      return res.status(401).json({ message: 'Bạn chưa đăng nhập. Vui lòng đăng nhập để xem các khóa học đã duyệt.' });
+      return res.status(401).json({
+        message: 'Bạn chưa đăng nhập. Vui lòng đăng nhập để xem các khóa học đã duyệt.'
+      });
     }
+
     const learnerId = req.user.id || req.user._id;
 
     const bookings = await Booking.find({
       learnerId,
       status: 'approve'
     })
-    .populate({
-      path: 'tutorId', 
-      select: 'user', 
-      populate: {
-        path: 'user', 
-        select: 'username' 
-      }
-    })
-    .sort({ createdAt: -1 });
+      .populate({
+        path: 'tutorId',
+        select: 'user',
+        populate: {
+          path: 'user',
+          select: 'username'
+        }
+      })
+      .populate({
+        path: 'subjectId',
+        select: 'name description'
+      })
+      .sort({ createdAt: -1 });
 
     res.json(bookings);
   } catch (err) {
     console.error("Lỗi khi lấy các khóa học đã duyệt:", err);
-    res.status(500).json({ message: 'Đã xảy ra lỗi khi tải danh sách khóa học của bạn. Vui lòng thử lại sau.' });
+    res.status(500).json({
+      message: 'Đã xảy ra lỗi khi tải danh sách khóa học của bạn. Vui lòng thử lại sau.'
+    });
   }
 };
 exports.cancelBooking = async (req, res) => {

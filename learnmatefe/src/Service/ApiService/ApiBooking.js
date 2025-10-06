@@ -9,7 +9,7 @@ export const finishBooking = async (bookingId) => {
         return { success: false, message: "Bạn chưa đăng nhập." };
       }
   
-      const response = await axios.patch(`/bookings/${bookingId}/finish`, {}, {
+      const response = await axios.patch(`/api/booking/bookings/${bookingId}/finish`, {}, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -118,5 +118,13 @@ export const getMyBookings = async () => {
     } catch (error) {
       console.error("Error fetching bookings by tutorId:", error);
       return null;
+    }
+  };
+  export const requestChangeSchedule = async (bookingId, payload) => {
+    try {
+      const res = await axios.post(`/api/booking/bookings/${bookingId}/request-change`, payload);
+      return res.data;
+    } catch (err) {
+      return { success: false, message: err.response?.data?.message || "Error" };
     }
   };
