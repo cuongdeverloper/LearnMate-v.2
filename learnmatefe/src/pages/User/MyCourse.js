@@ -7,7 +7,8 @@ import {
   finishBooking,
   getMaterialsByBookingId,
   getMyBookings,
-  reportBooking,requestChangeSchedule // Make sure this is correctly imported
+  reportBooking,
+  requestChangeSchedule, // Make sure this is correctly imported
 } from "../../Service/ApiService/ApiBooking";
 import {
   getMyWeeklySchedules,
@@ -37,18 +38,43 @@ const ConfirmationModal = ({ title, message, onConfirm, onCancel }) => {
     </div>
   );
 };
-const ChangeScheduleModal = ({ isOpen, onClose, onSubmit, bookingId }) => {
+const ChangeScheduleModal = ({
+  isOpen,
+  onClose,
+  onSubmit,
+  bookingId,
+  schedules,
+}) => {
+  const [selectedScheduleId, setSelectedScheduleId] = useState("");
   const [newDate, setNewDate] = useState("");
-  const [newStartTime, setNewStartTime] = useState("");
-  const [newEndTime, setNewEndTime] = useState("");
+  const [newTimeSlot, setNewTimeSlot] = useState("");
   const [reason, setReason] = useState("");
 
+  const timeSlots = [
+    "07:00 - 09:00",
+    "09:30 - 11:30",
+    "12:00 - 14:00",
+    "14:30 - 16:30",
+    "17:00 - 19:00",
+    "19:30 - 21:30",
+  ];
+
   const handleSubmit = () => {
-    if (!newDate || !newStartTime || !newEndTime || !reason.trim()) {
-      toast.error("Vui lòng nhập đầy đủ thông tin.");
+    if (!selectedScheduleId || !newDate || !newTimeSlot || !reason.trim()) {
+      toast.error("Vui lòng chọn đầy đủ thông tin.");
       return;
     }
-    onSubmit({ bookingId, newDate, newStartTime, newEndTime, reason });
+
+    const [newStartTime, newEndTime] = newTimeSlot.split(" - ");
+
+    onSubmit({
+      bookingId,
+      scheduleId: selectedScheduleId, // lịch hiện có
+      newDate,
+      newStartTime,
+      newEndTime,
+      reason,
+    });
     onClose();
   };
 
@@ -58,26 +84,48 @@ const ChangeScheduleModal = ({ isOpen, onClose, onSubmit, bookingId }) => {
     <div className="change-modal-overlay">
       <div className="change-modal-content">
         <h3>Yêu cầu đổi lịch học</h3>
+
+        <label>Chọn buổi học hiện tại:</label>
+        <select
+          value={selectedScheduleId}
+          onChange={(e) => setSelectedScheduleId(e.target.value)}
+        >
+          <option value="">-- Chọn buổi học --</option>
+          {(schedules || []).map((s) => (
+            <option key={s._id} value={s._id}>
+              {new Date(s.date).toLocaleDateString("vi-VN")} ({s.startTime} -{" "}
+              {s.endTime})
+            </option>
+          ))}
+        </select>
+
+        <label>Ngày mới:</label>
         <input
           type="date"
           value={newDate}
           onChange={(e) => setNewDate(e.target.value)}
         />
-        <input
-          type="time"
-          value={newStartTime}
-          onChange={(e) => setNewStartTime(e.target.value)}
-        />
-        <input
-          type="time"
-          value={newEndTime}
-          onChange={(e) => setNewEndTime(e.target.value)}
-        />
+
+        <label>Chọn khung giờ mới:</label>
+        <select
+          value={newTimeSlot}
+          onChange={(e) => setNewTimeSlot(e.target.value)}
+        >
+          <option value="">-- Chọn khung giờ --</option>
+          {timeSlots.map((slot, i) => (
+            <option key={i} value={slot}>
+              {slot}
+            </option>
+          ))}
+        </select>
+
+        <label>Lý do đổi lịch:</label>
         <textarea
-          placeholder="Lý do muốn đổi lịch..."
+          placeholder="Nhập lý do..."
           value={reason}
           onChange={(e) => setReason(e.target.value)}
         />
+
         <div className="modal-actions">
           <button onClick={onClose}>Hủy</button>
           <button onClick={handleSubmit}>Gửi yêu cầu</button>
@@ -767,8 +815,12 @@ function MyCourses() {
             onClose={handleCloseChangeModal}
             onSubmit={handleSubmitChangeSchedule}
             bookingId={changingBookingId}
+            schedules={allWeeklySchedules.filter(
+              (s) => s.bookingId?._id === changingBookingId
+            )}
           />
         )}
+
         <ToastContainer
           position="top-right"
           autoClose={5000}

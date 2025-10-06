@@ -11,7 +11,7 @@ export const getMyWeeklySchedules = async (weekStartDate) => {
   
       const isoDate = new Date(weekStartDate).toISOString().split('T')[0];
   
-      const response = await axios.get(`/api/learner/schedule/my-weekly-schedules?weekStart=${encodeURIComponent(isoDate)}`, {
+      const response = await axios.get(`/api/booking/schedule/my-weekly-schedules?weekStart=${encodeURIComponent(isoDate)}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
