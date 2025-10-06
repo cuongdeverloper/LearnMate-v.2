@@ -20,8 +20,7 @@ const bookingSchema = new mongoose.Schema({
   paidSessions: { type: Number, default: 0 },         
   completed: { type: Boolean, default: false },
   note: { type: String, default: '' },
-  completed: { type: Boolean, default: false },
-         
+  completed: { type: Boolean, default: false },       
   reported: { type: Boolean, default: false },
   reportedAt: { type: Date }
 }, { timestamps: true });

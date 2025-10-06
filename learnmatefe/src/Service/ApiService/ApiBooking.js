@@ -31,7 +31,7 @@ export  const getMaterialsByBookingId = async (bookingId) => {
         return { success: false, message: "Bạn chưa đăng nhập." };
       }
   
-      const response = await axios.get(`/api/learner/materials/booking/${bookingId}`, {
+      const response = await axios.get(`/api/tutor/materials/booking/${bookingId}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -54,7 +54,7 @@ export const getMyBookings = async () => {
         return { success: false, message: "Chưa đăng nhập" };
       }
   
-      const response = await axios.get('/api/learner/me/my-courses', {
+      const response = await axios.get('/api/booking/bookings/my-courses', {
         headers: {
           Authorization: `Bearer ${token}`,
         },

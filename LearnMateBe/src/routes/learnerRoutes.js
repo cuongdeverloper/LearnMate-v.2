@@ -23,15 +23,11 @@ routerApi.post('/bookings/:tutorId', checkAccessToken, bookingController.createB
 routerApi.get('/profile', checkAccessToken, profileController.getProfile);
 routerApi.put('/update-profile', checkAccessToken, profileController.updateProfile);
 
-routerApi.post('/bookings/:tutorId', checkAccessToken, bookingController.createBooking);
+
 routerApi.patch("/bookings/:bookingId/cancel", checkAccessToken, bookingController.cancelBooking);
 routerApi.get('/bookings/:id', bookingController.getBookingById);
 
 
 routerApi.get('/me/info', checkAccessToken,paymentController.getUserInfo); 
-routerApi.get("/me/my-courses",checkAccessToken, bookingController.getApprovedBookingsForLearner);
 
-routerApi.get('/schedule/my-weekly-schedules', checkAccessToken, scheduleController.getLearnerWeeklySchedules);
-routerApi.get('/materials/booking/:bookingId', checkAccessToken, materialController.getMaterials);
-routerApi.get('/materials/download/:materialId', checkAccessToken, materialController.getMaterials);
 module.exports = routerApi;
