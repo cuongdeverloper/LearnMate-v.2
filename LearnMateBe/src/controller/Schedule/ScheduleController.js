@@ -1,12 +1,36 @@
 const Schedule = require('../../modal/Schedule');
 const Booking = require('../../modal/Booking');
+const ChangeRequest = require("../../modal/ChangeRequest");
 
 function addDays(date, days) {
   const d = new Date(date);
   d.setDate(d.getDate() + days);
   return d;
 }
+exports.requestChangeSchedule = async (req, res) => {
+  try {
+    const { bookingId } = req.params;
+    const { newDate, newStartTime, newEndTime, reason } = req.body;
 
+    const booking = await Booking.findById(bookingId);
+    if (!booking) return res.status(404).json({ success: false, message: "Booking not found" });
+
+    const changeReq = new ChangeRequest({
+      bookingId,
+      learnerId: req.user._id,
+      newDate,
+      newStartTime,
+      newEndTime,
+      reason
+    });
+
+    await changeReq.save();
+    return res.json({ success: true, message: "Change request created", data: changeReq });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ success: false, message: "Server error" });
+  }
+};
 // 1. Lấy slot bận trong tuần của booking
 // Lấy toàn bộ slot bận trong tuần (mọi booking)
 exports.getBusySlotsForWeek = async (req, res) => {

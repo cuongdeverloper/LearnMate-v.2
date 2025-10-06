@@ -7,7 +7,7 @@ import {
   finishBooking,
   getMaterialsByBookingId,
   getMyBookings,
-  reportBooking, // Make sure this is correctly imported
+  reportBooking,requestChangeSchedule // Make sure this is correctly imported
 } from "../../Service/ApiService/ApiBooking";
 import {
   getMyWeeklySchedules,
@@ -32,6 +32,55 @@ const ConfirmationModal = ({ title, message, onConfirm, onCancel }) => {
           <button onClick={onCancel} className="cancel-btn">
             Hủy bỏ
           </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+const ChangeScheduleModal = ({ isOpen, onClose, onSubmit, bookingId }) => {
+  const [newDate, setNewDate] = useState("");
+  const [newStartTime, setNewStartTime] = useState("");
+  const [newEndTime, setNewEndTime] = useState("");
+  const [reason, setReason] = useState("");
+
+  const handleSubmit = () => {
+    if (!newDate || !newStartTime || !newEndTime || !reason.trim()) {
+      toast.error("Vui lòng nhập đầy đủ thông tin.");
+      return;
+    }
+    onSubmit({ bookingId, newDate, newStartTime, newEndTime, reason });
+    onClose();
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="change-modal-overlay">
+      <div className="change-modal-content">
+        <h3>Yêu cầu đổi lịch học</h3>
+        <input
+          type="date"
+          value={newDate}
+          onChange={(e) => setNewDate(e.target.value)}
+        />
+        <input
+          type="time"
+          value={newStartTime}
+          onChange={(e) => setNewStartTime(e.target.value)}
+        />
+        <input
+          type="time"
+          value={newEndTime}
+          onChange={(e) => setNewEndTime(e.target.value)}
+        />
+        <textarea
+          placeholder="Lý do muốn đổi lịch..."
+          value={reason}
+          onChange={(e) => setReason(e.target.value)}
+        />
+        <div className="modal-actions">
+          <button onClick={onClose}>Hủy</button>
+          <button onClick={handleSubmit}>Gửi yêu cầu</button>
         </div>
       </div>
     </div>
@@ -148,6 +197,8 @@ function MyCourses() {
   const [errorBookings, setErrorBookings] = useState(null);
   const [loadingSchedules, setLoadingSchedules] = useState(true);
   const [errorSchedules, setErrorSchedules] = useState(null);
+  const [showChangeScheduleModal, setShowChangeScheduleModal] = useState(false);
+  const [changingBookingId, setChangingBookingId] = useState(null);
 
   // States for Report Modal
   const [showReportModal, setShowReportModal] = useState(false);
@@ -170,7 +221,37 @@ function MyCourses() {
   useEffect(() => {
     fetchBookings();
     fetchAllWeeklySchedules();
+    console.log("All bookings: ", bookings);
   }, [token, weekStart]);
+
+  const handleCloseChangeModal = () => {
+    setShowChangeScheduleModal(false);
+    setChangingBookingId(null);
+  };
+
+  const handleSubmitChangeSchedule = async ({
+    bookingId,
+    newDate,
+    newStartTime,
+    newEndTime,
+    reason,
+  }) => {
+    try {
+      const res = await requestChangeSchedule(bookingId, {
+        newDate,
+        newStartTime,
+        newEndTime,
+        reason,
+      });
+      if (res.success) {
+        toast.success("Yêu cầu đổi lịch đã được gửi.");
+      } else {
+        toast.error(res.message || "Không thể gửi yêu cầu đổi lịch.");
+      }
+    } catch (error) {
+      toast.error("Lỗi khi gửi yêu cầu đổi lịch.");
+    }
+  };
 
   // Handlers for Report Modal
   const handleOpenReportModal = (bookingId) => {
@@ -206,7 +287,7 @@ function MyCourses() {
     setErrorBookings(null);
     try {
       const res = await getMyBookings();
-      console.log(res);
+      console.log(res.data);
       setBookings(res.data);
     } catch (error) {
       console.error("Error fetching bookings:", error);
@@ -525,6 +606,10 @@ function MyCourses() {
                 } ${booking.reported ? "reported" : ""}`}
               >
                 <p>
+                  <strong>Môn học:</strong>{" "}
+                  {booking.subjectId?.name || "Chưa có tên môn"}
+                </p>
+                <p>
                   <strong>Gia sư:</strong>{" "}
                   {booking.tutorId?.user?.username || "N/A"}
                 </p>
@@ -532,8 +617,19 @@ function MyCourses() {
                   <strong>Số buổi học:</strong> {booking.numberOfSessions}
                 </p>
                 <p>
-                  <strong>Số tiền:</strong>{" "}
-                  {booking.amount.toLocaleString("vi-VN")} VNĐ
+                  <strong>Chi phí mỗi buổi:</strong>{" "}
+                  {booking.sessionCost?.toLocaleString("vi-VN")} VNĐ
+                </p>
+                <p>
+                  <strong>Tổng tiền:</strong>{" "}
+                  {booking.amount?.toLocaleString("vi-VN")} VNĐ
+                </p>
+                <p>
+                  <strong>Tiền cọc:</strong>{" "}
+                  {booking.deposit?.toLocaleString("vi-VN")} VNĐ
+                </p>
+                <p>
+                  <strong>Ghi chú:</strong> {booking.note || "Không có"}
                 </p>
 
                 {booking.completed && (
@@ -590,6 +686,15 @@ function MyCourses() {
                         Báo cáo
                       </button>
                     )}
+                    <button
+                      className="change-schedule-button"
+                      onClick={() => {
+                        setChangingBookingId(booking._id);
+                        setShowChangeScheduleModal(true);
+                      }}
+                    >
+                      Yêu cầu đổi lịch
+                    </button>
                   </div>
                 )}
               </div>
@@ -654,6 +759,14 @@ function MyCourses() {
             onClose={handleCloseReportModal}
             onSubmit={handleSubmitReport}
             bookingId={reportingBookingId}
+          />
+        )}
+        {showChangeScheduleModal && (
+          <ChangeScheduleModal
+            isOpen={showChangeScheduleModal}
+            onClose={handleCloseChangeModal}
+            onSubmit={handleSubmitChangeSchedule}
+            bookingId={changingBookingId}
           />
         )}
         <ToastContainer
