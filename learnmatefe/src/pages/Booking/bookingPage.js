@@ -200,7 +200,7 @@ export default function BookingPage() {
 
       // call backend to create booking (pass schedule availability ids)
       const res = await axios.post(
-        `/api/learner/bookings/${tutorId}`,
+        `/api/booking/bookings/${tutorId}`,
         {
           amount: totalAmount,
           numberOfSessions:

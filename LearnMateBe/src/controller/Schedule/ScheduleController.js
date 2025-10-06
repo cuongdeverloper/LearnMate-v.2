@@ -10,18 +10,25 @@ function addDays(date, days) {
 exports.requestChangeSchedule = async (req, res) => {
   try {
     const { bookingId } = req.params;
-    const { newDate, newStartTime, newEndTime, reason } = req.body;
+    const { scheduleId, newDate, newStartTime, newEndTime, reason } = req.body;
 
     const booking = await Booking.findById(bookingId);
     if (!booking) return res.status(404).json({ success: false, message: "Booking not found" });
 
+    const schedule = await Schedule.findById(scheduleId);
+    if (!schedule) return res.status(404).json({ success: false, message: "Schedule not found" });
+
     const changeReq = new ChangeRequest({
       bookingId,
+      scheduleId,
       learnerId: req.user._id,
+      oldDate: schedule.date,
+      oldStartTime: schedule.startTime,
+      oldEndTime: schedule.endTime,
       newDate,
       newStartTime,
       newEndTime,
-      reason
+      reason,
     });
 
     await changeReq.save();

@@ -16,6 +16,6 @@ RouteBooking.delete('/schedule/:scheduleId', scheduleController.deleteScheduleSl
 RouteBooking.get('/schedule/my-weekly-schedules', checkAccessToken, scheduleController.getLearnerWeeklySchedules);
 RouteBooking.patch('/schedule/:scheduleId/attendance', checkAccessToken, scheduleController.markAttendance); 
 
-RouteBooking.post("/bookings/:bookingId/request-change", checkAccessToken, scheduleController.requestChangeSchedule);
+RouteBooking.post("/bookings/:bookingId/request-change", checkAccessToken,scheduleController.requestChangeSchedule);
 
 module.exports = RouteBooking;
