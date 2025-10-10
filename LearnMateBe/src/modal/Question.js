@@ -15,7 +15,7 @@ const QuestionSchema = new mongoose.Schema({
   quiz: { type: mongoose.Schema.Types.ObjectId, ref: "Quiz" },
   text: { type: String, required: true },
   options: [{ type: String, required: true }], // danh sách lựa chọn
-  correctAnswer: { type: String, required: true }
+  correctAnswer: { type: mongoose.Schema.Types.ObjectId, ref: "Answer" }
 });
 
 module.exports = mongoose.model("Question", QuestionSchema);
