@@ -2,9 +2,6 @@ const Booking = require("../../modal/Booking");
 const Schedule = require("../../modal/Schedule");
 const Material = require("../../modal/Material");
 const Progress = require("../../modal/Progress");
-const Tutor = require("../../modal/Tutor");
-const uploadCloud = require("../../config/cloudinaryConfig");
-const uploadDocs = require("../../config/cloudinaryDocxConfig");
 const TutorAvailability = require("../../modal/TutorAvailability");
 
 const respondBooking = async (req, res) => {
@@ -240,21 +237,47 @@ const getProgress = async (req, res) => {
   }
 };
 
-// Upload material
+
 const uploadMaterial = async (req, res) => {
   try {
-    const { bookingId, title, description, fileType } = req.body;
+    const { bookingId, title, description, fileType, subjectId, tutorId, learnerId } = req.body;
     const fileUrl = req.file?.path || req.file?.secure_url;
 
+    // ✅ Kiểm tra các field bắt buộc
     if (!bookingId || !title || !fileUrl) {
       return res.status(400).json({
         errorCode: 1,
-        message: "bookingId, title and file are required.",
+        message: "bookingId, title và fileUrl là bắt buộc.",
       });
     }
 
+    let finalSubjectId = subjectId;
+    let finalTutorId = tutorId;
+    let finalLearnerId = learnerId;
+
+    // ✅ Nếu không truyền subjectId, tự lấy từ booking (nếu có)
+    if (!finalSubjectId) {
+      const booking = await Booking.findById(bookingId);
+      if (booking) {
+        finalSubjectId = booking.subjectId;
+        finalTutorId = finalTutorId || booking.tutorId;
+        finalLearnerId = finalLearnerId || booking.learnerId;
+      }
+    }
+
+    // ✅ Kiểm tra lại subjectId cuối cùng
+    if (!finalSubjectId) {
+      return res.status(400).json({
+        errorCode: 1,
+        message: "subjectId is required (hoặc không tìm thấy trong booking).",
+      });
+    }
+
+    // ✅ Tạo document mới
     const newMaterial = new Material({
-      bookingId,
+      subjectId: finalSubjectId,
+      tutorId: finalTutorId,
+      learnerId: finalLearnerId,
       title,
       description,
       fileType: fileType || "other",
@@ -262,15 +285,16 @@ const uploadMaterial = async (req, res) => {
     });
 
     await newMaterial.save();
-    res.status(201).json({
-      errorCode: 0, // ✅ success
+
+    return res.status(201).json({
+      errorCode: 0,
       message: "Material uploaded successfully",
       material: newMaterial,
     });
   } catch (error) {
     console.error("Save Material Error:", error);
-    res.status(500).json({
-      errorCode: 1, // ❌ error
+    return res.status(500).json({
+      errorCode: 1,
       message: "Error saving material",
       error: error.message,
     });
