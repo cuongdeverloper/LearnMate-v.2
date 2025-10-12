@@ -1,7 +1,7 @@
 import React from "react";
 import "./StudentHomePage.scss";
 import LangLogin from "../LangLogin/LangLogin";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { doLogout } from "../../../redux/action/userAction";
 import { useDispatch, useSelector } from "react-redux";
 import { jwtDecode } from "jwt-decode";
@@ -67,10 +67,10 @@ const StudentHomePage = () => {
       <header className="header">
         <div className="logo">LearnMate</div>
         <nav className="nav">
-          <a href="/tutor">Tìm gia sư</a>
-          <a href="/tutor-application">Trở thành gia sư</a>
-          {role === "tutor" && <a href="/TutorDashboard">BookingManagement</a>}
-          {role === "admin" && <a href="/admin/dashboard">Admin</a>}
+          <Link to="/tutor">Tìm gia sư</Link>
+          <Link to="/tutor-application">Trở thành gia sư</Link>
+          {role === "tutor" && <Link to="/TutorDashboard">BookingManagement</Link>}
+          {role === "admin" && <Link to="/admin/dashboard">Admin</Link>}
         </nav>
         <div className="right-section">
           <LangLogin />
