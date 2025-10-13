@@ -1,3 +1,24 @@
+<<<<<<< HEAD
+const express = require("express");
+const configViewEngine = require("./config/ViewEngine");
+const cors = require("cors");
+require("dotenv").config();
+const connection = require("./config/database");
+const cookieParser = require("cookie-parser");
+const session = require("express-session");
+const passport = require("passport");
+const socketHandler = require("./socket/socket");
+const doLoginWGoogle = require("./controller/social/GoogleController");
+const http = require("http");
+const learnerRouter = require("./routes/learnerRoutes");
+const socketIo = require("socket.io");
+const { RouteAuth } = require("./routes/AuthRoutes");
+const RouterTutor = require("./routes/tutorRoutes");
+const RouteBooking = require("./routes/BookingRoutes");
+const RouteMessage = require("./routes/messageRoutes");
+const RouteQuiz = require("./routes/QuizRoutes");
+const RoutePayment = require("./routes/PaymentRoutes");
+=======
 const express = require('express');
 const configViewEngine = require('./config/ViewEngine');
 const cors = require('cors');
@@ -17,6 +38,7 @@ const RouteBooking = require('./routes/BookingRoutes');
 const RouterAdmin = require('./routes/adminRoutes');
 
 
+>>>>>>> origin/main
 const app = express();
 const port = process.env.PORT || 8888;
 const hostname = process.env.HOST_NAME || 'localhost';
@@ -55,7 +77,18 @@ app.use(cors({
 // Use your view engine configuration if rendering views
 configViewEngine(app);
 
+
+app.use("/api/learner", learnerRouter);
+
+app.use("/", RouteAuth);
+app.use("/api/tutor", RouterTutor);
+app.use("/api/booking", RouteBooking);
+app.use("/api/message", RouteMessage);
+app.use("/api/quiz", RouteQuiz);
+app.use("/api/payment", RoutePayment);
+
 app.use('/api/learner', learnerRouter);
+
 
 app.use('/', RouteAuth);
 app.use('/api/tutor', RouterTutor);

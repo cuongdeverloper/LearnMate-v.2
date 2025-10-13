@@ -2,6 +2,9 @@ const express = require('express');
 const RouteBooking = express.Router();
 const bookingController = require('../controller/Booking/bookingController');
 const scheduleController = require('../controller/Schedule/ScheduleController');
+const ReviewController = require('../controller/Review/ReviewController');
+
+
 const { checkAccessToken } = require('../middleware/JWTAction');
 
 RouteBooking.get("/user/:userId", bookingController.getUserBookingHistory);
@@ -17,5 +20,8 @@ RouteBooking.get('/schedule/my-weekly-schedules', checkAccessToken, scheduleCont
 RouteBooking.patch('/schedule/:scheduleId/attendance', checkAccessToken, scheduleController.markAttendance); 
 
 RouteBooking.post("/bookings/:bookingId/request-change", checkAccessToken,scheduleController.requestChangeSchedule);
+RouteBooking.get("/bookings/change-requests/my-requests", checkAccessToken, scheduleController.getMyChangeRequests);
+
+RouteBooking.post('/review', checkAccessToken, ReviewController.createReview);
 
 module.exports = RouteBooking;

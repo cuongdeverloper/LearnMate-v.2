@@ -1,6 +1,9 @@
-const Schedule = require('../../modal/Schedule');
-const Booking = require('../../modal/Booking');
+const Schedule = require("../../modal/Schedule");
+const Booking = require("../../modal/Booking");
 const ChangeRequest = require("../../modal/ChangeRequest");
+const User = require("../../modal/User");
+const FinancialHistory = require("../../modal/FinancialHistory");
+
 
 function addDays(date, days) {
   const d = new Date(date);
@@ -9,63 +12,118 @@ function addDays(date, days) {
 }
 exports.requestChangeSchedule = async (req, res) => {
   try {
-    const { bookingId } = req.params;
     const { scheduleId, newDate, newStartTime, newEndTime, reason } = req.body;
 
-    const booking = await Booking.findById(bookingId);
-    if (!booking) return res.status(404).json({ success: false, message: "Booking not found" });
+    // ✅ Kiểm tra dữ liệu đầu vào
+    if (!scheduleId || !newDate || !newStartTime || !newEndTime || !reason) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Missing required fields." });
+    }
 
+    // ✅ Tìm lịch học
     const schedule = await Schedule.findById(scheduleId);
-    if (!schedule) return res.status(404).json({ success: false, message: "Schedule not found" });
-
-    const changeReq = new ChangeRequest({
-      bookingId,
+    if (!schedule) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Schedule not found." });
+    }
+    const existingRequest = await ChangeRequest.findOne({
       scheduleId,
-      learnerId: req.user._id,
-      oldDate: schedule.date,
-      oldStartTime: schedule.startTime,
-      oldEndTime: schedule.endTime,
+      learnerId: req.user._id || req.user.id,
+      status: "pending", // 
+    });
+    if (existingRequest) {
+      return res.status(400).json({
+        success: false,
+        message: "A change request for this schedule is already pending.",
+      });
+    }
+    // ✅ Kiểm tra quyền của học viên (chỉ học viên của buổi học mới được đổi
+
+    if (
+      schedule.learnerId.toString() !== req.user._id &&
+      schedule.learnerId.toString() !== req.user.id
+    ) {
+      return res
+        .status(403)
+        .json({ success: false, message: "Unauthorized action." });
+    }
+
+    // ✅ Tạo yêu cầu đổi lịch
+    const changeRequest = new ChangeRequest({
+      scheduleId,
+      learnerId: req.user._id || req.user.id,
       newDate,
       newStartTime,
       newEndTime,
       reason,
     });
 
-    await changeReq.save();
-    return res.json({ success: true, message: "Change request created", data: changeReq });
+    await changeRequest.save();
+
+    return res.status(201).json({
+      success: true,
+      message: "Change schedule request created successfully.",
+      data: changeRequest,
+    });
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({ success: false, message: "Server error" });
+    console.error("Error in requestChangeSchedule:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Server error when requesting schedule change.",
+      error: error.message,
+    });
+  }
+};
+exports.getMyChangeRequests = async (req, res) => {
+  try {
+    const learnerId = req.user._id || req.user.id;
+
+    const requests = await ChangeRequest.find({ learnerId })
+      .populate("scheduleId", "date startTime endTime tutorId")
+      .sort({ createdAt: -1 });
+
+    return res.json({
+      success: true,
+      data: requests,
+    });
+  } catch (error) {
+    console.error("Error in getMyChangeRequests:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Server error when fetching change request history.",
+    });
   }
 };
 // 1. Lấy slot bận trong tuần của booking
 // Lấy toàn bộ slot bận trong tuần (mọi booking)
 exports.getBusySlotsForWeek = async (req, res) => {
-    try {
-      const { bookingId } = req.params;
-      const { weekStart } = req.query;
-  
-      if (!bookingId || bookingId === 'undefined' || !weekStart) {
-        return res.status(400).json({ message: 'Missing or invalid parameters' });
-      }
-  
-      if (!bookingId.match(/^[0-9a-fA-F]{24}$/)) {
-        return res.status(400).json({ message: 'Invalid bookingId format' });
-      }
-  
-      const startDate = new Date(weekStart);
-      const endDate = addDays(startDate, 7);
-  
-      const busySlots = await Schedule.find({
-        date: { $gte: startDate, $lt: endDate }
-      }).select('date startTime endTime bookingId');
-  
-      res.json(busySlots);
-    } catch (error) {
-      console.error(error);
-      res.status(500).json({ message: 'Server error' });
+  try {
+    const { bookingId } = req.params;
+    const { weekStart } = req.query;
+
+    if (!bookingId || bookingId === "undefined" || !weekStart) {
+      return res.status(400).json({ message: "Missing or invalid parameters" });
     }
-  };
+
+    if (!bookingId.match(/^[0-9a-fA-F]{24}$/)) {
+      return res.status(400).json({ message: "Invalid bookingId format" });
+    }
+
+    const startDate = new Date(weekStart);
+    const endDate = addDays(startDate, 7);
+
+    const busySlots = await Schedule.find({
+      date: { $gte: startDate, $lt: endDate },
+    }).select("date startTime endTime bookingId");
+
+    res.json(busySlots);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
 
 // 2. Thêm nhiều slot lịch cho booking
 exports.addMultipleSlots = async (req, res) => {
@@ -73,20 +131,25 @@ exports.addMultipleSlots = async (req, res) => {
     const { bookingId } = req.params;
     const { slots } = req.body;
 
-    if (!bookingId || bookingId === 'undefined' || !Array.isArray(slots) || slots.length === 0) {
-      return res.status(400).json({ message: 'Invalid input' });
+    if (
+      !bookingId ||
+      bookingId === "undefined" ||
+      !Array.isArray(slots) ||
+      slots.length === 0
+    ) {
+      return res.status(400).json({ message: "Invalid input" });
     }
 
     if (!bookingId.match(/^[0-9a-fA-F]{24}$/)) {
-      return res.status(400).json({ message: 'Invalid bookingId format' });
+      return res.status(400).json({ message: "Invalid bookingId format" });
     }
 
     const booking = await Booking.findById(bookingId);
-    if (!booking) return res.status(404).json({ message: 'Booking not found' });
+    if (!booking) return res.status(404).json({ message: "Booking not found" });
 
-    const newSchedules = slots.map(s => ({
+    const newSchedules = slots.map((s) => ({
       tutorId: booking.tutorId,
-      learnerId : booking.learnerId,
+      learnerId: booking.learnerId,
       bookingId,
       date: new Date(s.date),
       startTime: s.startTime,
@@ -95,10 +158,10 @@ exports.addMultipleSlots = async (req, res) => {
 
     await Schedule.insertMany(newSchedules);
 
-    res.json({ message: 'Slots added' });
+    res.json({ message: "Slots added" });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: "Server error" });
   }
 };
 
@@ -107,67 +170,69 @@ exports.deleteScheduleSlot = async (req, res) => {
   try {
     const { scheduleId } = req.params;
 
-    if (!scheduleId || scheduleId === 'undefined') {
-      return res.status(400).json({ message: 'Missing scheduleId' });
+    if (!scheduleId || scheduleId === "undefined") {
+      return res.status(400).json({ message: "Missing scheduleId" });
     }
 
     if (!scheduleId.match(/^[0-9a-fA-F]{24}$/)) {
-      return res.status(400).json({ message: 'Invalid scheduleId format' });
+      return res.status(400).json({ message: "Invalid scheduleId format" });
     }
 
     const schedule = await Schedule.findById(scheduleId);
-    if (!schedule) return res.status(404).json({ message: 'Schedule not found' });
+    if (!schedule)
+      return res.status(404).json({ message: "Schedule not found" });
 
     await schedule.deleteOne();
 
-    res.json({ message: 'Schedule slot deleted' });
+    res.json({ message: "Schedule slot deleted" });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: "Server error" });
   }
 };
-
 
 exports.getLearnerWeeklySchedules = async (req, res) => {
   try {
     if (!req.user) {
-      return res.status(401).json({ message: 'Unauthorized: User not logged in.' });
+      return res
+        .status(401)
+        .json({ message: "Unauthorized: User not logged in." });
     }
     const learnerId = req.user.id || req.user._id;
     const { weekStart } = req.query;
 
     if (!weekStart) {
-      return res.status(400).json({ message: 'Missing weekStart parameter' });
+      return res.status(400).json({ message: "Missing weekStart parameter" });
     }
 
     const startDate = new Date(weekStart);
     startDate.setUTCHours(0, 0, 0, 0);
-    
+
     const endDate = addDays(startDate, 7); // lấy đến đúng Chủ nhật
     endDate.setUTCHours(23, 59, 59, 999); // bao toàn bộ ngày Chủ nhật
-    
+
     const schedules = await Schedule.find({
       learnerId: learnerId,
-      date: { $gte: startDate, $lte: endDate } // CHỈNH SỬA Ở ĐÂY
+      date: { $gte: startDate, $lte: endDate }, // CHỈNH SỬA Ở ĐÂY
     })
-    .populate({
-      path: 'bookingId',
-      select: 'tutorId', 
-      populate: {
-        path: 'tutorId',
-        select: 'user',
+      .populate({
+        path: "bookingId",
+        select: "tutorId",
         populate: {
-          path: 'user', 
-          select: 'username' 
-        }
-      }
-    })
-    .select('date startTime endTime bookingId attended');
+          path: "tutorId",
+          select: "user",
+          populate: {
+            path: "user",
+            select: "username",
+          },
+        },
+      })
+      .select("date startTime endTime bookingId attended");
 
     res.json(schedules);
   } catch (error) {
     console.error("Error fetching learner's weekly schedules:", error);
-    res.status(500).json({ message: 'Server error fetching schedules' });
+    res.status(500).json({ message: "Server error fetching schedules" });
   }
 };
 // ✅ Mark Attendance & trừ tiền từng buổi
@@ -177,39 +242,57 @@ exports.markAttendance = async (req, res) => {
     const { attended } = req.body;
 
     if (!scheduleId || !scheduleId.match(/^[0-9a-fA-F]{24}$/)) {
-      return res.status(400).json({ message: 'Invalid scheduleId' });
+      return res.status(400).json({ message: "Invalid scheduleId" });
     }
 
     if (!req.user) {
-      return res.status(401).json({ message: 'Unauthorized: User not logged in' });
+      return res
+        .status(401)
+        .json({ message: "Unauthorized: User not logged in" });
     }
 
     const schedule = await Schedule.findById(scheduleId);
     if (!schedule) {
-      return res.status(404).json({ message: 'Schedule slot not found' });
+      return res.status(404).json({ message: "Schedule slot not found" });
     }
 
-    if (schedule.learnerId.toString() !== (req.user.id || req.user._id).toString()) {
-      return res.status(403).json({ message: 'Forbidden: Bạn không có quyền cập nhật lịch trình này.' });
+    if (
+      schedule.learnerId.toString() !== (req.user.id || req.user._id).toString()
+    ) {
+      return res
+        .status(403)
+        .json({
+          message: "Forbidden: Bạn không có quyền cập nhật lịch trình này.",
+        });
     }
 
     const booking = await Booking.findById(schedule.bookingId);
     if (!booking) {
-      return res.status(404).json({ message: 'Booking không tồn tại.' });
+      return res.status(404).json({ message: "Booking không tồn tại." });
     }
 
-    if (booking.status !== 'active') {
-      return res.status(400).json({ message: 'Booking không còn hiệu lực.' });
+    if (booking.status !== "approve" && booking.status !== "completed") {
+      return res.status(400).json({ message: "Booking không còn hiệu lực." });
+    }
+    if (booking.completed && attended === false) {
+      return res
+        .status(400)
+        .json({
+          message: "Booking này đã hoàn thành, không thể hủy điểm danh nữa.",
+        });
     }
 
     const now = new Date();
-    const scheduleDatePart = schedule.date.toISOString().split('T')[0];
-    const sessionStartTimeUTC = new Date(`${scheduleDatePart}T${schedule.startTime}:00.000Z`);
+    const scheduleDatePart = schedule.date.toISOString().split("T")[0];
+    const sessionStartTimeUTC = new Date(
+      `${scheduleDatePart}T${schedule.startTime}:00.000Z`
+    );
 
     if (now.getTime() < sessionStartTimeUTC.getTime()) {
-      return res.status(400).json({ message: 'Không thể điểm danh cho buổi học chưa bắt đầu.' });
+      return res
+        .status(400)
+        .json({ message: "Không thể điểm danh cho buổi học chưa bắt đầu." });
     }
-
     // ✅ Update attendance
     schedule.attended = attended;
     await schedule.save();
@@ -219,7 +302,9 @@ exports.markAttendance = async (req, res) => {
       const learner = await User.findById(booking.learnerId);
 
       if (learner.balance < booking.sessionCost) {
-        return res.status(400).json({ message: 'Số dư không đủ để thanh toán cho buổi học này.' });
+        return res
+          .status(400)
+          .json({ message: "Số dư không đủ để thanh toán cho buổi học này." });
       }
 
       learner.balance -= booking.sessionCost;
@@ -229,25 +314,41 @@ exports.markAttendance = async (req, res) => {
         userId: learner._id,
         amount: booking.sessionCost,
         balanceChange: -booking.sessionCost,
-        type: 'spend',
-        status: 'paid',
-        description: `Thanh toán buổi học #${booking.paidSessions + 1} cho booking ${booking._id.toString().slice(-6)}`,
-        date: new Date()
+        type: "spend",
+        status: "pending",
+        description: `Thanh toán buổi học #${
+          booking.paidSessions + 1
+        } cho booking ${booking._id.toString().slice(-6)}`,
+        date: new Date(),
       });
 
       booking.paidSessions += 1;
 
-      // ✅ Nếu đã đủ số buổi → hoàn tất booking
-      if (booking.paidSessions >= booking.numberOfSessions) {
-        booking.status = 'completed';
-      }
-
       await booking.save();
+    } else {
+      const learner = await User.findById(booking.learnerId);
+      // ✅ Hủy điểm danh → hoàn lại tiền
+      learner.balance += booking.sessionCost;
+      await learner.save();
+
+      await FinancialHistory.create({
+        userId: learner._id,
+        amount: booking.sessionCost,
+        balanceChange: booking.sessionCost,
+        type: "earning",
+        status: "success",
+        description: `Hoàn tiền buổi học #${
+          booking.paidSessions
+        } do hủy điểm danh (${booking._id.toString().slice(-6)})`,
+        date: new Date(),
+      });
+
+      booking.paidSessions = Math.max(booking.paidSessions - 1, 0);
     }
 
-    res.json({ message: 'Điểm danh đã được cập nhật thành công', schedule });
+    res.json({ message: "Điểm danh đã được cập nhật thành công", schedule });
   } catch (error) {
     console.error("Error marking attendance:", error);
-    res.status(500).json({ message: 'Lỗi server khi cập nhật điểm danh.' });
+    res.status(500).json({ message: "Lỗi server khi cập nhật điểm danh." });
   }
 };

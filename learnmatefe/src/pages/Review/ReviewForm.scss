@@ -1,0 +1,42 @@
+.review-form {
+  background: #fff;
+  border-radius: 8px;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+  .form-group {
+    margin-bottom: 16px;
+    label {
+      font-weight: 500;
+      margin-bottom: 6px;
+      display: block;
+    }
+    textarea {
+      width: 100%;
+      min-height: 60px;
+      border-radius: 6px;
+      border: 1px solid #ddd;
+      padding: 8px;
+      font-size: 1rem;
+      resize: vertical;
+      transition: border 0.2s;
+      &:focus {
+        border: 1.5px solid #ffb400;
+        outline: none;
+      }
+    }
+  }
+  .btn-submit {
+    background: linear-gradient(90deg, #ffb400, #ff8800);
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 10px 24px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+    &:hover {
+      background: linear-gradient(90deg, #ff8800, #ffb400);
+    }
+  }
+}

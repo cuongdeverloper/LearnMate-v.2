@@ -1,6 +1,7 @@
 const Tutor = require('../../modal/Tutor');
 const User = require('../../modal/User');
 const SavedTutor = require('../../modal/SavedTutor');
+const Review = require('../../modal/Review')
 
 const Subject = require('../../modal/Subject'); // import Subject model
 
@@ -11,12 +12,10 @@ exports.getTutors = async (req, res) => {
     let filter = {};
     let userFilter = {};
 
-    // Lọc theo tên tutor
     if (name) {
       userFilter.username = { $regex: name, $options: "i" };
     }
 
-    // ✅ Lọc theo nhiều môn
     if (subjects) {
       const subjectNames = decodeURIComponent(subjects).split(",").map(s => s.trim());
       const subjectDocs = await Subject.find({ name: { $in: subjectNames } });
@@ -24,28 +23,16 @@ exports.getTutors = async (req, res) => {
       filter.subjects = { $in: subjectIds };
     } else if (subject) {
       const subjectDoc = await Subject.findOne({ name: { $regex: subject, $options: "i" } });
-      if (subjectDoc) {
-        filter.subjects = subjectDoc._id;
-      } else {
-        return res.json({ success: true, tutors: [] }); // không tìm thấy môn -> trả về rỗng
-      }
+      if (subjectDoc) filter.subjects = subjectDoc._id;
+      else return res.json({ success: true, tutors: [] });
     }
 
-    // ✅ Lọc theo class
-    if (classGrade) {
-      filter.classes = Number(classGrade);
-    }
+    if (classGrade) filter.classes = Number(classGrade);
 
-    // ✅ Lọc theo giá
     if (minPrice || maxPrice) {
       filter.pricePerHour = {};
       if (minPrice) filter.pricePerHour.$gte = Number(minPrice);
       if (maxPrice) filter.pricePerHour.$lte = Number(maxPrice);
-    }
-
-    // ✅ Lọc theo rating
-    if (minRating) {
-      filter.rating = { $gte: Number(minRating) };
     }
 
     let tutors = await Tutor.find(filter)
@@ -54,44 +41,94 @@ exports.getTutors = async (req, res) => {
         match: userFilter,
         select: "username email image phoneNumber gender",
       })
-      .populate("subjects", "name"); // 👈 lấy tên môn học
+      .populate("subjects", "name classLevel");
 
-    tutors = tutors.filter((tutor) => tutor.user !== null);
+    tutors = tutors.filter(t => t.user !== null);
 
-    res.json({ success: true, tutors });
+    // ✅ Tính rating trung bình từ Review
+    const tutorIds = tutors.map(t => t._id);
+    const reviews = await Review.aggregate([
+      { $match: { tutor: { $in: tutorIds } } },
+      { $group: { _id: "$tutor", avgRating: { $avg: "$rating" } } }
+    ]);
+
+    const ratingMap = {};
+    reviews.forEach(r => {
+      ratingMap[r._id.toString()] = r.avgRating;
+    });
+
+    const resultTutors = tutors.map(tutor => {
+      const avgRating = ratingMap[tutor._id.toString()] || 0;
+      return { ...tutor.toObject(), rating: avgRating };
+    });
+
+    // ✅ Lọc theo minRating
+    const finalTutors = minRating
+      ? resultTutors.filter(t => t.rating >= Number(minRating))
+      : resultTutors;
+
+    res.json({ success: true, tutors: finalTutors });
   } catch (err) {
+    console.error("Error in getTutors:", err);
     res.status(500).json({ success: false, message: err.message });
   }
 };
-
 exports.getTutorById = async (req, res) => {
   try {
     const tutor = await Tutor.findById(req.params.tutorId)
-    .populate('subjects', 'name classLevel') 
-    .populate('user', 'username email image phoneNumber gender')
+      .populate("subjects", "name classLevel")
+      .populate("user", "username email image phoneNumber gender");
 
-    if (!tutor) return res.status(404).json({ success: false, message: 'Tutor not found' });
+    if (!tutor)
+      return res.status(404).json({ success: false, message: "Tutor not found" });
 
-    res.json({ success: true, tutor });
+    // Tính rating trung bình từ Review
+    const reviews = await Review.find({ tutor: tutor._id });
+    const avgRating =
+      reviews.length > 0
+        ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
+        : 0;
+
+    const tutorWithRating = { ...tutor.toObject(), rating: avgRating };
+
+    res.json({ success: true, tutor: tutorWithRating });
   } catch (err) {
+    console.error("Error in getTutorById:", err);
     res.status(500).json({ success: false, message: err.message });
   }
 };
 
 exports.getSavedTutors = async (req, res) => {
   try {
-    // req.user.id sẽ đến từ middleware xác thực (ví dụ: từ token JWT)
+    // Lấy danh sách tutor đã lưu của user
     const savedTutors = await SavedTutor.find({ user: req.user.id || req.user._id })
     .populate({
       path: 'tutor',
-      populate: {
-        path: 'user',
-        select: 'username image' // 👈 Chọn trường cần thiết
-      }
+      populate: [
+        { path: 'user', select: 'username image' },
+        { path: 'subjects', select: 'name classLevel' } // <- populate subjects đúng cách
+      ]
     });
 
-    // Trả về danh sách các đối tượng Tutor đã được populate
-    res.status(200).json(savedTutors.map(item => item.tutor));
+    // Tính rating trung bình cho từng tutor
+    const tutorIds = savedTutors.map(st => st.tutor._id);
+    const reviews = await Review.find({ tutor: { $in: tutorIds } });
+
+    const ratingMap = {};
+    reviews.forEach(r => {
+      const tId = r.tutor.toString();
+      if (!ratingMap[tId]) ratingMap[tId] = [];
+      ratingMap[tId].push(r.rating);
+    });
+
+    const tutorsWithRating = savedTutors.map(st => {
+      const tutor = st.tutor.toObject();
+      const ratings = ratingMap[tutor._id.toString()] || [];
+      const avgRating = ratings.length > 0 ? ratings.reduce((a,b)=>a+b,0)/ratings.length : 0;
+      return { ...tutor, rating: avgRating };
+    });
+
+    res.status(200).json(tutorsWithRating);
   } catch (error) {
     console.error('Lỗi khi lấy danh sách gia sư đã lưu:', error);
     res.status(500).json({ message: 'Lỗi server.' });
@@ -201,6 +238,57 @@ exports.updateActiveStatus = async (req, res) => {
   } catch (error) {
     console.error('Error updating tutor active status:', error);
     return res.status(500).json({ message: 'Internal Server Error' });
+  }
+};
+
+exports.getMyTutor = async (req, res) => {
+  try {
+    const tutor = await Tutor.findOne({ user: req.user._id || req.user.id })
+      .populate("subjects", "name classLevel");
+    if (!tutor)
+      return res.status(404).json({ message: "Tutor not found" });
+
+    res.json(tutor);
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// ✅ Cập nhật thông tin tutor
+exports.updateTutor = async (req, res) => {
+  try {
+    const { bio, subjects, pricePerHour, location, languages } = req.body;
+
+    const tutor = await Tutor.findById(req.params.id);
+    if (!tutor) return res.status(404).json({ message: "Tutor not found" });
+
+    // Chỉ cho phép user sở hữu tutor đó cập nhật
+    if (!tutor.user.equals(req.user._id || req.user.id))
+      return res.status(403).json({ message: "Bạn không có quyền cập nhật hồ sơ này." });
+
+    // Cập nhật các trường
+    if (bio !== undefined) tutor.bio = bio;
+    if (subjects !== undefined) tutor.subjects = subjects;
+    if (pricePerHour !== undefined) tutor.pricePerHour = pricePerHour;
+    if (location !== undefined) tutor.location = location;
+    if (languages !== undefined) tutor.languages = languages;
+
+    await tutor.save();
+
+    const updatedTutor = await Tutor.findById(tutor._id).populate("subjects", "name classLevel");
+    res.json({ message: "Cập nhật thành công", tutor: updatedTutor });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// ✅ Lấy danh sách tất cả môn học
+exports.getAllSubjects = async (req, res) => {
+  try {
+    const subjects = await Subject.find({}, "name classLevel");
+    res.json(subjects);
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 };
 
