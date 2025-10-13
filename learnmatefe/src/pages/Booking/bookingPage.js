@@ -200,7 +200,7 @@ export default function BookingPage() {
 
       // call backend to create booking (pass schedule availability ids)
       const res = await axios.post(
-        `/api/booking/bookings/${tutorId}`,
+        `/api/learner/bookings/${tutorId}`,
         {
           amount: totalAmount,
           numberOfSessions:
@@ -221,7 +221,7 @@ export default function BookingPage() {
       if (body?.success || body?.booking) {
         toast.success("Đặt lịch thành công!");
         // update balance locally if possible
-        setBalance((prev) => (typeof prev === "number" ? prev - totalAmount : prev));
+        setBalance((prev) => (typeof prev === "number" ? prev - totalAmount*0.3 : prev));
         // refresh availabilities so booked slots become unavailable
         await fetchAvailabilities();
         setSelectedSlots([]);

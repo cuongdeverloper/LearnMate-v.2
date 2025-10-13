@@ -8,7 +8,7 @@ import {
   getMaterialsByBookingId,
   getMyBookings,
   reportBooking,
-  requestChangeSchedule, // Make sure this is correctly imported
+  requestChangeSchedule,getMyChangeRequests // Make sure this is correctly imported
 } from "../../Service/ApiService/ApiBooking";
 import {
   getMyWeeklySchedules,
@@ -38,13 +38,7 @@ const ConfirmationModal = ({ title, message, onConfirm, onCancel }) => {
     </div>
   );
 };
-const ChangeScheduleModal = ({
-  isOpen,
-  onClose,
-  onSubmit,
-  bookingId,
-  schedules,
-}) => {
+const ChangeScheduleModal = ({ isOpen, onClose, onSubmit, schedules }) => {
   const [selectedScheduleId, setSelectedScheduleId] = useState("");
   const [newDate, setNewDate] = useState("");
   const [newTimeSlot, setNewTimeSlot] = useState("");
@@ -68,7 +62,6 @@ const ChangeScheduleModal = ({
     const [newStartTime, newEndTime] = newTimeSlot.split(" - ");
 
     onSubmit({
-      bookingId,
       scheduleId: selectedScheduleId, // lịch hiện có
       newDate,
       newStartTime,
@@ -265,8 +258,30 @@ function MyCourses() {
   // --- NEW STATE for tabs ---
   const [activeTab, setActiveTab] = useState("inProgress"); // 'inProgress' or 'finished'
   // --- END NEW STATE ---
+  const [changeRequests, setChangeRequests] = useState([]);
+  const [loadingChangeRequests, setLoadingChangeRequests] = useState(true);
+  const [errorChangeRequests, setErrorChangeRequests] = useState(null);
 
+  const fetchChangeRequests = async () => {
+    setLoadingChangeRequests(true);
+    setErrorChangeRequests(null);
+    try {
+      const res = await getMyChangeRequests();
+      if (res.success) {
+        setChangeRequests(res.data);
+      } else {
+        setErrorChangeRequests(
+          res.message || "Không thể tải yêu cầu đổi lịch."
+        );
+      }
+    } catch (error) {
+      setErrorChangeRequests("Lỗi khi tải yêu cầu đổi lịch.");
+    } finally {
+      setLoadingChangeRequests(false);
+    }
+  };
   useEffect(() => {
+    fetchChangeRequests();
     fetchBookings();
     fetchAllWeeklySchedules();
     console.log("All bookings: ", bookings);
@@ -279,6 +294,7 @@ function MyCourses() {
 
   const handleSubmitChangeSchedule = async ({
     bookingId,
+    scheduleId,
     newDate,
     newStartTime,
     newEndTime,
@@ -286,6 +302,7 @@ function MyCourses() {
   }) => {
     try {
       const res = await requestChangeSchedule(bookingId, {
+        scheduleId,
         newDate,
         newStartTime,
         newEndTime,
@@ -636,8 +653,16 @@ function MyCourses() {
           >
             Đã hoàn thành
           </button>
+          <button
+            className={`tab-button ${
+              activeTab === "changeRequests" ? "active" : ""
+            }`}
+            onClick={() => setActiveTab("changeRequests")}
+          >
+            Yêu cầu đổi lịch
+          </button>
         </div>
-
+        {(activeTab === "inProgress" || activeTab === "finished") && (
         <div className="bookings-list">
           {filteredBookings.length === 0 ? (
             <p className="no-bookings">
@@ -749,7 +774,63 @@ function MyCourses() {
             ))
           )}
         </div>
-
+        )}
+        {activeTab === "changeRequests" && (
+          <div className="change-requests-section">
+            <h3 className="section-subtitle">Lịch sử yêu cầu đổi lịch</h3>
+            {loadingChangeRequests ? (
+              <p className="loading-message">Đang tải danh sách yêu cầu...</p>
+            ) : errorChangeRequests ? (
+              <p className="error-message">{errorChangeRequests}</p>
+            ) : changeRequests.length === 0 ? (
+              <p className="no-bookings">Bạn chưa gửi yêu cầu đổi lịch nào.</p>
+            ) : (
+              <div className="change-request-list">
+                {changeRequests.map((req) => (
+                  <div key={req._id} className="change-request-card">
+                    <p>
+                      <strong>Ngày cũ:</strong>{" "}
+                      {new Date(req.scheduleId?.date).toLocaleDateString(
+                        "vi-VN"
+                      )}{" "}
+                      ({req.scheduleId?.startTime} - {req.scheduleId?.endTime})
+                    </p>
+                    <p>
+                      <strong>Ngày mới:</strong>{" "}
+                      {new Date(req.newDate).toLocaleDateString("vi-VN")} (
+                      {req.newStartTime} - {req.newEndTime})
+                    </p>
+                    <p>
+                      <strong>Lý do:</strong> {req.reason}
+                    </p>
+                    <p>
+                      <strong>Trạng thái:</strong>{" "}
+                      <span
+                        className={`status ${
+                          req.status === "pending"
+                            ? "pending"
+                            : req.status === "approved"
+                            ? "approved"
+                            : "rejected"
+                        }`}
+                      >
+                        {req.status === "pending"
+                          ? "Đang chờ"
+                          : req.status === "approved"
+                          ? "Đã duyệt"
+                          : "Từ chối"}
+                      </span>
+                    </p>
+                    <p>
+                      <strong>Ngày gửi:</strong>{" "}
+                      {new Date(req.createdAt).toLocaleString("vi-VN")}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
         <h3 className="section-subtitle">Lịch học tổng quan tuần này</h3>
 
         <div className="week-navigation">

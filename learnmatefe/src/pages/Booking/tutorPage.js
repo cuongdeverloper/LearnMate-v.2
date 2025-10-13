@@ -357,7 +357,17 @@ export default function TutorListPage() {
                       <div className="tutor-info">
                         <h3>{tutor.user?.username || "Gia sư chưa có tên"}</h3>
                         <div className="rating">
-                          <FaStar className="star-icon" />
+                          {[...Array(5)].map((_, i) => (
+                            <FaStar
+                              key={i}
+                              className="star-icon"
+                              color={
+                                i < Math.round(tutor.rating)
+                                  ? "#ffc107"
+                                  : "#e4e5e9"
+                              }
+                            />
+                          ))}
                           <span>
                             {tutor.rating
                               ? tutor.rating.toFixed(1)
@@ -366,8 +376,11 @@ export default function TutorListPage() {
                         </div>
                         <p>
                           <strong>Môn dạy:</strong>{" "}
-                          {tutor.subjects?.map((s) => s.name).join(", ") ||
-                            "Đang cập nhật"}
+                          {tutor.subjects?.length
+                            ? tutor.subjects
+                                .map((s) => `${s.name} lớp ${s.classLevel}`)
+                                .join(", ")
+                            : "Đang cập nhật"}
                         </p>
                         <p className="tutor-desc">
                           {tutor.bio ||

@@ -3,6 +3,7 @@ const Schedule = require("../../modal/Schedule");
 const Material = require("../../modal/Material");
 const Progress = require("../../modal/Progress");
 const TutorAvailability = require("../../modal/TutorAvailability");
+const Tutor = require ("../../modal/Tutor")
 
 const respondBooking = async (req, res) => {
 
@@ -333,6 +334,47 @@ const getTutorAvailability = async (req, res) => {
     res.status(500).json({ success: false, message: err.message });
   }
 };
+const getActiveStatus = async (req, res) => {
+  try {
+    const tutor = await Tutor.findOne({ user: req.user.id });
+    if (!tutor) {
+      return res.status(404).json({ message: 'Tutor not found' });
+    }
+    return res.status(200).json({ active: tutor.active });
+  } catch (error) {
+    console.error('Error getting tutor active status:', error);
+    return res.status(500).json({ message: 'Internal Server Error' });
+  }
+};
+
+/**
+ * PUT /api/tutor/active-status
+ * Cập nhật trạng thái hoạt động của tutor
+ */
+const updateActiveStatus = async (req, res) => {
+  const { active } = req.body;
+
+  if (typeof active !== 'boolean') {
+    return res.status(400).json({ message: 'Invalid status value' });
+  }
+
+  try {
+    const tutor = await Tutor.findOneAndUpdate(
+      { user: req.user.id },
+      { active },
+      { new: true }
+    );
+
+    if (!tutor) {
+      return res.status(404).json({ message: 'Tutor not found' });
+    }
+
+    return res.status(200).json({ success: true, active: tutor.active });
+  } catch (error) {
+    console.error('Error updating tutor active status:', error);
+    return res.status(500).json({ message: 'Internal Server Error' });
+  }
+};
 
 module.exports = {
   respondBooking,
@@ -345,5 +387,5 @@ module.exports = {
   updateProgress,
   getProgress,
   uploadMaterial,
-  getMaterials,getTutorAvailability
+  getMaterials,getTutorAvailability,updateActiveStatus,getActiveStatus
 };

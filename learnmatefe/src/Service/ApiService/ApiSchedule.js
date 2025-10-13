@@ -33,7 +33,7 @@ export const getMyWeeklySchedules = async (weekStartDate) => {
       }
   
       const response = await axios.patch(
-        `/schedule/${scheduleId}/attendance`,
+        `/api/booking/schedule/${scheduleId}/attendance`,
         { attended: Boolean(attended) },
         {
           headers: {

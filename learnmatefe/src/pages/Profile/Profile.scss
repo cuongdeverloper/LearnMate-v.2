@@ -157,13 +157,13 @@ $text-sass: #333;
 
 /* Button Group */
 .button-group {
-  display: flex;
-  flex-wrap: wrap; // Allow buttons to wrap to the next line
-  justify-content: center;
-  gap: 15px; // Space between buttons
-  margin-top: 30px; // Space above buttons
-
-  .btn {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 30px;
+  
+    .btn {
       padding: 12px 25px;
       border: none;
       border-radius: 8px;
@@ -171,41 +171,48 @@ $text-sass: #333;
       font-weight: 600;
       cursor: pointer;
       transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
-      min-width: 150px; // Ensure buttons have a minimum width
-
+      min-width: 150px;
+  
       &:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 4px 10px var(--shadow-light);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 10px var(--shadow-light);
       }
-
+  
       &-edit {
-          background-color: var(--warning-color); // Use CSS variable for base color
-          color: var(--white);
-
-          &:hover {
-              background-color: darken($warning-sass, 8%); // Use Sass variable for darken
-          }
+        background-color: var(--warning-color);
+        color: var(--white);
+        &:hover {
+          background-color: darken($warning-sass, 8%);
+        }
       }
-
+  
       &-change-password {
-          background-color: var(--primary-color); // Use CSS variable for base color
-          color: var(--white);
-
-          &:hover {
-              background-color: darken($primary-sass, 8%); // Use Sass variable for darken
-          }
+        background-color: var(--primary-color);
+        color: var(--white);
+        &:hover {
+          background-color: darken($primary-sass, 8%);
+        }
       }
-
+  
       &-apply-tutor {
-          background-color: var(--secondary-color); // Use CSS variable for base color
-          color: var(--white);
-
-          &:hover {
-              background-color: darken($secondary-sass, 8%); // Use Sass variable for darken
-          }
+        background-color: var(--secondary-color);
+        color: var(--white);
+        &:hover {
+          background-color: darken($secondary-sass, 8%);
+        }
       }
+  
+      /* ✅ Nút cập nhật hồ sơ gia sư */
+      &-edit-tutor {
+        background-color: var(--success-color);
+        color: var(--white);
+        &:hover {
+          background-color: darken($success-sass, 8%);
+        }
+      }
+    }
   }
-}
+  
 
 /* Responsive Adjustments */
 @media (max-width: 767px) {
