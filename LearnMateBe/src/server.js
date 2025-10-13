@@ -16,6 +16,7 @@ const RouterTutor = require("./routes/tutorRoutes");
 const RouteBooking = require("./routes/BookingRoutes");
 const RouteMessage = require("./routes/messageRoutes");
 const RouteQuiz = require("./routes/QuizRoutes");
+const RoutePayment = require("./routes/PaymentRoutes");
 const app = express();
 const port = process.env.PORT || 8888;
 const hostname = process.env.HOST_NAME || "localhost";
@@ -65,6 +66,7 @@ app.use("/api/tutor", RouterTutor);
 app.use("/api/booking", RouteBooking);
 app.use("/api/message", RouteMessage);
 app.use("/api/quiz", RouteQuiz);
+app.use("/api/payment", RoutePayment);
 
 app.get("/", (req, res) => {
   res.json("Hello");

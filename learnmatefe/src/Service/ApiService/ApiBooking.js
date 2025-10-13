@@ -119,12 +119,64 @@ export const getMyBookings = async () => {
       console.error("Error fetching bookings by tutorId:", error);
       return null;
     }
-  };
-  export const requestChangeSchedule = async (bookingId, payload) => {
+  };export const requestChangeSchedule = async (bookingId, payload) => {
     try {
-      const res = await axios.post(`/api/booking/bookings/${bookingId}/request-change`, payload);
-      return res.data;
+      const token = Cookies.get("accessToken");
+      if (!token) {
+        window.open("/signin", "_blank");
+        return;
+      }
+  
+      const res = await axios.post(
+        `/api/booking/bookings/${bookingId}/request-change`,
+        payload,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+  
+      // ✅ Thành công thì trả luôn response data
+      return res;
+  
     } catch (err) {
-      return { success: false, message: err.response?.data?.message || "Error" };
+      // ✅ Bắt lỗi từ backend và chuẩn hóa response để frontend xử lý thống nhất
+      return {
+        success: false,
+        message:
+          err.response?.message ||
+          "Server error occurred while requesting schedule change.",
+      };
+    }
+  };
+  export const getMyChangeRequests = async () => {
+    try {
+      const token = Cookies.get("accessToken");
+      if (!token) {
+        window.open("/signin", "_blank");
+        return { success: false, message: "Unauthorized. Please sign in." };
+      }
+  
+      const res = await axios.get(`/api/booking/bookings/change-requests/my-requests`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+  
+      return res;
+    } catch (err) {
+      console.error("❌ Error in getMyChangeRequests:", err);
+      return {
+        success: false,
+        message: err.response?.message || "Error fetching change requests.",
+      };
+    }
+  };
+  export const createReview = async (data) => {
+    try {
+      const response = await axios.post('/api/booking/review', data);
+      return response;
+    } catch (error) {
+      console.error("Error creating review:", error);
+      throw error;
     }
   };
