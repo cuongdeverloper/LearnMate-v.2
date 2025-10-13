@@ -23,11 +23,15 @@ import AuthCallback from "./components/Auth/AuthCallback";
 import EnterOTPRegister from "./components/Auth/Sign up/OTP/EnterOTPRegister";
 import RequestPasswordReset from "./components/Auth/reset password/RequestPasswordReset";
 import ResetPassword from "./components/Auth/reset password/ResetPassword";
+
 import Messenger from "./Message Socket/Page/Messenger";
 import PaymentPage from "./pages/User/PaymentPage";
 import PaymentResult from "./pages/User/paymentResult";
 import TutorApplicationForm from "./pages/Profile/TutorApplicationForm";
 import ReviewCoursePage from "./pages/Review/ReviewCoursePage";
+
+import AdminDashboard from "./components/Admin/AdminDashboard";
+
 
 const AppLayout = ({ children }) => {
   const location = useLocation();
@@ -68,6 +72,7 @@ const Layout = () => {
           <Route path="/signin" element={<SignIn />} />
           <Route path="/otp-verify" element={<EnterOTPRegister />} />
           <Route path="auth/callback" element={<AuthCallback />} />
+<<<<<<< HEAD
           <Route
             path="/messenger"
             element={
@@ -86,6 +91,21 @@ const Layout = () => {
           />
           <Route path="/forgot-password" element={<RequestPasswordReset />} />
           <Route path="/reset-password" element={<ResetPassword />} />
+=======
+          <Route path="/forgot-password" element={
+                <RequestPasswordReset />
+           } />
+          <Route path="/reset-password" element={
+              <ResetPassword />} />
+>>>>>>> origin/main
+          <Route
+            path="/admin/dashboard"
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <AdminDashboard />
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="/TutorDashboard"
             element={

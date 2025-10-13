@@ -30,6 +30,12 @@ const userSchema = new mongoose.Schema({
   isBlocked: {
     type: Boolean,
     default: false
+  },
+  blockReason: {
+    type: String
+  },
+  blockedAt: {
+    type: Date
   }
 }, { timestamps: true });
 
