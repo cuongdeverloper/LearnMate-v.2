@@ -72,7 +72,7 @@ const Layout = () => {
           <Route path="/signin" element={<SignIn />} />
           <Route path="/otp-verify" element={<EnterOTPRegister />} />
           <Route path="auth/callback" element={<AuthCallback />} />
-<<<<<<< HEAD
+
           <Route
             path="/messenger"
             element={
@@ -91,13 +91,13 @@ const Layout = () => {
           />
           <Route path="/forgot-password" element={<RequestPasswordReset />} />
           <Route path="/reset-password" element={<ResetPassword />} />
-=======
+
           <Route path="/forgot-password" element={
                 <RequestPasswordReset />
            } />
           <Route path="/reset-password" element={
               <ResetPassword />} />
->>>>>>> origin/main
+
           <Route
             path="/admin/dashboard"
             element={
