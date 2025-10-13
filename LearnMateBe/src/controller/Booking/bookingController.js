@@ -60,7 +60,7 @@ exports.createBooking = async (req, res) => {
       amount: deposit,
       balanceChange: -deposit,
       type: 'spend',
-      status: 'paid',
+      status: 'success',
       description: `Đặt cọc 30% cho booking với gia sư ${tutorId.toString().slice(-6)}`,
       date: new Date()
     });
@@ -75,7 +75,7 @@ exports.createBooking = async (req, res) => {
       deposit,
       sessionCost,
       paidSessions: 0,   // số buổi đã trả trong phần 70%
-      status: 'active',
+      status: 'pending',
       note,
     });
 
@@ -206,19 +206,19 @@ exports.cancelBooking = async (req, res) => {
       return res.status(500).json({ success: false, message: 'Error processing refund: User not found.' });
     }
 
-    user.balance += booking.amount; // Hoàn lại số tiền booking
+    user.balance += booking.deposit; // Hoàn lại số tiền booking
     await user.save();
     await FinancialHistory.create({
       userId: userId,
-      amount: booking.amount,
-      balanceChange: booking.amount,
+      amount: booking.deposit,
+      balanceChange: booking.deposit,
       type: 'earning',
       status: 'success',
-      description: `Hoàn tiền sau khi hủy  khóa học (${booking._id.toString().slice(-6)})`,
+      description: `Hoàn tiền cọc sau khi hủy  khóa học (${booking._id.toString().slice(-6)})`,
       date: new Date()
     });
 
-    res.status(200).json({ success: true, message: 'Booking cancelled and refunded successfully.', bookingId: booking._id });
+    res.status(200).json({ success: true, message: 'Booking cancelled and refunded deposit successfully.', bookingId: booking._id });
 
   } catch (error) {
     console.error('Error cancelling booking:', error);

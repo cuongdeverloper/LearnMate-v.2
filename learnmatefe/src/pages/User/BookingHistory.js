@@ -126,7 +126,8 @@ const BookingHistoryPage = () => {
                                 <tr>
                                     <th>Gia sư</th>
                                     <th>Số buổi</th>
-                                    <th>Số tiền</th>
+                                    <th>Tổng tiền</th>
+                                    <th>Tiền cọc</th>
                                     <th>Trạng thái</th>
                                     <th>Thời gian đặt</th>
                                     <th>Hành động</th>
@@ -146,6 +147,7 @@ const BookingHistoryPage = () => {
                                         </td>
                                         <td>{b.numberOfSessions}</td>
                                         <td>{b.amount.toLocaleString()} VND</td>
+                                        <td>{b.deposit.toLocaleString()} VND</td>
                                         <td>{renderStatus(b.status)}</td>
                                         <td>{new Date(b.createdAt).toLocaleString()}</td>
                                         <td>
