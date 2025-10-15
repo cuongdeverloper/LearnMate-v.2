@@ -5,7 +5,7 @@ import Aos from "aos";
 import "aos/dist/aos.css";
 import { useEffect } from "react";
 import StudentHomePage from "./components/HomePage/Student homepage/StudentHomePage";
-import SignUp from "./components/Auth/Sign up/SignUp";
+// import SignUp from "./components/Auth/Sign up/SignUp";
 import SignIn from "./components/Auth/Sign in/SignIn";
 import { BrowserRouter, Route, Routes, useLocation } from "react-router-dom";
 import TutorDashboard from "./components/Tutor/TutorDashboard";
@@ -67,7 +67,7 @@ const Layout = () => {
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<StudentHomePage />} />
-          <Route path="/signup" element={<SignUp />} />
+          {/* <Route path="/signup" element={<SignUp />} /> */}
           <Route path="/signin" element={<SignIn />} />
           <Route path="/otp-verify" element={<EnterOTPRegister />} />
           <Route path="auth/callback" element={<AuthCallback />} />
