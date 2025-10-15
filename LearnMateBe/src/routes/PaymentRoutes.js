@@ -11,7 +11,7 @@ routerPayment.get('/me/withdrawals',checkAccessToken, paymentController.getUserW
 routerPayment.get('/me/financial-flow',checkAccessToken, paymentController.getFinancialFlowHistory); // Đổi từ /user/:userId/financial-flow (nếu có trước đó)
 routerPayment.get('/me/financial-flowhistory', checkAccessToken, paymentController.getUserFinancialFlow);
 // Route callback từ VNPAY sau khi thanh toán
-routerPayment.get('/payment/vnpay_return', paymentController.vnpayReturn);
+routerPayment.get('/vnpay_return', paymentController.vnpayReturn);
 
 // Xác thực trước khi trả dữ liệu user
 routerPayment.get('/user/:userId', checkAccessToken, paymentController.getUserInfo);

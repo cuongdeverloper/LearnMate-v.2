@@ -32,7 +32,6 @@ import ReviewCoursePage from "./pages/Review/ReviewCoursePage";
 
 import AdminDashboard from "./components/Admin/AdminDashboard";
 
-
 const AppLayout = ({ children }) => {
   const location = useLocation();
   const noHeaderFooterRoutes = ["/otp-verify", "/auth/callback"];
@@ -92,16 +91,13 @@ const Layout = () => {
           <Route path="/forgot-password" element={<RequestPasswordReset />} />
           <Route path="/reset-password" element={<ResetPassword />} />
 
-          <Route path="/forgot-password" element={
-                <RequestPasswordReset />
-           } />
-          <Route path="/reset-password" element={
-              <ResetPassword />} />
+          <Route path="/forgot-password" element={<RequestPasswordReset />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
 
           <Route
             path="/admin/dashboard"
             element={
-              <ProtectedRoute allowedRoles={['admin']}>
+              <ProtectedRoute allowedRoles={["admin"]}>
                 <AdminDashboard />
               </ProtectedRoute>
             }
@@ -205,8 +201,10 @@ const Layout = () => {
           <Route
             path="/review/:bookingId"
             element={
-              <ProtectedRoute allowedRoles={['student','tutor']}>
-                <ReviewCoursePage />
+              <ProtectedRoute allowedRoles={["student", "tutor"]}>
+                <AppLayout>
+                  <ReviewCoursePage />
+                </AppLayout>
               </ProtectedRoute>
             }
           />
