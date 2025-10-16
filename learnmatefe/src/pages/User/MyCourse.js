@@ -7,7 +7,8 @@ import {
   finishBooking,
   getMaterialsByBookingId,
   getMyBookings,
-  reportBooking, // Make sure this is correctly imported
+  reportBooking,
+  requestChangeSchedule,getMyChangeRequests // Make sure this is correctly imported
 } from "../../Service/ApiService/ApiBooking";
 import {
   getMyWeeklySchedules,
@@ -32,6 +33,95 @@ const ConfirmationModal = ({ title, message, onConfirm, onCancel }) => {
           <button onClick={onCancel} className="cancel-btn">
             Hủy bỏ
           </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+const ChangeScheduleModal = ({ isOpen, onClose, onSubmit, schedules }) => {
+  const [selectedScheduleId, setSelectedScheduleId] = useState("");
+  const [newDate, setNewDate] = useState("");
+  const [newTimeSlot, setNewTimeSlot] = useState("");
+  const [reason, setReason] = useState("");
+
+  const timeSlots = [
+    "07:00 - 09:00",
+    "09:30 - 11:30",
+    "12:00 - 14:00",
+    "14:30 - 16:30",
+    "17:00 - 19:00",
+    "19:30 - 21:30",
+  ];
+
+  const handleSubmit = () => {
+    if (!selectedScheduleId || !newDate || !newTimeSlot || !reason.trim()) {
+      toast.error("Vui lòng chọn đầy đủ thông tin.");
+      return;
+    }
+
+    const [newStartTime, newEndTime] = newTimeSlot.split(" - ");
+
+    onSubmit({
+      scheduleId: selectedScheduleId, // lịch hiện có
+      newDate,
+      newStartTime,
+      newEndTime,
+      reason,
+    });
+    onClose();
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="change-modal-overlay">
+      <div className="change-modal-content">
+        <h3>Yêu cầu đổi lịch học</h3>
+
+        <label>Chọn buổi học hiện tại:</label>
+        <select
+          value={selectedScheduleId}
+          onChange={(e) => setSelectedScheduleId(e.target.value)}
+        >
+          <option value="">-- Chọn buổi học --</option>
+          {(schedules || []).map((s) => (
+            <option key={s._id} value={s._id}>
+              {new Date(s.date).toLocaleDateString("vi-VN")} ({s.startTime} -{" "}
+              {s.endTime})
+            </option>
+          ))}
+        </select>
+
+        <label>Ngày mới:</label>
+        <input
+          type="date"
+          value={newDate}
+          onChange={(e) => setNewDate(e.target.value)}
+        />
+
+        <label>Chọn khung giờ mới:</label>
+        <select
+          value={newTimeSlot}
+          onChange={(e) => setNewTimeSlot(e.target.value)}
+        >
+          <option value="">-- Chọn khung giờ --</option>
+          {timeSlots.map((slot, i) => (
+            <option key={i} value={slot}>
+              {slot}
+            </option>
+          ))}
+        </select>
+
+        <label>Lý do đổi lịch:</label>
+        <textarea
+          placeholder="Nhập lý do..."
+          value={reason}
+          onChange={(e) => setReason(e.target.value)}
+        />
+
+        <div className="modal-actions">
+          <button onClick={onClose}>Hủy</button>
+          <button onClick={handleSubmit}>Gửi yêu cầu</button>
         </div>
       </div>
     </div>
@@ -148,6 +238,8 @@ function MyCourses() {
   const [errorBookings, setErrorBookings] = useState(null);
   const [loadingSchedules, setLoadingSchedules] = useState(true);
   const [errorSchedules, setErrorSchedules] = useState(null);
+  const [showChangeScheduleModal, setShowChangeScheduleModal] = useState(false);
+  const [changingBookingId, setChangingBookingId] = useState(null);
 
   // States for Report Modal
   const [showReportModal, setShowReportModal] = useState(false);
@@ -166,11 +258,65 @@ function MyCourses() {
   // --- NEW STATE for tabs ---
   const [activeTab, setActiveTab] = useState("inProgress"); // 'inProgress' or 'finished'
   // --- END NEW STATE ---
+  const [changeRequests, setChangeRequests] = useState([]);
+  const [loadingChangeRequests, setLoadingChangeRequests] = useState(true);
+  const [errorChangeRequests, setErrorChangeRequests] = useState(null);
 
+  const fetchChangeRequests = async () => {
+    setLoadingChangeRequests(true);
+    setErrorChangeRequests(null);
+    try {
+      const res = await getMyChangeRequests();
+      if (res.success) {
+        setChangeRequests(res.data);
+      } else {
+        setErrorChangeRequests(
+          res.message || "Không thể tải yêu cầu đổi lịch."
+        );
+      }
+    } catch (error) {
+      setErrorChangeRequests("Lỗi khi tải yêu cầu đổi lịch.");
+    } finally {
+      setLoadingChangeRequests(false);
+    }
+  };
   useEffect(() => {
+    fetchChangeRequests();
     fetchBookings();
     fetchAllWeeklySchedules();
+    console.log("All bookings: ", bookings);
   }, [token, weekStart]);
+
+  const handleCloseChangeModal = () => {
+    setShowChangeScheduleModal(false);
+    setChangingBookingId(null);
+  };
+
+  const handleSubmitChangeSchedule = async ({
+    bookingId,
+    scheduleId,
+    newDate,
+    newStartTime,
+    newEndTime,
+    reason,
+  }) => {
+    try {
+      const res = await requestChangeSchedule(bookingId, {
+        scheduleId,
+        newDate,
+        newStartTime,
+        newEndTime,
+        reason,
+      });
+      if (res.success) {
+        toast.success("Yêu cầu đổi lịch đã được gửi.");
+      } else {
+        toast.error(res.message || "Không thể gửi yêu cầu đổi lịch.");
+      }
+    } catch (error) {
+      toast.error("Lỗi khi gửi yêu cầu đổi lịch.");
+    }
+  };
 
   // Handlers for Report Modal
   const handleOpenReportModal = (bookingId) => {
@@ -206,7 +352,7 @@ function MyCourses() {
     setErrorBookings(null);
     try {
       const res = await getMyBookings();
-      console.log(res);
+      console.log(res.data);
       setBookings(res.data);
     } catch (error) {
       console.error("Error fetching bookings:", error);
@@ -507,8 +653,16 @@ function MyCourses() {
           >
             Đã hoàn thành
           </button>
+          <button
+            className={`tab-button ${
+              activeTab === "changeRequests" ? "active" : ""
+            }`}
+            onClick={() => setActiveTab("changeRequests")}
+          >
+            Yêu cầu đổi lịch
+          </button>
         </div>
-
+        {(activeTab === "inProgress" || activeTab === "finished") && (
         <div className="bookings-list">
           {filteredBookings.length === 0 ? (
             <p className="no-bookings">
@@ -525,6 +679,10 @@ function MyCourses() {
                 } ${booking.reported ? "reported" : ""}`}
               >
                 <p>
+                  <strong>Môn học:</strong>{" "}
+                  {booking.subjectId?.name || "Chưa có tên môn"}
+                </p>
+                <p>
                   <strong>Gia sư:</strong>{" "}
                   {booking.tutorId?.user?.username || "N/A"}
                 </p>
@@ -532,8 +690,19 @@ function MyCourses() {
                   <strong>Số buổi học:</strong> {booking.numberOfSessions}
                 </p>
                 <p>
-                  <strong>Số tiền:</strong>{" "}
-                  {booking.amount.toLocaleString("vi-VN")} VNĐ
+                  <strong>Chi phí mỗi buổi:</strong>{" "}
+                  {booking.sessionCost?.toLocaleString("vi-VN")} VNĐ
+                </p>
+                <p>
+                  <strong>Tổng tiền:</strong>{" "}
+                  {booking.amount?.toLocaleString("vi-VN")} VNĐ
+                </p>
+                <p>
+                  <strong>Tiền cọc:</strong>{" "}
+                  {booking.deposit?.toLocaleString("vi-VN")} VNĐ
+                </p>
+                <p>
+                  <strong>Ghi chú:</strong> {booking.note || "Không có"}
                 </p>
 
                 {booking.completed && (
@@ -590,13 +759,78 @@ function MyCourses() {
                         Báo cáo
                       </button>
                     )}
+                    <button
+                      className="change-schedule-button"
+                      onClick={() => {
+                        setChangingBookingId(booking._id);
+                        setShowChangeScheduleModal(true);
+                      }}
+                    >
+                      Yêu cầu đổi lịch
+                    </button>
                   </div>
                 )}
               </div>
             ))
           )}
         </div>
-
+        )}
+        {activeTab === "changeRequests" && (
+          <div className="change-requests-section">
+            <h3 className="section-subtitle">Lịch sử yêu cầu đổi lịch</h3>
+            {loadingChangeRequests ? (
+              <p className="loading-message">Đang tải danh sách yêu cầu...</p>
+            ) : errorChangeRequests ? (
+              <p className="error-message">{errorChangeRequests}</p>
+            ) : changeRequests.length === 0 ? (
+              <p className="no-bookings">Bạn chưa gửi yêu cầu đổi lịch nào.</p>
+            ) : (
+              <div className="change-request-list">
+                {changeRequests.map((req) => (
+                  <div key={req._id} className="change-request-card">
+                    <p>
+                      <strong>Ngày cũ:</strong>{" "}
+                      {new Date(req.scheduleId?.date).toLocaleDateString(
+                        "vi-VN"
+                      )}{" "}
+                      ({req.scheduleId?.startTime} - {req.scheduleId?.endTime})
+                    </p>
+                    <p>
+                      <strong>Ngày mới:</strong>{" "}
+                      {new Date(req.newDate).toLocaleDateString("vi-VN")} (
+                      {req.newStartTime} - {req.newEndTime})
+                    </p>
+                    <p>
+                      <strong>Lý do:</strong> {req.reason}
+                    </p>
+                    <p>
+                      <strong>Trạng thái:</strong>{" "}
+                      <span
+                        className={`status ${
+                          req.status === "pending"
+                            ? "pending"
+                            : req.status === "approved"
+                            ? "approved"
+                            : "rejected"
+                        }`}
+                      >
+                        {req.status === "pending"
+                          ? "Đang chờ"
+                          : req.status === "approved"
+                          ? "Đã duyệt"
+                          : "Từ chối"}
+                      </span>
+                    </p>
+                    <p>
+                      <strong>Ngày gửi:</strong>{" "}
+                      {new Date(req.createdAt).toLocaleString("vi-VN")}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
         <h3 className="section-subtitle">Lịch học tổng quan tuần này</h3>
 
         <div className="week-navigation">
@@ -656,6 +890,18 @@ function MyCourses() {
             bookingId={reportingBookingId}
           />
         )}
+        {showChangeScheduleModal && (
+          <ChangeScheduleModal
+            isOpen={showChangeScheduleModal}
+            onClose={handleCloseChangeModal}
+            onSubmit={handleSubmitChangeSchedule}
+            bookingId={changingBookingId}
+            schedules={allWeeklySchedules.filter(
+              (s) => s.bookingId?._id === changingBookingId
+            )}
+          />
+        )}
+
         <ToastContainer
           position="top-right"
           autoClose={5000}

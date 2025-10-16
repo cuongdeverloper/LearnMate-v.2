@@ -5,7 +5,7 @@ import Aos from "aos";
 import "aos/dist/aos.css";
 import { useEffect } from "react";
 import StudentHomePage from "./components/HomePage/Student homepage/StudentHomePage";
-import SignUp from "./components/Auth/Sign up/SignUp";
+// import SignUp from "./components/Auth/Sign up/SignUp";
 import SignIn from "./components/Auth/Sign in/SignIn";
 import { BrowserRouter, Route, Routes, useLocation } from "react-router-dom";
 import TutorDashboard from "./components/Tutor/TutorDashboard";
@@ -23,7 +23,14 @@ import AuthCallback from "./components/Auth/AuthCallback";
 import EnterOTPRegister from "./components/Auth/Sign up/OTP/EnterOTPRegister";
 import RequestPasswordReset from "./components/Auth/reset password/RequestPasswordReset";
 import ResetPassword from "./components/Auth/reset password/ResetPassword";
+
 import Messenger from "./Message Socket/Page/Messenger";
+import PaymentPage from "./pages/User/PaymentPage";
+import PaymentResult from "./pages/User/paymentResult";
+import TutorApplicationForm from "./pages/Profile/TutorApplicationForm";
+import ReviewCoursePage from "./pages/Review/ReviewCoursePage";
+
+import AdminDashboard from "./components/Admin/AdminDashboard";
 
 const AppLayout = ({ children }) => {
   const location = useLocation();
@@ -60,25 +67,41 @@ const Layout = () => {
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<StudentHomePage />} />
-          <Route path="/signup" element={<SignUp />} />
+          {/* <Route path="/signup" element={<SignUp />} /> */}
           <Route path="/signin" element={<SignIn />} />
           <Route path="/otp-verify" element={<EnterOTPRegister />} />
           <Route path="auth/callback" element={<AuthCallback />} />
-          <Route path="/messenger" element={
-            // <ProtectedRoute allowedRoles={['tutor', 'student', 'admin']}>
+
+          <Route
+            path="/messenger"
+            element={
+              // <ProtectedRoute allowedRoles={['tutor', 'student', 'admin']}>
               <Messenger />
-            // </ProtectedRoute> 
-          }/>
-          <Route path="/messenger/:conversationId" element={
-            // <ProtectedRoute allowedRoles={['tutor', 'student', 'admin']}>
+              // </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/messenger/:conversationId"
+            element={
+              // <ProtectedRoute allowedRoles={['tutor', 'student', 'admin']}>
               <Messenger />
-            // </ProtectedRoute>
-            } />
-          <Route path="/forgot-password" element={
-                <RequestPasswordReset />
-           } />
-          <Route path="/reset-password" element={
-              <ResetPassword />} />
+              // </ProtectedRoute>
+            }
+          />
+          <Route path="/forgot-password" element={<RequestPasswordReset />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
+
+          <Route path="/forgot-password" element={<RequestPasswordReset />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
+
+          <Route
+            path="/admin/dashboard"
+            element={
+              <ProtectedRoute allowedRoles={["admin"]}>
+                <AdminDashboard />
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="/TutorDashboard"
             element={
@@ -139,23 +162,53 @@ const Layout = () => {
             path="/user/my-courses"
             element={
               <ProtectedRoute allowedRoles={["tutor", "student"]}>
-      
                 <AppLayout>
-                <MyCourses />
+                  <MyCourses />
                 </AppLayout>
               </ProtectedRoute>
             }
           />
-                  <Route path="/profile"
+          <Route
+            path="/profile"
             element={
-              <ProtectedRoute allowedRoles={['tutor', 'student', 'admin']}>
+              <ProtectedRoute allowedRoles={["tutor", "student", "admin"]}>
                 <AppLayout>
-                <Profile />
+                  <Profile />
                 </AppLayout>
-              </ProtectedRoute>} />
-              <Route path="auth/callback" element={<AuthCallback />} />
+              </ProtectedRoute>
+            }
+          />
+          <Route path="auth/callback" element={<AuthCallback />} />
+          <Route
+            path="/user/paymentinfo"
+            element={
+              <ProtectedRoute allowedRoles={["tutor", "student"]}>
+                <AppLayout>
+                  <PaymentPage />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/tutor-application"
+            element={
+              <ProtectedRoute allowedRoles={["tutor", "student"]}>
+                <TutorApplicationForm />
+              </ProtectedRoute>
+            }
+          />
+          <Route path="/payment/result" element={<PaymentResult />} />
+          <Route
+            path="/review/:bookingId"
+            element={
+              <ProtectedRoute allowedRoles={["student", "tutor"]}>
+                <AppLayout>
+                  <ReviewCoursePage />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
         </Routes>
-
       </BrowserRouter>
     </Suspense>
   );

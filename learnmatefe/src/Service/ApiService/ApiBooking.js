@@ -9,7 +9,7 @@ export const finishBooking = async (bookingId) => {
         return { success: false, message: "Bạn chưa đăng nhập." };
       }
   
-      const response = await axios.patch(`/bookings/${bookingId}/finish`, {}, {
+      const response = await axios.patch(`/api/booking/bookings/${bookingId}/finish`, {}, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -31,7 +31,7 @@ export  const getMaterialsByBookingId = async (bookingId) => {
         return { success: false, message: "Bạn chưa đăng nhập." };
       }
   
-      const response = await axios.get(`/api/learner/materials/booking/${bookingId}`, {
+      const response = await axios.get(`/api/tutor/materials/booking/${bookingId}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -54,7 +54,7 @@ export const getMyBookings = async () => {
         return { success: false, message: "Chưa đăng nhập" };
       }
   
-      const response = await axios.get('/api/learner/me/my-courses', {
+      const response = await axios.get('/api/booking/bookings/my-courses', {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -92,7 +92,7 @@ export const getMyBookings = async () => {
   };
   export const fetchBookingDetailsApi = async (bookingId) => {
     try {
-      const response = await axios.get(`/bookings/${bookingId}`);
+      const response = await axios.get(`/api/booking/bookings/${bookingId}`);
       return response; 
     } catch (error) {
       console.error("Error fetching booking details:", error);
@@ -118,5 +118,65 @@ export const getMyBookings = async () => {
     } catch (error) {
       console.error("Error fetching bookings by tutorId:", error);
       return null;
+    }
+  };export const requestChangeSchedule = async (bookingId, payload) => {
+    try {
+      const token = Cookies.get("accessToken");
+      if (!token) {
+        window.open("/signin", "_blank");
+        return;
+      }
+  
+      const res = await axios.post(
+        `/api/booking/bookings/${bookingId}/request-change`,
+        payload,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+  
+      // ✅ Thành công thì trả luôn response data
+      return res;
+  
+    } catch (err) {
+      // ✅ Bắt lỗi từ backend và chuẩn hóa response để frontend xử lý thống nhất
+      return {
+        success: false,
+        message:
+          err.response?.message ||
+          "Server error occurred while requesting schedule change.",
+      };
+    }
+  };
+  export const getMyChangeRequests = async () => {
+    try {
+      const token = Cookies.get("accessToken");
+      if (!token) {
+        window.open("/signin", "_blank");
+        return { success: false, message: "Unauthorized. Please sign in." };
+      }
+  
+      const res = await axios.get(`/api/booking/bookings/change-requests/my-requests`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+  
+      return res;
+    } catch (err) {
+      console.error("❌ Error in getMyChangeRequests:", err);
+      return {
+        success: false,
+        message: err.response?.message || "Error fetching change requests.",
+      };
+    }
+  };
+  export const createReview = async (data) => {
+    try {
+      const response = await axios.post('/api/booking/review', data);
+      return response;
+    } catch (error) {
+      console.error("Error creating review:", error);
+      throw error;
     }
   };

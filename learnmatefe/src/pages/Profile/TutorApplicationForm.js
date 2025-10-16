@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import Header from '../Layout/Header/Header';
-import Footer from '../Layout/Footer/Footer';
+import Header from '../../components/Layout/Header/Header';
+import Footer from '../../components/Layout/Footer/Footer';
 import './TutorApplicationForm.scss';
 
 // Import the new API function
-import { submitTutorApplication } from '../../Service/ApiService'; // Adjust path if needed
+import { submitTutorApplication } from '../../Service/ApiService/ApiTutor'; // Adjust path if needed
 
 const classSubjectsMap = {
   1: ["Toán", "Tiếng Việt"],

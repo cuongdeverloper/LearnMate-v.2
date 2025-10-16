@@ -11,7 +11,7 @@ export const getMyWeeklySchedules = async (weekStartDate) => {
   
       const isoDate = new Date(weekStartDate).toISOString().split('T')[0];
   
-      const response = await axios.get(`/api/learner/schedule/my-weekly-schedules?weekStart=${encodeURIComponent(isoDate)}`, {
+      const response = await axios.get(`/api/booking/schedule/my-weekly-schedules?weekStart=${encodeURIComponent(isoDate)}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -33,7 +33,7 @@ export const getMyWeeklySchedules = async (weekStartDate) => {
       }
   
       const response = await axios.patch(
-        `/schedule/${scheduleId}/attendance`,
+        `/api/booking/schedule/${scheduleId}/attendance`,
         { attended: Boolean(attended) },
         {
           headers: {
@@ -51,10 +51,34 @@ export const getMyWeeklySchedules = async (weekStartDate) => {
   };
   export const fetchBusySlotsByBookingId = async (bookingId, weekStart) => {
     try {
-      const response = await axios.get(`/schedule/booking/${bookingId}/busy-slots?weekStart=${weekStart}`);
+      const response = await axios.get(`api/booking/schedule/booking/${bookingId}/busy-slots?weekStart=${weekStart}`);
       return response;
     } catch (error) {
       console.error("Error fetching busy slots:", error);
       return null;
     }
   };
+
+export const addSlotsToBooking = async (bookingId, slots) => {
+  try {
+    const res = await axios.post(`/api/booking/schedule/booking/${bookingId}/add-slots`, {
+      slots,
+    });
+    return res;
+  } catch (error) {
+    console.error("Error adding slots:", error);
+    toast.error(error.response?.data?.message || "Thêm lịch thất bại");
+    throw error;
+  }
+};
+
+export const deleteScheduleSlot = async (scheduleId) => {
+  try {
+    const res = await axios.delete(`/api/booking/schedule/${scheduleId}`);
+    return res;
+  } catch (error) {
+    console.error("Error deleting slot:", error);
+    toast.error(error.response?.data?.message || "Xóa slot thất bại");
+    throw error;
+  }
+};

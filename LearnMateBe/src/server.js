@@ -14,9 +14,11 @@ const socketIo = require("socket.io");
 const { RouteAuth } = require("./routes/AuthRoutes");
 const RouterTutor = require("./routes/tutorRoutes");
 const RouteBooking = require("./routes/BookingRoutes");
+const RouterAdmin = require("./routes/adminRoutes");
 const RouteMessage = require("./routes/messageRoutes");
 const RouteQuiz = require("./routes/QuizRoutes");
 const RouteAssignment = require("./routes/AssignmentRoutes");
+const RoutePayment = require("./routes/PaymentRoutes");
 const app = express();
 const port = process.env.PORT || 8888;
 const hostname = process.env.HOST_NAME || "localhost";
@@ -67,7 +69,14 @@ app.use("/api/booking", RouteBooking);
 app.use("/api/message", RouteMessage);
 app.use("/api/quiz", RouteQuiz);
 app.use("/api/assignment", RouteAssignment);
+app.use("/api/payment", RoutePayment);
 
+app.use("/api/learner", learnerRouter);
+
+app.use("/", RouteAuth);
+app.use("/api/tutor", RouterTutor);
+app.use("/api/booking", RouteBooking);
+app.use("/api/admin", RouterAdmin);
 app.get("/", (req, res) => {
   res.json("Hello");
 });

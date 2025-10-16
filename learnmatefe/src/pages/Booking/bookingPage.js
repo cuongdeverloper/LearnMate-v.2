@@ -7,7 +7,10 @@ import "react-toastify/dist/ReactToastify.css";
 import "../../scss/BookingPage.scss";
 import { useSelector } from "react-redux";
 import { getUserBalance } from "../../Service/ApiService/ApiUser";
-import { getReviewsByTutor, getTutorById } from "../../Service/ApiService/ApiTutor";
+import {
+  getReviewsByTutor,
+  getTutorById,
+} from "../../Service/ApiService/ApiTutor";
 import Header from "../../components/Layout/Header/Header";
 import { ApiCreateConversation } from "../../Service/ApiService/ApiMessage";
 
@@ -113,7 +116,9 @@ export default function BookingPage() {
     try {
       // pass weekStart to backend so it can filter per week if API supports it
       const params = { weekStart: weekStart.toISOString().split("T")[0] };
-      const res = await axios.get(`/api/tutor/${tutorId}/availability`, { params });
+      const res = await axios.get(`/api/tutor/${tutorId}/availability`, {
+        params,
+      });
       const body = res?.data ?? res;
       console.log(body);
 
@@ -216,12 +221,14 @@ export default function BookingPage() {
           },
         }
       );
-      
+
       const body = res?.data ?? res;
       if (body?.success || body?.booking) {
         toast.success("Đặt lịch thành công!");
         // update balance locally if possible
-        setBalance((prev) => (typeof prev === "number" ? prev - totalAmount : prev));
+        setBalance((prev) =>
+          typeof prev === "number" ? prev - totalAmount * 0.3 : prev
+        );
         // refresh availabilities so booked slots become unavailable
         await fetchAvailabilities();
         setSelectedSlots([]);
@@ -230,7 +237,9 @@ export default function BookingPage() {
       }
     } catch (err) {
       console.error("Lỗi đặt lịch:", err);
-      toast.error(err?.response?.data?.message || err.message || "Đặt lịch thất bại");
+      toast.error(
+        err?.response?.data?.message || err.message || "Đặt lịch thất bại"
+      );
     } finally {
       setLoading(false);
       setShowConfirmModal(false);
@@ -243,7 +252,9 @@ export default function BookingPage() {
 
   const toggleSlot = (slotId) => {
     setSelectedSlots((prev) =>
-      prev.includes(slotId) ? prev.filter((id) => id !== slotId) : [...prev, slotId]
+      prev.includes(slotId)
+        ? prev.filter((id) => id !== slotId)
+        : [...prev, slotId]
     );
   };
 
@@ -254,7 +265,9 @@ export default function BookingPage() {
         <img
           src={
             user?.image ||
-            `https://i.pravatar.cc/100?img=${Math.floor(Math.random() * 70) + 1}`
+            `https://i.pravatar.cc/100?img=${
+              Math.floor(Math.random() * 70) + 1
+            }`
           }
           alt="avatar"
           className="avatar"
@@ -273,11 +286,14 @@ export default function BookingPage() {
           <p>
             <strong>Môn:</strong>{" "}
             {subjects && subjects.length > 0
-              ? subjects.map((sub) => `${sub.name} (${sub.classLevel})`).join(", ")
+              ? subjects
+                  .map((sub) => `${sub.name} (${sub.classLevel})`)
+                  .join(", ")
               : "Không rõ"}
           </p>
           <p>
-            <strong>Giá:</strong> {tutor?.pricePerHour?.toLocaleString()} VND / giờ
+            <strong>Giá:</strong> {tutor?.pricePerHour?.toLocaleString()} VND /
+            giờ
           </p>
           <p>
             <strong>Mô tả:</strong> {tutor?.description || "Không có mô tả"}
@@ -320,7 +336,10 @@ export default function BookingPage() {
             {/* Subject select */}
             <div className="form-group">
               <label>Chọn môn học</label>
-              <select value={selectedSubject} onChange={(e) => setSelectedSubject(e.target.value)}>
+              <select
+                value={selectedSubject}
+                onChange={(e) => setSelectedSubject(e.target.value)}
+              >
                 <option value="">--Chọn môn--</option>
                 {subjects.map((sub, idx) => (
                   <option key={idx} value={sub._id}>
@@ -362,7 +381,9 @@ export default function BookingPage() {
 
                 <div className="week-controls">
                   <button onClick={handlePrevWeek}>← Tuần trước</button>
-                  <span>Tuần bắt đầu: {weekStart.toLocaleDateString("vi-VN")}</span>
+                  <span>
+                    Tuần bắt đầu: {weekStart.toLocaleDateString("vi-VN")}
+                  </span>
                   <button onClick={handleNextWeek}>Tuần sau →</button>
                 </div>
 
@@ -386,18 +407,37 @@ export default function BookingPage() {
                       return (
                         <div key={idx} className="grid-day-column">
                           {timeSlots.map((slotStr) => {
-                            const [startTime, endTime] = slotStr.split(" - ").map((s) => s.trim());
+                            const [startTime, endTime] = slotStr
+                              .split(" - ")
+                              .map((s) => s.trim());
                             // find availability object for this date/time
                             const avail = availabilities.find((a) => {
-                              const aDate = new Date(a.date).toISOString().split("T")[0];
-                              return aDate === dayStr && a.startTime === startTime && a.endTime === endTime;
+                              const aDate = new Date(a.date)
+                                .toISOString()
+                                .split("T")[0];
+                              return (
+                                aDate === dayStr &&
+                                a.startTime === startTime &&
+                                a.endTime === endTime
+                              );
                             });
 
-                            const isSelected = !!(avail && selectedSlots.includes(avail._id));
+                            const isSelected = !!(
+                              avail && selectedSlots.includes(avail._id)
+                            );
                             // if backend returns booking info on availability
-                            const isBooked = !!(avail && (avail.bookingId || avail.isBooked));
+                            const isBooked = !!(
+                              avail &&
+                              (avail.bookingId || avail.isBooked)
+                            );
 
-                            const cls = !avail ? "not-available" : isBooked ? "booked" : isSelected ? "selected" : "available";
+                            const cls = !avail
+                              ? "not-available"
+                              : isBooked
+                              ? "booked"
+                              : isSelected
+                              ? "selected"
+                              : "available";
 
                             return (
                               <div
@@ -416,7 +456,9 @@ export default function BookingPage() {
                                   toggleSlot(avail._id);
                                 }}
                               >
-                                <div className="slot-time">{startTime} - {endTime}</div>
+                                <div className="slot-time">
+                                  {startTime} - {endTime}
+                                </div>
                                 <div className="slot-status">
                                   {!avail ? (
                                     <small>Not available</small>
@@ -446,16 +488,31 @@ export default function BookingPage() {
             {/* Note */}
             <div className="form-group">
               <label>Ghi chú</label>
-              <textarea value={note} onChange={(e) => setNote(e.target.value)}></textarea>
+              <textarea
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+              ></textarea>
             </div>
 
             {/* Balance */}
             <div className="form-group">
               <label>Số dư tài khoản</label>
-              <input type="text" value={balance !== null && balance !== undefined ? balance.toLocaleString() + " VND" : ""} disabled />
+              <input
+                type="text"
+                value={
+                  balance !== null && balance !== undefined
+                    ? balance.toLocaleString() + " VND"
+                    : ""
+                }
+                disabled
+              />
             </div>
 
-            <button onClick={handleShowConfirm} disabled={loading || !tutor} className="btn-booking">
+            <button
+              onClick={handleShowConfirm}
+              disabled={loading || !tutor}
+              className="btn-booking"
+            >
               {loading ? "Đang xử lý..." : "Trừ tiền & Đặt lịch"}
             </button>
           </div>
@@ -483,23 +540,89 @@ export default function BookingPage() {
         {/* Confirm modal */}
         {showConfirmModal && (
           <div className="modal-overlay">
-            <div className="modal-content">
-              <h3>Xác nhận đặt lịch</h3>
-              <p>
-                Bạn có chắc muốn đặt{" "}
-                {mode === "longterm" ? numberOfSessions : selectedSlots.length}{" "}
-                buổi với tổng số tiền{" "}
-                {(tutor?.pricePerHour *
-                  (mode === "longterm" ? numberOfSessions : selectedSlots.length)
-                ).toLocaleString()}{" "}
-                VND?
-              </p>
-              {note && <p>Ghi chú: {note}</p>}
+            <div className="modal-content payment-modal">
+              <h2 className="modal-title"> Thanh toán đặt lịch</h2>
+
+              <div className="payment-summary">
+                <div className="summary-row">
+                  <span>Số buổi học:</span>
+                  <strong>
+                    {mode === "longterm"
+                      ? numberOfSessions
+                      : selectedSlots.length}{" "}
+                    buổi
+                  </strong>
+                </div>
+
+                <div className="summary-row">
+                  <span>Giá mỗi buổi:</span>
+                  <strong>{tutor?.pricePerHour?.toLocaleString()} VND</strong>
+                </div>
+
+                <div className="summary-row highlight">
+                  <span>Tổng số tiền:</span>
+                  <strong>
+                    {(
+                      tutor?.pricePerHour *
+                      (mode === "longterm"
+                        ? numberOfSessions
+                        : selectedSlots.length)
+                    ).toLocaleString()}{" "}
+                    VND
+                  </strong>
+                </div>
+
+                <div className="summary-row">
+                  <span>Tiền cọc (30%):</span>
+                  <strong className="deposit">
+                    {(
+                      tutor?.pricePerHour *
+                      (mode === "longterm"
+                        ? numberOfSessions
+                        : selectedSlots.length) *
+                      0.3
+                    ).toLocaleString()}{" "}
+                    VND
+                  </strong>
+                </div>
+
+                <div className="summary-row">
+                  <span>Số tiền còn lại:</span>
+                  <strong className="remaining">
+                    {(
+                      tutor?.pricePerHour *
+                      (mode === "longterm"
+                        ? numberOfSessions
+                        : selectedSlots.length) *
+                      0.7
+                    ).toLocaleString()}{" "}
+                    VND
+                  </strong>
+                </div>
+
+                <hr />
+
+                {note && (
+                  <div className="summary-row">
+                    <span>Ghi chú:</span>
+                    <em>{note}</em>
+                  </div>
+                )}
+              </div>
+
               <div className="modal-actions">
-                <button className="btn btn-confirm" onClick={handleBooking} disabled={loading}>
-                  Xác nhận
+                <button
+                  className="btn btn-confirm"
+                  onClick={handleBooking}
+                  disabled={loading}
+                >
+                  {loading ? "Đang xử lý..." : "Xác nhận & Thanh toán"}
                 </button>
-                <button className="btn btn-cancel" onClick={() => setShowConfirmModal(false)} disabled={loading}>
+                <button
+                  className="btn btn-cancel"
+                  onClick={() => setShowConfirmModal(false)}
+                  disabled={loading}
+                >
                   Hủy
                 </button>
               </div>

@@ -62,7 +62,7 @@ const TutorBookingList = () => {
           </div>
         ) : (
           bookings.map((b) => (
-            <div className="booking-card" key={b._id}>
+            <div className="booking-card-tutor" key={b._id}>
               <div className="booking-info">
                 <h3>{b.learnerId?.username || b.studentId}</h3>
                 <span className={`status ${b.status}`}>{b.status}</span>
