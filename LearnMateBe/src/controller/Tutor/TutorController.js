@@ -2,10 +2,8 @@ const Booking = require("../../modal/Booking");
 const Schedule = require("../../modal/Schedule");
 const Material = require("../../modal/Material");
 const Progress = require("../../modal/Progress");
-const Tutor = require("../../modal/Tutor");
-const uploadCloud = require("../../config/cloudinaryConfig");
-const uploadDocs = require("../../config/cloudinaryDocxConfig");
 const TutorAvailability = require("../../modal/TutorAvailability");
+const Tutor = require ("../../modal/Tutor")
 
 const respondBooking = async (req, res) => {
 
@@ -240,21 +238,47 @@ const getProgress = async (req, res) => {
   }
 };
 
-// Upload material
+
 const uploadMaterial = async (req, res) => {
   try {
-    const { bookingId, title, description, fileType } = req.body;
+    const { bookingId, title, description, fileType, subjectId, tutorId, learnerId } = req.body;
     const fileUrl = req.file?.path || req.file?.secure_url;
 
+    // ✅ Kiểm tra các field bắt buộc
     if (!bookingId || !title || !fileUrl) {
       return res.status(400).json({
         errorCode: 1,
-        message: "bookingId, title and file are required.",
+        message: "bookingId, title và fileUrl là bắt buộc.",
       });
     }
 
+    let finalSubjectId = subjectId;
+    let finalTutorId = tutorId;
+    let finalLearnerId = learnerId;
+
+    // ✅ Nếu không truyền subjectId, tự lấy từ booking (nếu có)
+    if (!finalSubjectId) {
+      const booking = await Booking.findById(bookingId);
+      if (booking) {
+        finalSubjectId = booking.subjectId;
+        finalTutorId = finalTutorId || booking.tutorId;
+        finalLearnerId = finalLearnerId || booking.learnerId;
+      }
+    }
+
+    // ✅ Kiểm tra lại subjectId cuối cùng
+    if (!finalSubjectId) {
+      return res.status(400).json({
+        errorCode: 1,
+        message: "subjectId is required (hoặc không tìm thấy trong booking).",
+      });
+    }
+
+    // ✅ Tạo document mới
     const newMaterial = new Material({
-      bookingId,
+      subjectId: finalSubjectId,
+      tutorId: finalTutorId,
+      learnerId: finalLearnerId,
       title,
       description,
       fileType: fileType || "other",
@@ -262,15 +286,16 @@ const uploadMaterial = async (req, res) => {
     });
 
     await newMaterial.save();
-    res.status(201).json({
-      errorCode: 0, // ✅ success
+
+    return res.status(201).json({
+      errorCode: 0,
       message: "Material uploaded successfully",
       material: newMaterial,
     });
   } catch (error) {
     console.error("Save Material Error:", error);
-    res.status(500).json({
-      errorCode: 1, // ❌ error
+    return res.status(500).json({
+      errorCode: 1,
       message: "Error saving material",
       error: error.message,
     });
@@ -309,6 +334,47 @@ const getTutorAvailability = async (req, res) => {
     res.status(500).json({ success: false, message: err.message });
   }
 };
+const getActiveStatus = async (req, res) => {
+  try {
+    const tutor = await Tutor.findOne({ user: req.user.id });
+    if (!tutor) {
+      return res.status(404).json({ message: 'Tutor not found' });
+    }
+    return res.status(200).json({ active: tutor.active });
+  } catch (error) {
+    console.error('Error getting tutor active status:', error);
+    return res.status(500).json({ message: 'Internal Server Error' });
+  }
+};
+
+/**
+ * PUT /api/tutor/active-status
+ * Cập nhật trạng thái hoạt động của tutor
+ */
+const updateActiveStatus = async (req, res) => {
+  const { active } = req.body;
+
+  if (typeof active !== 'boolean') {
+    return res.status(400).json({ message: 'Invalid status value' });
+  }
+
+  try {
+    const tutor = await Tutor.findOneAndUpdate(
+      { user: req.user.id },
+      { active },
+      { new: true }
+    );
+
+    if (!tutor) {
+      return res.status(404).json({ message: 'Tutor not found' });
+    }
+
+    return res.status(200).json({ success: true, active: tutor.active });
+  } catch (error) {
+    console.error('Error updating tutor active status:', error);
+    return res.status(500).json({ message: 'Internal Server Error' });
+  }
+};
 
 module.exports = {
   respondBooking,
@@ -321,5 +387,5 @@ module.exports = {
   updateProgress,
   getProgress,
   uploadMaterial,
-  getMaterials,getTutorAvailability
+  getMaterials,getTutorAvailability,updateActiveStatus,getActiveStatus
 };

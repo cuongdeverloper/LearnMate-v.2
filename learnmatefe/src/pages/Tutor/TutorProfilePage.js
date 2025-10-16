@@ -2,7 +2,12 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "../../Service/AxiosCustomize";
-import { FaStar, FaMapMarkerAlt, FaGraduationCap, FaBook } from "react-icons/fa";
+import {
+  FaStar,
+  FaMapMarkerAlt,
+  FaGraduationCap,
+  FaBook,
+} from "react-icons/fa";
 import { toast } from "react-toastify";
 import "./TutorProfilePage.scss";
 
@@ -38,15 +43,23 @@ export default function TutorProfilePage() {
           className="profile-avatar"
           src={
             tutor?.user?.image ||
-            "https://i.pravatar.cc/150?img=" + (Math.floor(Math.random() * 70) + 1)
+            "https://i.pravatar.cc/150?img=" +
+              (Math.floor(Math.random() * 70) + 1)
           }
           alt={tutor.user?.username || "Gia sư"}
         />
         <div className="profile-info">
           <h2>{tutor.user?.username}</h2>
           <div className="profile-rating">
-            <FaStar className="star-icon" />
-            <span>{tutor.rating ? tutor.rating.toFixed(1) : "Chưa có đánh giá"}</span>
+            {[...Array(5)].map((_, i) => (
+              <FaStar
+                key={i}
+                color={i < Math.round(tutor.rating) ? "#ffc107" : "#e4e5e9"}
+              />
+            ))}
+            <span>
+              {tutor.rating ? tutor.rating.toFixed(1) : "Chưa có đánh giá"}
+            </span>
           </div>
           <p>
             <FaMapMarkerAlt /> {tutor.location || "Địa điểm chưa cập nhật"}
@@ -63,7 +76,13 @@ export default function TutorProfilePage() {
       <div className="profile-body">
         <section className="profile-section">
           <h3>📖 Môn dạy</h3>
-          <p>{tutor.subjects?.join(", ") || "Đang cập nhật"}</p>
+          <p>
+            {tutor.subjects?.length
+              ? tutor.subjects
+                  .map((s) => `${s.name} lớp ${s.classLevel}`)
+                  .join(", ")
+              : "Đang cập nhật"}
+          </p>
         </section>
 
         <section className="profile-section">
@@ -91,7 +110,12 @@ export default function TutorProfilePage() {
       </div>
 
       <div className="profile-actions">
-        <button className="btn-book" onClick={ () => navigate("/book/${tutorId}")}>Đặt Lịch Ngay</button>
+        <button
+          className="btn-book"
+          onClick={() => navigate(`/book/${tutorId}`)}
+        >
+          Đặt Lịch Ngay
+        </button>
         <button className="btn-back" onClick={() => navigate("/tutor")}>
           Quay lại danh sách
         </button>

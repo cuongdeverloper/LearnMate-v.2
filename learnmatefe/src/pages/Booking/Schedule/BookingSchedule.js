@@ -4,7 +4,7 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import "./BookingSchedule.scss";
 import { useSelector } from "react-redux";
-import { fetchBusySlotsByBookingId } from "../../../Service/ApiService/ApiSchedule";
+import { addSlotsToBooking, deleteScheduleSlot, fetchBusySlotsByBookingId } from "../../../Service/ApiService/ApiSchedule";
 import { getBookingsByTutorId } from "../../../components/Tutor/ApiTutor";
 import { fetchBookingDetailsApi } from "../../../Service/ApiService/ApiBooking";
 
@@ -124,67 +124,63 @@ const loadBusySlots = async () => {
   };
 
   const handleAddSchedule = async () => {
-    if (selectedSlots.size === 0) {
-      toast.info("Vui lòng chọn ít nhất 1 ô giờ để thêm lịch.");
-      return;
-    }
-    if (currentBookedSlotsCount + selectedSlots.size > totalSessionsAllowed) {
-      toast.error(`Tổng số buổi sau khi thêm sẽ vượt quá ${totalSessionsAllowed} buổi.`);
-      return;
-    }
+  if (selectedSlots.size === 0) {
+    toast.info("Vui lòng chọn ít nhất 1 ô giờ để thêm lịch.");
+    return;
+  }
+  if (currentBookedSlotsCount + selectedSlots.size > totalSessionsAllowed) {
+    toast.error(`Tổng số buổi sau khi thêm sẽ vượt quá ${totalSessionsAllowed} buổi.`);
+    return;
+  }
 
-    const slotsByDate = {};
-    Array.from(selectedSlots).forEach((key) => {
-      const [date, startTime] = key.split("|");
-      if (!slotsByDate[date]) slotsByDate[date] = [];
-      slotsByDate[date].push(startTime);
-    });
+  const slotsByDate = {};
+  Array.from(selectedSlots).forEach((key) => {
+    const [date, startTime] = key.split("|");
+    if (!slotsByDate[date]) slotsByDate[date] = [];
+    slotsByDate[date].push(startTime);
+  });
 
-    const slotsToSave = [];
-    for (const date in slotsByDate) {
-      const currentDaySlots = slotsByDate[date].sort();
-      let i = 0;
-      while (i < currentDaySlots.length) {
-        let currentStartTime = currentDaySlots[i];
-        let currentEndTime = timeSlots.find(slot => slot.startsWith(currentStartTime))?.split(" - ")[1];
-        let j = i + 1;
-        while (j < currentDaySlots.length) {
-          const prevSlot = timeSlots.find(slot => slot.startsWith(currentDaySlots[j - 1]));
-          const currentSlot = timeSlots.find(slot => slot.startsWith(currentDaySlots[j]));
-          if (timeSlots.indexOf(currentSlot) === timeSlots.indexOf(prevSlot) + 1) {
-            currentEndTime = currentSlot.split(" - ")[1];
-            j++;
-          } else break;
-        }
-        slotsToSave.push({ date, startTime: currentStartTime, endTime: currentEndTime });
-        i = j;
+  const slotsToSave = [];
+  for (const date in slotsByDate) {
+    const currentDaySlots = slotsByDate[date].sort();
+    let i = 0;
+    while (i < currentDaySlots.length) {
+      let currentStartTime = currentDaySlots[i];
+      let currentEndTime = timeSlots.find(slot => slot.startsWith(currentStartTime))?.split(" - ")[1];
+      let j = i + 1;
+      while (j < currentDaySlots.length) {
+        const prevSlot = timeSlots.find(slot => slot.startsWith(currentDaySlots[j - 1]));
+        const currentSlot = timeSlots.find(slot => slot.startsWith(currentDaySlots[j]));
+        if (timeSlots.indexOf(currentSlot) === timeSlots.indexOf(prevSlot) + 1) {
+          currentEndTime = currentSlot.split(" - ")[1];
+          j++;
+        } else break;
       }
+      slotsToSave.push({ date, startTime: currentStartTime, endTime: currentEndTime });
+      i = j;
     }
+  }
 
-    setLoading(true);
-    try {
-      await axios.post(`hhttps://learnmatebe.onrender.com/schedule/booking/${bookingId}/add-slots`, {
-        slots: slotsToSave,
-      });
-      toast.success("Thêm lịch thành công!");
-      loadBusySlots();
-    } catch (err) {
-      toast.error(err.response?.data?.message || "Thêm lịch thất bại");
-    } finally {
-      setLoading(false);
-    }
-  };
+  setLoading(true);
+  try {
+    let response = await addSlotsToBooking(bookingId, slotsToSave); 
+    toast.success("Thêm lịch thành công!");
+    loadBusySlots();
+  } catch (err) {
+  } finally {
+    setLoading(false);
+  }
+};
 
-  const handleDeleteSlot = async (scheduleId) => {
-    if (!window.confirm("Bạn có chắc muốn xóa slot này?")) return;
-    try {
-      await axios.delete(`https://learnmatebe.onrender.com/schedule/${scheduleId}`);
-      toast.success("Xóa slot thành công!");
-      loadBusySlots();
-    } catch (err) {
-      toast.error(err.response?.data?.message || "Xóa slot thất bại");
-    }
-  };
+ const handleDeleteSlot = async (scheduleId) => {
+  if (!window.confirm("Bạn có chắc muốn xóa slot này?")) return;
+  try {
+    let response = await deleteScheduleSlot(scheduleId); 
+    toast.success("Xóa slot thành công!");
+    loadBusySlots();
+  } catch (err) {
+  }
+};
 
   const completedBookings = bookings.filter(b => b.completed);
   const incompleteBookings = bookings.filter(b => !b.completed);

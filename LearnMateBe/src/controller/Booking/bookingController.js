@@ -27,14 +27,14 @@ exports.getBookingById = async (req, res) => {
   }
 };
 // controllers/bookingController.js
-// controllers/bookingController.js
+// ✅ Create Booking với cọc 30%
 exports.createBooking = async (req, res) => {
   try {
     const { tutorId } = req.params;
     const { amount, numberOfSessions, note, subjectId, option, availabilityIds } = req.body;
 
-    if (!tutorId || !amount || !subjectId) {
-      return res.status(400).json({ success: false, message: 'Missing required fields: tutorId, amount or subjectId' });
+    if (!tutorId || !amount || !subjectId || !numberOfSessions) {
+      return res.status(400).json({ success: false, message: 'Missing required fields: tutorId, amount, subjectId, numberOfSessions' });
     }
 
     if (!req.user) {
@@ -44,36 +44,42 @@ exports.createBooking = async (req, res) => {
     const user = await User.findById(req.user.id || req.user._id);
     if (!user) return res.status(404).json({ success: false, message: 'User not found' });
 
-    if (user.balance < amount) {
-      return res.status(400).json({ success: false, message: 'Số dư không đủ để đặt lịch' });
+    const deposit = Math.round(amount * 0.3); // 30% cọc
+    const sessionCost = Math.round((amount * 0.7) / numberOfSessions); // 70% chia đều mỗi buổi
+
+    if (user.balance < deposit) {
+      return res.status(400).json({ success: false, message: 'Số dư không đủ để đặt lịch (cần tối thiểu 30% cọc)' });
     }
 
-    // Trừ tiền
-    user.balance -= amount;
+    // ✅ Trừ 30% ngay
+    user.balance -= deposit;
     await user.save();
 
     await FinancialHistory.create({
       userId: user._id,
-      amount,
-      balanceChange: -amount,
+      amount: deposit,
+      balanceChange: -deposit,
       type: 'spend',
-      status: 'pending',
-      description: `Thanh toán cho booking với gia sư ${tutorId.toString().slice(-6)}`,
+      status: 'success',
+      description: `Đặt cọc 30% cho booking với gia sư ${tutorId.toString().slice(-6)}`,
       date: new Date()
     });
 
-    // Tạo booking
+    // ✅ Tạo booking
     const booking = await Booking.create({
       learnerId: req.user.id || req.user._id,
       tutorId,
       subjectId,
       amount,
-      numberOfSessions: numberOfSessions || 0,
+      numberOfSessions,
+      deposit,
+      sessionCost,
+      paidSessions: 0,   // số buổi đã trả trong phần 70%
       status: 'pending',
       note,
     });
 
-    // Nếu chọn option lịch trống
+    // ✅ Nếu chọn lịch sẵn
     if (option === "schedule" && Array.isArray(availabilityIds) && availabilityIds.length > 0) {
       const slots = await TutorAvailability.find({ _id: { $in: availabilityIds }, isBooked: false });
 
@@ -81,13 +87,11 @@ exports.createBooking = async (req, res) => {
         return res.status(400).json({ success: false, message: 'Một số slot đã được đặt' });
       }
 
-      // Chỉ cập nhật isBooked
       await TutorAvailability.updateMany(
         { _id: { $in: availabilityIds } },
         { $set: { isBooked: true } }
       );
 
-      // Tạo schedule dựa trên các slot
       const schedulesData = slots.map(slot => ({
         tutorId,
         learnerId: req.user.id || req.user._id,
@@ -98,8 +102,6 @@ exports.createBooking = async (req, res) => {
       }));
 
       const insertedSchedules = await Schedule.insertMany(schedulesData);
-
-      // Lưu scheduleIds vào booking
       booking.scheduleIds = insertedSchedules.map(s => s._id);
       await booking.save();
     }
@@ -110,6 +112,7 @@ exports.createBooking = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
 
 
 
@@ -136,28 +139,37 @@ exports.getUserBookingHistory = async (req, res) => {
 exports.getApprovedBookingsForLearner = async (req, res) => {
   try {
     if (!req.user) {
-      return res.status(401).json({ message: 'Bạn chưa đăng nhập. Vui lòng đăng nhập để xem các khóa học đã duyệt.' });
+      return res.status(401).json({
+        message: 'Bạn chưa đăng nhập. Vui lòng đăng nhập để xem các khóa học đã duyệt.'
+      });
     }
+
     const learnerId = req.user.id || req.user._id;
 
     const bookings = await Booking.find({
       learnerId,
       status: 'approve'
     })
-    .populate({
-      path: 'tutorId', 
-      select: 'user', 
-      populate: {
-        path: 'user', 
-        select: 'username' 
-      }
-    })
-    .sort({ createdAt: -1 });
+      .populate({
+        path: 'tutorId',
+        select: 'user',
+        populate: {
+          path: 'user',
+          select: 'username'
+        }
+      })
+      .populate({
+        path: 'subjectId',
+        select: 'name description'
+      })
+      .sort({ createdAt: -1 });
 
     res.json(bookings);
   } catch (err) {
     console.error("Lỗi khi lấy các khóa học đã duyệt:", err);
-    res.status(500).json({ message: 'Đã xảy ra lỗi khi tải danh sách khóa học của bạn. Vui lòng thử lại sau.' });
+    res.status(500).json({
+      message: 'Đã xảy ra lỗi khi tải danh sách khóa học của bạn. Vui lòng thử lại sau.'
+    });
   }
 };
 exports.cancelBooking = async (req, res) => {
@@ -194,19 +206,19 @@ exports.cancelBooking = async (req, res) => {
       return res.status(500).json({ success: false, message: 'Error processing refund: User not found.' });
     }
 
-    user.balance += booking.amount; // Hoàn lại số tiền booking
+    user.balance += booking.deposit; // Hoàn lại số tiền booking
     await user.save();
     await FinancialHistory.create({
       userId: userId,
-      amount: booking.amount,
-      balanceChange: booking.amount,
+      amount: booking.deposit,
+      balanceChange: booking.deposit,
       type: 'earning',
       status: 'success',
-      description: `Hoàn tiền sau khi hủy  khóa học (${booking._id.toString().slice(-6)})`,
+      description: `Hoàn tiền cọc sau khi hủy  khóa học (${booking._id.toString().slice(-6)})`,
       date: new Date()
     });
 
-    res.status(200).json({ success: true, message: 'Booking cancelled and refunded successfully.', bookingId: booking._id });
+    res.status(200).json({ success: true, message: 'Booking cancelled and refunded deposit successfully.', bookingId: booking._id });
 
   } catch (error) {
     console.error('Error cancelling booking:', error);

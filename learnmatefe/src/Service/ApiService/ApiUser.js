@@ -10,7 +10,7 @@ const getUserBalance = async () => {
         return null;
       }
   
-      const response = await axios.get('/api/learner/me/info', {
+      const response = await axios.get('/api/payment/me/info', {
         headers: {
           Authorization: `Bearer ${token}`,
         },

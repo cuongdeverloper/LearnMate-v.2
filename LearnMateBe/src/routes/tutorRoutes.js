@@ -1,48 +1,83 @@
-const express = require('express');
+const express = require("express");
 const RouterTutor = express.Router();
-const uploadCloud = require('../config/cloudinaryConfig');
-const tutorCtrl = require('../controller/Tutor/TutorController');
-const TutorApplication = require('../controller/Tutor/TutorApplicationController');
-const BookingController = require('../controller/Booking/bookingController');
-const ReviewController = require('../controller/Review/ReviewController');
-const { checkAccessToken } = require('../middleware/JWTAction');
-const { getAllStudents } = require('../controller/User/UserController');
-const uploadDocs = require('../config/cloudinaryDocxConfig');
+const uploadCloud = require("../config/cloudinaryConfig");
+const tutorCtrl = require("../controller/Tutor/TutorController");
+const TutorApplication = require("../controller/Tutor/TutorApplicationController");
+const BookingController = require("../controller/Booking/bookingController");
+const ReviewController = require("../controller/Review/ReviewController");
+const { checkAccessToken } = require("../middleware/JWTAction");
+const { getAllStudents } = require("../controller/User/UserController");
+const uploadDocs = require("../config/cloudinaryDocxConfig");
+const { getMyTutor,updateTutor,getAllSubjects } = require('../controller/User/TutorController');
 
-RouterTutor.post('/bookings/respond', tutorCtrl.respondBooking);
-RouterTutor.post('/bookings/cancel', tutorCtrl.cancelBooking);
-RouterTutor.get('/bookings/pending/:tutorId', tutorCtrl.getPendingBookings);
+const {
+  submitApplication,
+  getTutorApplications,
+  getAllApplications,
+  getApplicationsByStatus,
+  getApplicationById,
+  approveApplication,
+  rejectApplication,
+} = require("../controller/Tutor/TutorApplicationController");
+RouterTutor.post("/bookings/respond", tutorCtrl.respondBooking);
+RouterTutor.post("/bookings/cancel", tutorCtrl.cancelBooking);
+RouterTutor.get("/bookings/pending/:tutorId", tutorCtrl.getPendingBookings);
 
-RouterTutor.post('/schedule', tutorCtrl.createSchedule);
-RouterTutor.get('/schedule/:tutorId', tutorCtrl.getSchedule);
-RouterTutor.put('/schedule/:id', tutorCtrl.updateSchedule);
-RouterTutor.delete('/schedule/:id', tutorCtrl.deleteSchedule);
+RouterTutor.post("/schedule", tutorCtrl.createSchedule);
+RouterTutor.get("/schedule/:tutorId", tutorCtrl.getSchedule);
+RouterTutor.put("/schedule/:id", tutorCtrl.updateSchedule);
+RouterTutor.delete("/schedule/:id", tutorCtrl.deleteSchedule);
 
-RouterTutor.post('/progress', tutorCtrl.updateProgress);
-RouterTutor.get('/progress/:studentId', tutorCtrl.getProgress);
+RouterTutor.post("/progress", tutorCtrl.updateProgress);
+RouterTutor.get("/progress/:studentId", tutorCtrl.getProgress);
 
 // RouterTutor.post('/material/upload', tutorCtrl.uploadMaterial);
 RouterTutor.post(
-  '/material/upload',
-  uploadDocs.single('file'),   
-  tutorCtrl.uploadMaterial     
+  "/material/upload",
+  uploadDocs.single("file"),
+  tutorCtrl.uploadMaterial
 );
-RouterTutor.get('/material/:bookingId', tutorCtrl.getMaterials);
-
-
+RouterTutor.get("/material/:bookingId", tutorCtrl.getMaterials);
 
 RouterTutor.post(
-  '/tutor/application',
+  "/tutor/application",
   checkAccessToken,
-  uploadCloud.single('cvFile'), 
+  uploadCloud.single("cvFile"),
   TutorApplication.submitApplication
 );
 
-RouterTutor.get('/tutor/applications', checkAccessToken, TutorApplication.getTutorApplications);
-RouterTutor.get('/tutor/:tutorId/bookings', checkAccessToken,BookingController.getAllBookingsByTutorId);
-RouterTutor.get('/materials/booking/:bookingId', checkAccessToken,tutorCtrl.getMaterials);
-RouterTutor.get('/students', getAllStudents);  
-RouterTutor.get('/:tutorId/availability', tutorCtrl.getTutorAvailability);
-RouterTutor.get('/review/:tutorId', ReviewController.getReviewsByTutor);
+RouterTutor.get(
+  "/tutor/applications",
+  checkAccessToken,
+  TutorApplication.getTutorApplications
+);
+RouterTutor.get(
+  "/tutor/:tutorId/bookings",
+  checkAccessToken,
+  BookingController.getAllBookingsByTutorId
+);
+RouterTutor.get(
+  "/materials/booking/:bookingId",
+  checkAccessToken,
+  tutorCtrl.getMaterials
+);
+RouterTutor.get("/students", getAllStudents);
+RouterTutor.get("/:tutorId/availability", tutorCtrl.getTutorAvailability);
+RouterTutor.get("/review/:tutorId", ReviewController.getReviewsByTutor);
+RouterTutor.get("/active-status", checkAccessToken, tutorCtrl.getActiveStatus);
+RouterTutor.put(
+  "/active-status",
+  checkAccessToken,
+  tutorCtrl.updateActiveStatus
+);
+RouterTutor.post(
+  "/application",
+  checkAccessToken,
+  uploadCloud.single("cvFile"), 
+  submitApplication
+);
 
+RouterTutor.get("/me", checkAccessToken, getMyTutor);
+RouterTutor.put("/:id", checkAccessToken, updateTutor);
+RouterTutor.get("/subjects", getAllSubjects);
 module.exports = RouterTutor;
