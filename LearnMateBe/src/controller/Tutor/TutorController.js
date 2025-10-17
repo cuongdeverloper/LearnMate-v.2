@@ -311,6 +311,124 @@ const getMaterials = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+
+const createAvailability = async (req, res) => {
+  try {
+    const userId = req.user.id; 
+    const { slots } = req.body;
+
+    const tutor = await Tutor.findOne({ user: userId });
+    if (!tutor) {
+      return res.status(404).json({
+        success: false,
+        message: "Không tìm thấy thông tin gia sư cho tài khoản này.",
+      });
+    }
+
+    const tutorId = tutor._id;
+
+    if (!Array.isArray(slots) || slots.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Không có slot nào để tạo.",
+      });
+    }
+
+    const formattedSlots = slots.map((s) => ({
+      tutorId,
+      date: new Date(`${s.date}T00:00:00.000Z`), 
+      startTime: s.startTime,
+      endTime: s.endTime,
+    }));
+
+    const dates = formattedSlots.map((s) => s.date);
+
+    const existing = await TutorAvailability.find({
+      tutorId,
+      date: { $in: dates },
+    });
+
+    for (const slot of formattedSlots) {
+      const duplicate = existing.find(
+        (e) =>
+          e.startTime === slot.startTime &&
+          e.endTime === slot.endTime &&
+          e.date.toISOString().split("T")[0] ===
+            slot.date.toISOString().split("T")[0]
+      );
+
+      if (duplicate) {
+        return res.status(400).json({
+          success: false,
+          message: `Đã có khung giờ ${slot.startTime} - ${slot.endTime} ngày ${slot.date.toLocaleDateString("vi-VN")}`,
+        });
+      }
+    }
+
+    // Không trùng → thêm mới
+    const created = await TutorAvailability.insertMany(formattedSlots);
+
+    res.json({
+      success: true,
+      message: "Tạo lịch trống thành công.",
+      data: created,
+    });
+  } catch (err) {
+    console.error("Error creating availability:", err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+
+const deleteAvailability = async (req, res) => {
+  try {
+    const { availabilityId } = req.params;
+    const userId = req.user.id; 
+
+    const tutor = await Tutor.findOne({ user: userId });
+    if (!tutor) {
+      return res.status(404).json({
+        success: false,
+        message: "Không tìm thấy thông tin gia sư."
+      });
+    }
+
+    const slot = await TutorAvailability.findOne({
+      _id: availabilityId,
+      tutorId: tutor._id
+    });
+
+    if (!slot) {
+      return res.status(404).json({
+        success: false,
+        message: "Không tìm thấy slot này hoặc không thuộc về bạn."
+      });
+    }
+
+    if (slot.isBooked) {
+      return res.status(400).json({
+        success: false,
+        message: "Slot này đã được học viên đặt, không thể xoá."
+      });
+    }
+
+    // 🔹 Xóa slot
+    await slot.deleteOne();
+
+    res.json({
+      success: true,
+      message: "Đã xoá slot thành công."
+    });
+  } catch (err) {
+    console.error("Error deleting availability:", err);
+    res.status(500).json({
+      success: false,
+      message: err.message
+    });
+  }
+};
+
+
 const getTutorAvailability = async (req, res) => {
   try {
     const { tutorId } = req.params;
@@ -387,5 +505,6 @@ module.exports = {
   updateProgress,
   getProgress,
   uploadMaterial,
-  getMaterials,getTutorAvailability,updateActiveStatus,getActiveStatus
+  getMaterials,getTutorAvailability,updateActiveStatus,getActiveStatus,
+  createAvailability,deleteAvailability
 };

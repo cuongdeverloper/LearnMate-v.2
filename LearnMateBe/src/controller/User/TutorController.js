@@ -296,3 +296,29 @@ exports.getAllSubjects = async (req, res) => {
   }
 };
 
+exports.getSubjectsByTutor = async (req, res) => {
+  try {
+    const userId  = req.user.id;
+    if (!userId) {
+      return res.status(400).json({ success: false, message: "Not authenticated" });
+    }
+
+    const tutor = await Tutor.findOne({ user: userId }).populate("subjects", "name classLevel");
+    if (!tutor) {
+      return res.status(404).json({ success: false, message: "Không tìm thấy tutor với userId này." });
+    }
+
+    return res.status(200).json({
+      success: true,
+      tutorId: tutor._id,
+      subjects: tutor.subjects,
+    });
+  } catch (error) {
+    console.error("Error in getSubjectsByTutor:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Lỗi server khi lấy danh sách môn học theo tutor.",
+      error: error.message,
+    });
+  }
+};

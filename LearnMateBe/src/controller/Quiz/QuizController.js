@@ -1,153 +1,198 @@
+// controller/Quiz/QuizController.js
 const XLSX = require("xlsx");
-
 const Quiz = require("../../modal/Quiz");
+const Question = require("../../modal/Question");
+const Booking = require("../../modal/Booking");
 const Subject = require("../../modal/Subject");
 const Tutor = require("../../modal/Tutor");
-const Question = require("../../modal/Question");
-const Result = require("../../modal/Result");
 
-const getAllQuizzes = async (req, res) => {
+// 🧩 Lấy tất cả quiz (admin hoặc test)
+exports.getAllQuizzes = async (req, res) => {
   try {
-    const quizzes = await Quiz.find().populate("subject").populate("tutor");
-    res.json({ success: true, quizzes });
+    const quizzes = await Quiz.find().populate("subjectId tutorId");
+    res.status(200).json({ success: true, quizzes });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Lỗi khi lấy danh sách quiz",
-      error: error.message,
+    console.error("GetAllQuizzes Error:", error);
+    res.status(500).json({ success: false, message: "Không thể tải danh sách quiz." });
+  }
+};
+
+// 🧩 Lấy quiz theo ID
+exports.getQuizById = async (req, res) => {
+  try {
+    const quiz = await Quiz.findById(req.params.id).populate("subjectId tutorId");
+    if (!quiz) return res.status(404).json({ success: false, message: "Không tìm thấy quiz." });
+    res.status(200).json({ success: true, quiz });
+  } catch (error) {
+    console.error("GetQuizById Error:", error);
+    res.status(500).json({ success: false, message: "Lỗi khi lấy quiz." });
+  }
+};
+
+// 🧩 Tạo quiz mới (có thể theo booking)
+exports.createQuiz = async (req, res) => {
+  try {
+    const { subjectId, tutorId, bookingId, title } = req.body;
+    if (!title) {
+      return res.status(400).json({ success: false, message: "Thiếu tiêu đề quiz." });
+    }
+
+    let finalTutorId = tutorId;
+    let finalSubjectId = subjectId;
+
+    // Nếu có bookingId → lấy subject + tutor từ đó
+    if (bookingId) {
+      const booking = await Booking.findById(bookingId);
+      if (booking) {
+        finalTutorId = finalTutorId || booking.tutorId;
+        finalSubjectId = finalSubjectId || booking.subjectId;
+      }
+    }
+
+    if (!finalTutorId || !finalSubjectId) {
+      return res.status(400).json({ success: false, message: "Thiếu subjectId hoặc tutorId." });
+    }
+
+    const newQuiz = new Quiz({
+      title,
+      subjectId: finalSubjectId,
+      tutorId: finalTutorId,
+      bookingId: bookingId || null,
     });
+
+    await newQuiz.save();
+    res.status(201).json({ success: true, message: "Tạo quiz thành công.", quiz: newQuiz });
+  } catch (error) {
+    console.error("CreateQuiz Error:", error);
+    res.status(500).json({ success: false, message: "Lỗi khi tạo quiz." });
   }
 };
 
-const getQuizById = async (req, res) => {
+// 🧩 Import câu hỏi từ file Excel
+// Import Excel
+exports.importQuestions = async (req, res) => {
   try {
-    const quiz = await Quiz.findById(req.params.id)
-      .populate("subject")
-      .populate("tutor");
+    const { quizId, bookingId } = req.params;
+
+    if (!quizId || !bookingId) {
+      return res.status(400).json({ success: false, message: "Thiếu quizId hoặc bookingId." });
+    }
+
+    // ✅ Lấy quiz để biết tutorId và subjectId
+    const quiz = await Quiz.findById(quizId);
     if (!quiz) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Quiz not found" });
-    }
-    const questions = await Question.find({ quiz: req.params.id });
-
-    res.json({ success: true, ...quiz.toObject(), questions });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Lỗi khi lấy quiz",
-      error: error.message,
-    });
-  }
-};
-
-const createQuiz = async (req, res) => {
-  try {
-    const { subjectId, tutorId, title } = req.body;
-    const subject = await Subject.findById(subjectId);
-    const tutor = await Tutor.findById(tutorId);
-    if (!subject || !tutor) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Subject or Tutor not found" });
-    }
-    const quiz = new Quiz({ subjectId, tutorId, title });
-    await quiz.save();
-    res.status(201).json({ success: true, quiz });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Lỗi khi tạo quiz",
-      error: error.message,
-    });
-  }
-};
-
-const updateQuizById = async (req, res) => {
-  try {
-    const { title } = req.body;
-    const quiz = await Quiz.findById(req.params.id);
-    if (!quiz) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Quiz not found" });
-    }
-    quiz.title = title;
-    await quiz.save();
-    res.json({ success: true, quiz });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-};
-
-const deleteQuizById = async (req, res) => {
-  try {
-    const quiz = await Quiz.findById(req.params.id);
-    if (!quiz) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Quiz not found" });
-    }
-    await quiz.remove();
-    await Result.deleteMany({ quiz: req.params.id });
-    await Question.deleteMany({ quiz: req.params.id });
-    res.json({ success: true, message: "Quiz deleted successfully" });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-};
-
-const importQuestions = async (req, res) => {
-  try {
-    const { id: quizId } = req.params;
-
-    if (!req.file) {
-      return res
-        .status(400)
-        .json({ success: false, message: "No file uploaded" });
+      return res.status(404).json({ success: false, message: "Không tìm thấy quiz." });
     }
 
-    const workbook = XLSX.readFile(req.file.path);
+    // ✅ Đọc file Excel
+    const workbook = XLSX.read(req.file.buffer, { type: "buffer" });
     const sheet = workbook.Sheets[workbook.SheetNames[0]];
     const rows = XLSX.utils.sheet_to_json(sheet);
 
-    const questions = rows.map((row) => ({
-      quiz: quizId,
-      text: row.questionText,
-      options: [row.optionA, row.optionB, row.optionC, row.optionD],
-      correctAnswer:
-        row.correctAnswer === "A"
-          ? 0
-          : row.correctAnswer === "B"
-          ? 1
-          : row.correctAnswer === "C"
-          ? 2
-          : 3,
-    }));
+    // ✅ Chuyển dữ liệu Excel thành danh sách câu hỏi
+    const questions = rows.map((row, index) => {
+      if (!row.text && !row.question) {
+        throw new Error(`Dòng ${index + 2} thiếu cột 'text' hoặc 'question'`);
+      }
 
+      return {
+        quizId,
+        bookingId,
+        tutorId: quiz.tutorId,
+        subjectId: quiz.subjectId,
+        text: row.text || row.question,
+        options: [row.optionA, row.optionB, row.optionC, row.optionD],
+        correctAnswer: Number(row.correctAnswer),
+      };
+    });
+
+    // ✅ Import vào DB
     await Question.insertMany(questions);
 
-    res.json({
-      success: true,
-      message: "Questions imported successfully",
-      count: questions.length,
-    });
+    res.status(200).json({ success: true, message: "✅ Import câu hỏi thành công!" });
   } catch (error) {
-    res
-      .status(500)
-      .json({
-        success: false,
-        message: "Import thất bại",
-        error: error.message,
-      });
+    console.error("❌ Lỗi import:", error);
+    res.status(500).json({
+      success: false,
+      message: "Lỗi server khi import câu hỏi.",
+      error: error.message,
+    });
   }
 };
 
-module.exports = {
-  getAllQuizzes,
-  getQuizById,
-  createQuiz,
-  updateQuizById,
-  deleteQuizById,
-  importQuestions,
+
+// 🧩 Lấy danh sách quiz theo tutor
+exports.getQuizzesByTutorId = async (req, res) => {
+  try {
+    const tutor = await Tutor.findOne({ user: req.user.id });
+    if (!tutor) return res.status(404).json({ success: false, message: "Không tìm thấy tutor." });
+
+    const quizzes = await Quiz.find({ tutorId: tutor._id })
+      .populate("subjectId", "name classLevel")
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({ success: true, quizzes });
+  } catch (error) {
+    console.error("GetQuizzesByTutorId Error:", error);
+    res.status(500).json({ success: false, message: "Lỗi khi lấy danh sách quiz." });
+  }
+};
+
+// 🧩 Lấy quiz theo booking
+exports.getQuizzesByBookingId = async (req, res) => {
+  try {
+    const { bookingId } = req.params;
+    const quizzes = await Quiz.find({ bookingId })
+      .populate("subjectId", "name")
+      .sort({ createdAt: -1 });
+    res.status(200).json({ success: true, quizzes });
+  } catch (error) {
+    console.error("GetQuizzesByBookingId Error:", error);
+    res.status(500).json({ success: false, message: "Không thể tải quiz theo booking." });
+  }
+};
+
+// 🧩 Lấy danh sách câu hỏi của quiz
+exports.getQuestionsByQuizId = async (req, res) => {
+  try {
+    const { quizId } = req.params;
+    const questions = await Question.find({quizId });
+    res.status(200).json({ success: true, questions });
+  } catch (error) {
+    console.error("GetQuestionsByQuizId Error:", error);
+    res.status(500).json({ success: false, message: "Lỗi khi tải câu hỏi." });
+  }
+};
+
+// 🧩 Cập nhật câu hỏi
+exports.updateQuestion = async (req, res) => {
+  try {
+    const { questionId } = req.params;
+    const { text, options, correctAnswer } = req.body;
+
+    const updated = await Question.findByIdAndUpdate(
+      questionId,
+      { text, options, correctAnswer },
+      { new: true }
+    );
+
+    if (!updated) return res.status(404).json({ success: false, message: "Không tìm thấy câu hỏi." });
+    res.status(200).json({ success: true, question: updated });
+  } catch (error) {
+    console.error("UpdateQuestion Error:", error);
+    res.status(500).json({ success: false, message: "Lỗi khi cập nhật câu hỏi." });
+  }
+};
+
+// 🧩 Xoá câu hỏi
+exports.deleteQuestion = async (req, res) => {
+  try {
+    const { questionId } = req.params;
+    const deleted = await Question.findByIdAndDelete(questionId);
+    if (!deleted) return res.status(404).json({ success: false, message: "Không tìm thấy câu hỏi." });
+    res.status(200).json({ success: true, message: "Đã xoá câu hỏi thành công." });
+  } catch (error) {
+    console.error("DeleteQuestion Error:", error);
+    res.status(500).json({ success: false, message: "Lỗi khi xoá câu hỏi." });
+  }
 };
