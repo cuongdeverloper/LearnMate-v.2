@@ -1,0 +1,212 @@
+// === TutorCreateQuiz.scss ===
+
+.tutor-create-quiz {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px;
+  background-color: #f8fafc;
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  font-family: "Inter", sans-serif;
+  color: #333;
+
+  h2 {
+    font-size: 24px;
+    font-weight: 600;
+    color: #1a56db;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 24px;
+
+    svg {
+      color: #1a56db;
+    }
+  }
+
+  // Section card
+  .card {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 24px;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+
+    &:hover {
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06);
+    }
+
+    h3 {
+      font-size: 17px;
+      font-weight: 600;
+      color: #334155;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+
+      svg {
+        color: #475569;
+      }
+    }
+  }
+
+  select,
+  input[type="text"],
+  input[type="file"] {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    font-size: 14px;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+
+    &:focus {
+      border-color: #1d4ed8;
+      box-shadow: 0 0 0 2px rgba(29, 78, 216, 0.1);
+      outline: none;
+    }
+  }
+
+  // Buttons
+  button {
+    border: none;
+    cursor: pointer;
+    font-weight: 500;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+
+    &.btn-primary {
+      background-color: #2563eb;
+      color: white;
+      padding: 10px 16px;
+
+      &:hover {
+        background-color: #1e40af;
+      }
+
+      &:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+    }
+
+    &.btn-success {
+      background-color: #16a34a;
+      color: white;
+      padding: 8px 14px;
+
+      &:hover {
+        background-color: #15803d;
+      }
+    }
+
+    &.btn-danger {
+      background-color: #dc2626;
+      color: white;
+      padding: 8px 14px;
+
+      &:hover {
+        background-color: #b91c1c;
+      }
+    }
+
+    &.btn-outline {
+      background-color: transparent;
+      color: #334155;
+      border: 1px solid #cbd5e1;
+      padding: 8px 14px;
+
+      &:hover {
+        background-color: #f1f5f9;
+      }
+    }
+  }
+
+  // Grid layout cho phần đầu
+  .quiz-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 20px;
+  }
+
+  // Question list
+  .question-list {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+
+    .question-item {
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 16px;
+      background: #ffffff;
+      transition: all 0.2s ease;
+
+      &:hover {
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      }
+
+      .question-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 12px;
+
+        input {
+          flex: 1;
+        }
+
+        span {
+          font-weight: 600;
+          color: #475569;
+        }
+      }
+
+      .options {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 10px;
+        margin-bottom: 10px;
+
+        label {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          padding: 8px 10px;
+          border: 1px solid #cbd5e1;
+          border-radius: 8px;
+          transition: all 0.2s ease;
+
+          &.correct {
+            background-color: #ecfdf5;
+            border-color: #10b981;
+          }
+
+          &:hover {
+            background-color: #f8fafc;
+          }
+
+          input[type="text"] {
+            flex: 1;
+            border: none;
+            outline: none;
+            font-size: 14px;
+            background: transparent;
+          }
+        }
+      }
+
+      .actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+      }
+    }
+  }
+}

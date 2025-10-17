@@ -7,7 +7,6 @@ const assignmentSubmissionSchema = new mongoose.Schema({
   submittedAt: { type: Date, default: Date.now },
   grade: Number,
   feedback: String,
-  aiFeedback: String
 }, { timestamps: true });
 
 module.exports = mongoose.model('AssignmentSubmission', assignmentSubmissionSchema);

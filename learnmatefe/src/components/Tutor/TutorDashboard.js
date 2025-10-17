@@ -15,6 +15,8 @@ import ScheduleIcon from '../../asset/schedule.png';
 import ProgressIcon from '../../asset/Progress.png';
 import MaterialIcon from '../../asset/material.png';
 import LogoutIcon from '../../asset/logout.png';
+import AvailableSchedule from './view/AvailableSchedule';
+import TutorCreateQuiz from './view/TutorCreateQuiz';
 
 const TutorDashboard = () => {
   const [activeTab, setActiveTab] = useState('bookings');
@@ -38,6 +40,8 @@ const TutorDashboard = () => {
       case 'schedule': return <BookingSchedule />;
       case 'progress': return <ProgressTracker />;
       case 'materials': return <MaterialUploader />;
+      case 'availableSchedule': return <AvailableSchedule />;
+      case 'createquiz': return <TutorCreateQuiz />;
       default: return <TutorBookingList />;
     }
   };
@@ -66,7 +70,19 @@ const TutorDashboard = () => {
       icon: MaterialIcon, 
       label: 'Tài liệu', 
       description: 'Chia sẻ tài liệu học tập' 
-    }
+    },
+    { 
+      id: 'availableSchedule', 
+      icon: MaterialIcon, 
+      label: 'Lịch trống', 
+      description: 'Đặt lịch trống cho gia sư' 
+    },
+    { 
+      id: 'createquiz', 
+      icon: MaterialIcon, 
+      label: 'Tạo quiz', 
+      description: 'Tạo quiz cho từng môn học' 
+    },
   ];
 
 
