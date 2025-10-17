@@ -1,182 +1,109 @@
-$success-sass: #28a745;
-$danger-sass: #dc3545;
+// UpdateTutorProfile.scss
 
-.update-tutor-form {
-    background-color: var(--white);
-    border-radius: 12px;
-    box-shadow: 0 8px 25px var(--shadow-light);
-    padding: 40px;
+// Variables
+$primary-color: #007bff;
+$secondary-color: #6c757d;
+$background-color: #f8f9fa;
+$card-background: #ffffff;
+$border-color: #dee2e6;
+$focus-shadow-color: rgba(0, 123, 255, 0.35); // Shadow đậm hơn khi focus
+
+.update-tutor-profile-container {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 60px 20px; // Padding lớn hơn cho màn hình lớn
+  min-height: 100vh;
+  background-color: $background-color;
+
+  .update-tutor-profile-form {
+    // 💡 ĐIỀU CHỈNH CHÍNH: Tăng độ rộng tối đa cho màn hình 1920x1080
     width: 100%;
-    max-width: 700px;
-    margin: 40px auto;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    color: var(--text-color);
-    animation: fadeIn 0.4s ease-in-out;
-  
-    h3 {
-      font-size: 1.8em;
+    max-width: 900px; // Tăng lên 900px để lấp đầy không gian hợp lý
+    padding: 40px 50px; // Tăng padding ngang bên trong form
+    background-color: $card-background;
+    border-radius: 16px; // Bo góc lớn hơn
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15); // Shadow rõ hơn, cao cấp hơn
+    transition: transform 0.3s ease-in-out;
+
+    .update-tutor-profile-title {
+      font-size: 2.2rem; // Tiêu đề lớn hơn
+      color: #212529;
+      margin-bottom: 35px;
       font-weight: 700;
-      color: var(--primary-color);
-      margin-bottom: 25px;
-      text-align: center;
+      border-bottom: 3px solid $primary-color;
+      padding-bottom: 12px;
     }
-  
-    form {
+
+    .update-tutor-profile-group {
+      margin-bottom: 30px; // Khoảng cách giữa các nhóm lớn hơn
+
+      .update-tutor-profile-label {
+        display: block;
+        margin-bottom: 10px;
+        font-weight: 600;
+        color: #343a40;
+        font-size: 1.1rem; // Font label lớn hơn
+      }
+
+      .update-tutor-profile-input,
+      .update-tutor-profile-textarea,
+      .update-tutor-profile-select .react-select__control {
+        // Tăng chiều cao input/select
+        min-height: 52px;
+        padding: 14px;
+        border-radius: 10px;
+        font-size: 1.05rem;
+        
+        &:focus {
+          border-color: $primary-color;
+          box-shadow: 0 0 0 0.25rem $focus-shadow-color;
+          outline: none;
+        }
+      }
+
+      .update-tutor-profile-textarea {
+        min-height: 180px; // Textarea cao hơn cho Bio
+      }
+      
+      .update-tutor-profile-select {
+        .react-select__control {
+            min-height: 52px; 
+        }
+        .react-select__multi-value {
+            background-color: lighten($primary-color, 40%);
+        }
+      }
+    }
+
+    .update-tutor-profile-actions {
       display: flex;
-      flex-direction: column;
-      gap: 20px;
-  
-      .form-group {
-        display: flex;
-        flex-direction: column;
-        text-align: left;
-  
-        label {
-          font-weight: 600;
-          color: var(--secondary-color);
-          margin-bottom: 8px;
-          font-size: 1em;
-        }
-  
-        input,
-        textarea,
-        select {
-          padding: 12px 14px;
-          border: 1px solid var(--border-color);
-          border-radius: 8px;
-          font-size: 1em;
-          color: var(--text-color);
-          background-color: var(--light-grey);
-          transition: all 0.2s ease;
-  
-          &:focus {
-            outline: none;
-            border-color: var(--primary-color);
-            background-color: var(--white);
-            box-shadow: 0 0 6px rgba(0, 123, 255, 0.2);
+      justify-content: flex-end;
+      gap: 25px; // Khoảng cách giữa các nút lớn hơn
+      margin-top: 40px;
+
+      .update-tutor-profile-btn {
+        padding: 14px 30px; // Nút lớn hơn
+        border-radius: 12px; // Bo góc nút lớn hơn
+        font-size: 1.1rem;
+        font-weight: 700;
+        min-width: 120px; 
+
+        &.save {
+          background-color: $primary-color;
+          &:not(:disabled):hover {
+            background-color: darken($primary-color, 8%);
+            box-shadow: 0 6px 15px rgba(0, 123, 255, 0.4); // Thêm shadow cho nút
           }
         }
-  
-        textarea {
-          min-height: 100px;
-          resize: vertical;
-        }
-  
-        select[multiple] {
-          height: 120px;
-          padding: 10px;
-        }
-      }
-  
-      .button-group {
-        display: flex;
-        justify-content: center;
-        gap: 15px;
-        margin-top: 25px;
-  
-        .btn {
-          padding: 12px 25px;
-          border: none;
-          border-radius: 8px;
-          font-size: 1em;
-          font-weight: 600;
-          cursor: pointer;
-          transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
-          min-width: 130px;
-  
-          &:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 10px var(--shadow-light);
-          }
-  
-          &.btn-primary {
-            background-color: var(--success-color);
-            color: var(--white);
-            &:hover {
-              background-color: darken($success-sass, 8%);
-            }
-          }
-  
-          &.btn-secondary {
-            background-color: var(--danger-color);
-            color: var(--white);
-            &:hover {
-              background-color: darken($danger-sass, 8%);
-            }
+
+        &.cancel {
+          background-color: $secondary-color;
+          &:not(:disabled):hover {
+            background-color: darken($secondary-color, 8%);
           }
         }
       }
     }
   }
-  
-  /* Simple fade-in effect */
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-      transform: translateY(10px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-  
-  /* Responsive */
-  @media (max-width: 767px) {
-    .update-tutor-form {
-      padding: 25px 20px;
-      margin: 20px;
-  
-      h3 {
-        font-size: 1.5em;
-      }
-  
-      form {
-        .button-group {
-          flex-direction: column;
-          align-items: center;
-  
-          .btn {
-            width: 100%;
-            max-width: 250px;
-          }
-        }
-      }
-    }
-  }
-  
-  /* React Select custom style */
-.react-select-container {
-    .react-select__control {
-      background-color: var(--light-grey);
-      border-radius: 8px;
-      border: 1px solid var(--border-color);
-      min-height: 45px;
-      box-shadow: none;
-      &:hover {
-        border-color: var(--primary-color);
-      }
-    }
-  
-    .react-select__menu {
-      background-color: #fff;
-      border-radius: 8px;
-      z-index: 10;
-    }
-  
-    .react-select__multi-value {
-      background-color: var(--primary-light);
-      border-radius: 6px;
-    }
-  
-    .react-select__multi-value__label {
-      color: var(--primary-color);
-      font-weight: 500;
-    }
-  
-    .react-select__multi-value__remove:hover {
-      background-color: var(--primary-color);
-      color: #fff;
-    }
-  }
-  
+}

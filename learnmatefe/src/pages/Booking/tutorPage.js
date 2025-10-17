@@ -282,6 +282,7 @@ export default function TutorListPage() {
                     placeholder="Tìm theo tên..."
                   />
                 </div>
+
                 <div className="filter-group">
                   <label htmlFor="minPrice">Giá tối thiểu</label>
                   <input
@@ -293,6 +294,7 @@ export default function TutorListPage() {
                     placeholder="VND"
                   />
                 </div>
+
                 <div className="filter-group">
                   <label htmlFor="maxPrice">Giá tối đa</label>
                   <input
@@ -304,6 +306,7 @@ export default function TutorListPage() {
                     placeholder="VND"
                   />
                 </div>
+
                 <div className="filter-group">
                   <label htmlFor="minRating">Đánh giá tối thiểu</label>
                   <input
@@ -316,6 +319,17 @@ export default function TutorListPage() {
                     value={filters.minRating ?? ""}
                     onChange={handleFilterChange}
                     placeholder="0.0 - 5.0"
+                  />
+                </div>
+                <div className="filter-group">
+                  <label htmlFor="location">Khu vực</label>
+                  <input
+                    id="location"
+                    type="text"
+                    name="location"
+                    value={filters.location ?? ""}
+                    onChange={handleFilterChange}
+                    placeholder="VD: Hà Nội, TP.HCM..."
                   />
                 </div>
                 <div className="filter-group filter-btn-group">
@@ -381,6 +395,10 @@ export default function TutorListPage() {
                                 .map((s) => `${s.name} lớp ${s.classLevel}`)
                                 .join(", ")
                             : "Đang cập nhật"}
+                        </p>
+                        <p>
+                          <strong>Khu vực:</strong>{" "}
+                          {tutor.location || "Chưa cập nhật"}
                         </p>
                         <p className="tutor-desc">
                           {tutor.bio ||

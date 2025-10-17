@@ -1,87 +1,131 @@
 const TutorApplication = require('../../modal/TutorApplication');
 const User = require('../../modal/User');
+const Tutor = require('../../modal/Tutor')
 const uploadCloud = require('../../config/cloudinaryConfig');
 const { createTutorApplicationNotification } = require('../Notification/NotificationController');
 
-const submitApplication = async (req, res) => {
-  try {
-    const {
-      experience,
-      education,
-      subjects,
-      bio,
-      pricePerHour,
-      location,
-      languages,
-      certificates,
-      classes,
-      availableTimes
-    } = req.body;
+  const submitApplication = async (req, res) => {
+    try {
+      const {
+        experience,
+        education,
+        subjects,
+        bio,
+        pricePerHour,
+        location,
+        languages,
+        certificates
+      } = req.body;
 
-    const tutorId = req.user?.id;
-    const cvFile = req.file?.path;
+      const tutorId = req.user?.id; // Đây là userId
+      const cvFile = req.file?.path;
 
-    if (!tutorId) {
-      return res.status(401).json({ errorCode: 5, message: 'Unauthorized: Missing user ID' });
-    }
+      if (!tutorId) {
+        return res.status(401).json({
+          errorCode: 1,
+          message: 'Không xác định được người dùng.'
+        });
+      }
+      // --- KIỂM TRA NẾU ĐÃ LÀ TUTOR ---
+      const existingTutor = await Tutor.findOne({ user: tutorId });
+      if (existingTutor) {
+        return res.status(400).json({
+          errorCode: 4,
+          message: 'Bạn đã là gia sư, không thể nộp đơn đăng ký mới.'
+        });
+      }
 
-    const missingFields = [];
-    if (!cvFile) missingFields.push('file CV');
-    if (!experience?.trim()) missingFields.push('kinh nghiệm');
-    if (!education?.trim()) missingFields.push('học vấn');
-    if (!bio?.trim()) missingFields.push('giới thiệu');
-    if (!location?.trim()) missingFields.push('địa điểm');
-    if (!pricePerHour || isNaN(pricePerHour)) missingFields.push('giá mỗi giờ');
+      // --- PARSE FIELDS ---
+      let parsedSubjects = subjects;
+      try {
+        if (typeof parsedSubjects === 'string') {
+          parsedSubjects = JSON.parse(parsedSubjects);
+        }
+      } catch {
+        parsedSubjects = [subjects];
+      }
+      if (!Array.isArray(parsedSubjects)) {
+        parsedSubjects = [parsedSubjects].filter(Boolean);
+      }
 
-    const parsedSubjects = Array.isArray(subjects) ? subjects : [subjects];
-    const parsedClasses = Array.isArray(classes) ? classes.map(Number) : [Number(classes)];
-    const parsedAvailableTimes = JSON.parse(availableTimes || '[]');
-    const parsedLanguages = Array.isArray(languages) ? languages : [languages];
-    const parsedCertificates = Array.isArray(certificates) ? certificates : [certificates];
+      const cleanArray = (val) => {
+        if (Array.isArray(val)) return val.filter(v => v && v.trim() !== '');
+        if (typeof val === 'string') {
+          return val.split(',').map(v => v.trim()).filter(Boolean);
+        }
+        return [];
+      };
 
-    if (parsedSubjects.length === 0) missingFields.push('môn học');
-    if (parsedClasses.length === 0) missingFields.push('khối lớp');
-    if (parsedAvailableTimes.length === 0) missingFields.push('thời gian rảnh');
+      const parsedLanguages = cleanArray(languages);
+      const parsedCertificates = cleanArray(certificates);
 
-    if (missingFields.length > 0) {
-      return res.status(400).json({
-        errorCode: 2,
-        message: `Thiếu trường bắt buộc: ${missingFields.join(', ')}`
+      // --- VALIDATION ---
+      const missingFields = [];
+      if (!cvFile) missingFields.push('CV');
+      if (!experience?.trim()) missingFields.push('Kinh nghiệm');
+      if (!education?.trim()) missingFields.push('Học vấn');
+      if (!bio?.trim()) missingFields.push('Giới thiệu bản thân');
+      if (!location?.trim()) missingFields.push('Địa điểm');
+      if (!pricePerHour || isNaN(pricePerHour) || Number(pricePerHour) <= 0)
+        missingFields.push('Giá mỗi giờ');
+      if (!parsedSubjects || parsedSubjects.length === 0)
+        missingFields.push('Môn học');
+
+      if (missingFields.length > 0) {
+        return res.status(400).json({
+          errorCode: 2,
+          message: `Thiếu thông tin bắt buộc: ${missingFields.join(', ')}`
+        });
+      }
+
+      // --- KIỂM TRA ĐƠN PENDING ---
+      const existingApp = await TutorApplication.findOne({
+        tutorId,
+        status: 'pending'
+      });
+      if (existingApp) {
+        return res.status(400).json({
+          errorCode: 3,
+          message: 'Bạn đã có đơn đăng ký đang chờ duyệt.'
+        });
+      }
+
+      // --- TẠO MỚI ĐƠN ĐĂNG KÝ ---
+      const newApplication = new TutorApplication({
+        tutorId,
+        cvFile,
+        certificates: parsedCertificates,
+        experience: experience.trim(),
+        education: education.trim(),
+        subjects: parsedSubjects,
+        bio: bio.trim(),
+        pricePerHour: Number(pricePerHour),
+        location: location.trim(),
+        languages: parsedLanguages,
+        status: 'pending'
+      });
+
+      await newApplication.save();
+
+      // --- GỬI THÔNG BÁO CHO ADMIN ---
+      if (typeof createTutorApplicationNotification === 'function') {
+        await createTutorApplicationNotification(newApplication);
+      }
+
+      return res.status(201).json({
+        errorCode: 0,
+        message: ' Đơn đăng ký gia sư của bạn đã được gửi thành công. Vui lòng chờ duyệt!',
+        data: newApplication
+      });
+
+    } catch (error) {
+      console.error(' Lỗi khi submit application:', error);
+      return res.status(500).json({
+        errorCode: 500,
+        message: error.message
       });
     }
-
-    const existing = await TutorApplication.findOne({ tutorId, status: 'pending' });
-    if (existing) {
-      return res.status(400).json({ errorCode: 3, message: 'Đã có đơn đang chờ xử lý' });
-    }
-
-    const application = new TutorApplication({
-      tutorId,
-      cvFile,
-      certificates: parsedCertificates,
-      experience: experience.trim(),
-      education: education.trim(),
-      subjects: parsedSubjects,
-      bio: bio.trim(),
-      pricePerHour: Number(pricePerHour),
-      location: location.trim(),
-      languages: parsedLanguages,
-      status: 'pending'
-    });
-
-    await application.save();
-    await createTutorApplicationNotification(application);
-
-    res.status(201).json({
-      errorCode: 0,
-      message: 'Đơn đăng ký đã gửi thành công',
-      data: application
-    });
-  } catch (error) {
-    console.error('Lỗi khi submit application:', error);
-    res.status(500).json({ errorCode: 4, message: 'Lỗi máy chủ' });
-  }
-};
+  };
 
 // Get all applications (for admin)
 const getAllApplications = async (req, res) => {
