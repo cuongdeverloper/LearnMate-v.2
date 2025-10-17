@@ -1,0 +1,105 @@
+.tutor-create-quiz {
+  max-width: 850px;
+  margin: 30px auto;
+  background: #fff;
+  border-radius: 12px;
+  padding: 25px 35px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+
+  h2 {
+    margin-bottom: 20px;
+    color: #333;
+    text-align: center;
+  }
+
+  .form-group {
+    margin-bottom: 15px;
+    label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+    select,
+    input {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      &:focus {
+        outline: none;
+        border-color: #007bff;
+      }
+    }
+  }
+
+  .quiz-form,
+  .import-section {
+    margin-top: 20px;
+    button {
+      background: #007bff;
+      color: white;
+      padding: 8px 16px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      &:hover {
+        background: #0056b3;
+      }
+    }
+  }
+
+  .question-list {
+    margin-top: 30px;
+    .question-item {
+      background: #f9f9f9;
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 10px;
+      border: 1px solid #e0e0e0;
+
+      .question-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+
+        input {
+          width: 80%;
+          font-size: 15px;
+          border: none;
+          background: transparent;
+          border-bottom: 1px solid #ccc;
+        }
+
+        .delete-btn {
+          background: #ff4444;
+          color: white;
+          border: none;
+          border-radius: 6px;
+          padding: 4px 10px;
+          cursor: pointer;
+        }
+      }
+
+      ul {
+        margin-top: 8px;
+        list-style: none;
+        li {
+          margin: 4px 0;
+          display: flex;
+          align-items: center;
+          input {
+            width: 90%;
+            border: none;
+            background: transparent;
+            border-bottom: 1px dashed #aaa;
+          }
+          .correct {
+            margin-left: 6px;
+            color: green;
+            font-weight: bold;
+          }
+        }
+      }
+    }
+  }
+}

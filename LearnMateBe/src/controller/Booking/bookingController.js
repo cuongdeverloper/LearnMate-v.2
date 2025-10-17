@@ -300,40 +300,61 @@ exports.getAllBookingsByTutorId = async (req, res) => {
   try {
     const { tutorId } = req.params;
 
+    // Kiểm tra định dạng ID
     if (!tutorId || !tutorId.match(/^[0-9a-fA-F]{24}$/)) {
-      return res.status(400).json({ message: 'Invalid tutor ID format.' });
+      return res.status(400).json({
+        success: false,
+        message: "❌ Định dạng tutor ID không hợp lệ.",
+      });
     }
 
+    // Tìm các booking của tutor đó
     const bookings = await Booking.find({ tutorId })
       .populate({
-        path: 'learnerId',
-        select: 'username email image',
+        path: "learnerId",
+        select: "username email phoneNumber gender image",
       })
       .populate({
-        path: 'scheduleIds',
-        select: 'date startTime endTime attended',
+        path: "subjectId",
+        select: "name classLevel description",
+      })
+      .populate({
+        path: "scheduleIds",
+        select: "date startTime endTime attended",
       })
       .sort({ createdAt: -1 });
 
-    // Tính toán startDate và endDate từ scheduleIds
+    // Xử lý dữ liệu lịch học để có startDate và endDate
     const enrichedBookings = bookings.map((booking) => {
-      const dates = booking.scheduleIds.map((s) => new Date(s.date));
-      const startDate = dates.length > 0 ? new Date(Math.min(...dates)) : null;
-      const endDate = dates.length > 0 ? new Date(Math.max(...dates)) : null;
+      const schedules = booking.scheduleIds || [];
+      const dates = schedules.map((s) => new Date(s.date));
+
+      const startDate = dates.length ? new Date(Math.min(...dates)) : null;
+      const endDate = dates.length ? new Date(Math.max(...dates)) : null;
 
       return {
         ...booking.toObject(),
         startDate,
         endDate,
+        totalSessions: schedules.length,
+        completedSessions: schedules.filter((s) => s.attended).length,
       };
     });
 
-    res.status(200).json({ success: true, bookings: enrichedBookings });
+    res.status(200).json({
+      success: true,
+      count: enrichedBookings.length,
+      bookings: enrichedBookings,
+    });
   } catch (error) {
-    console.error("Error fetching bookings by tutor ID:", error);
-    res.status(500).json({ message: 'Lỗi server khi lấy danh sách booking của tutor.' });
+    console.error("❌ Lỗi khi lấy danh sách booking của tutor:", error);
+    res.status(500).json({
+      success: false,
+      message: "Lỗi server khi lấy danh sách booking của tutor.",
+    });
   }
 };
+
 
 exports.createReport = async (req, res) => {
   const { targetType, targetId, reason } = req.body;

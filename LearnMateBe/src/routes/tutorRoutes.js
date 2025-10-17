@@ -8,7 +8,7 @@ const ReviewController = require("../controller/Review/ReviewController");
 const { checkAccessToken } = require("../middleware/JWTAction");
 const { getAllStudents } = require("../controller/User/UserController");
 const uploadDocs = require("../config/cloudinaryDocxConfig");
-const { getMyTutor,updateTutor,getAllSubjects } = require('../controller/User/TutorController');
+const { getMyTutor,updateTutor,getAllSubjects, getSubjectsByTutor } = require('../controller/User/TutorController');
 
 const {
   submitApplication,
@@ -80,4 +80,8 @@ RouterTutor.post(
 RouterTutor.get("/me", checkAccessToken, getMyTutor);
 RouterTutor.put("/:id", checkAccessToken, updateTutor);
 RouterTutor.get("/subjects", getAllSubjects);
+
+RouterTutor.post("/createavailability", checkAccessToken, tutorCtrl.createAvailability);
+RouterTutor.delete("/:availabilityId", checkAccessToken, tutorCtrl.deleteAvailability);
+RouterTutor.get("/subjects-by-tutor", checkAccessToken, getSubjectsByTutor);
 module.exports = RouterTutor;
