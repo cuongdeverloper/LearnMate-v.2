@@ -1,167 +1,252 @@
 // src/pages/profile/Profile.js
-import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useSelector } from 'react-redux';
-import './Profile.scss';
+import React, { useEffect, useState, useRef } from "react";
+import { useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";
+import Select from "react-select";
+import makeAnimated from "react-select/animated";
+import { toast } from "react-toastify";
+import {
+  ApiGetProfile,
+  ApiUpdateProfile,
+} from "../../Service/ApiService/ApiUser";
+import {
+  ApiGetMyTutor,
+  ApiGetAllSubjects,
+  ApiUpdateTutor,
+} from "../../Service/ApiService/ApiTutor";
+import  ChangePasswordForm  from "./ChangePasswordForm"; // Nếu file riêng, giữ import
+import "./Profile.scss";
 
-import UpdateProfile from './UpdateProfile';
-import ChangePasswordForm from './ChangePasswordForm';
-import UpdateTutorProfile from './UpdateTutorProfile'; // ✅ thêm để chỉnh thông tin gia sư
-
-import { ApiGetProfile } from '../../Service/ApiService/ApiUser';
-import { ApiGetMyTutor } from '../../Service/ApiService/ApiTutor';
+const animatedComponents = makeAnimated();
 
 const Profile = () => {
-  const [profile, setProfile] = useState(null);
-  const [editMode, setEditMode] = useState(false);
-  const [editTutorMode, setEditTutorMode] = useState(false);
-  const [showChangePassword, setShowChangePassword] = useState(false);
-  const [isSocial, setIsSocial] = useState(false);
-  const [tutorData, setTutorData] = useState(null);
-
   const navigate = useNavigate();
-  const access_token = useSelector(state => state.user.account?.access_token);
+  const access_token = useSelector((s) => s.user.account?.access_token);
 
-  // ✅ Lấy thông tin người dùng
+  const [profile, setProfile] = useState(null);
+  const [tutorData, setTutorData] = useState(null);
+  const [allSubjects, setAllSubjects] = useState([]);
+  const [isSocial, setIsSocial] = useState(false);
+  const [mode, setMode] = useState("view"); // view | editUser | editTutor | changePassword
+
+  const [formUser, setFormUser] = useState({});
+  const [formTutor, setFormTutor] = useState({});
+  const [imagePreview, setImagePreview] = useState("");
+  const fileRef = useRef();
+
+  // 🔹 Fetch profile
   useEffect(() => {
     const fetchProfile = async () => {
       try {
         const res = await ApiGetProfile();
-        if (res.socialLogin) {
-          setIsSocial(true);
-        }
         setProfile(res);
-      } catch (error) {
-        console.error("Failed to fetch profile:", error);
-        navigate('/signin');
+        setIsSocial(res.socialLogin);
+        setFormUser({
+          username: res.username,
+          email: res.email,
+          phoneNumber: res.phoneNumber,
+          gender: res.gender,
+          image: null,
+        });
+        setImagePreview(res.image);
+      } catch (e) {
+        console.error(e);
+        navigate("/signin");
       }
     };
-
     fetchProfile();
   }, [navigate]);
 
-  // ✅ Lấy thông tin gia sư nếu user là tutor
+  // 🔹 Fetch tutor + subjects
   useEffect(() => {
-    const fetchTutorData = async () => {
-      if (profile?.role === 'tutor') {
-        try {
-          const res = await ApiGetMyTutor();
-          setTutorData(res);
-        } catch (err) {
-          console.error(err);
-        }
+    if (profile?.role !== "tutor") return;
+    const fetchTutor = async () => {
+      try {
+        const [tutorRes, subjectsRes] = await Promise.all([
+          ApiGetMyTutor(),
+          ApiGetAllSubjects(),
+        ]);
+        setTutorData(tutorRes);
+        setAllSubjects(subjectsRes);
+        setFormTutor({
+          bio: tutorRes.bio || "",
+          subjects: tutorRes.subjects?.map((s) => s._id) || [],
+          pricePerHour: tutorRes.pricePerHour || "",
+          location: tutorRes.location || "",
+          languages: tutorRes.languages?.join(", ") || "",
+        });
+      } catch (err) {
+        toast.error("Không thể tải thông tin gia sư.");
       }
     };
-
-    fetchTutorData();
+    fetchTutor();
   }, [profile]);
 
-  if (!profile) {
-    return <div className="profile-loading">Đang tải thông tin cá nhân...</div>;
-  }
+  // 🧩 Handle change user
+  const handleUserChange = (e) => {
+    const { name, value } = e.target;
+    setFormUser((p) => ({ ...p, [name]: value }));
+  };
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setFormUser((p) => ({ ...p, image: file }));
+      setImagePreview(URL.createObjectURL(file));
+    }
+  };
+
+  // 🧩 Handle change tutor
+  const handleTutorChange = (e) => {
+    const { name, value } = e.target;
+    setFormTutor((p) => ({ ...p, [name]: value }));
+  };
+  const handleSubjectsChange = (opts) => {
+    setFormTutor((p) => ({ ...p, subjects: opts.map((o) => o.value) }));
+  };
+
+  // 🔹 Submit update user
+  const handleSubmitUser = async (e) => {
+    e.preventDefault();
+    try {
+      const data = await ApiUpdateProfile(formUser);
+      setProfile(data.user);
+      toast.success(data.message || "Cập nhật hồ sơ thành công!");
+      setMode("view");
+    } catch (err) {
+      toast.error("Cập nhật thất bại!");
+    }
+  };
+
+  // 🔹 Submit update tutor
+  const handleSubmitTutor = async (e) => {
+    e.preventDefault();
+    try {
+      const res = await ApiUpdateTutor(tutorData._id, {
+        ...formTutor,
+        languages: formTutor.languages.split(",").map((l) => l.trim()),
+      });
+      toast.success("Cập nhật thông tin gia sư thành công!");
+      setTutorData(res);
+      setMode("view");
+    } catch {
+      toast.error("Cập nhật thất bại!");
+    }
+  };
+
+  if (!profile)
+    return <div className="profile-loading">Đang tải thông tin...</div>;
 
   return (
-    <div className="profile-page-wrapper">
-      {/* ✅ Nếu đang chỉnh sửa hồ sơ user */}
-      {editMode ? (
-        <UpdateProfile
-          profile={profile}
-          onUpdate={user => {
-            setProfile(user);
-            setEditMode(false);
-          }}
-          onCancel={() => setEditMode(false)}
-          isSocial={isSocial}
-        />
-      ) : showChangePassword ? (
-        <ChangePasswordForm onClose={() => setShowChangePassword(false)} />
-      ) : editTutorMode ? (
-        <UpdateTutorProfile
-          tutorData={tutorData}
-          onUpdate={updatedTutor => {
-            setTutorData(updatedTutor);
-            setEditTutorMode(false);
-          }}
-          onCancel={() => setEditTutorMode(false)}
-        />
-      ) : (
-        <div className="profile-card">
-          <h2 className="profile-card-title">Thông tin cá nhân</h2>
+    <div className="profile-wrapper">
+      {/* 🔸 Header */}
+      <h2 className="profile-header">Hồ sơ cá nhân</h2>
 
-          <div className="avatar-section">
+      {/* 🔸 Chế độ xem hồ sơ */}
+      {mode === "view" && (
+        <div className="profile-card">
+          <div className="profile-avatar-section">
             <img
-              src={profile.image || '/default-avatar.png'}
+              src={profile.image || "/default-avatar.png"}
               alt="avatar"
-              className="avatar"
+              className="profile-avatar"
             />
           </div>
 
-          <div className="info-grid">
-            <div className="info-item">
-              <label>Tên đăng nhập:</label>
-              <span>{profile.username}</span>
-            </div>
-            <div className="info-item">
-              <label>Email:</label>
-              <span>{profile.email}</span>
-            </div>
-            <div className="info-item">
-              <label>Số điện thoại:</label>
-              <span>{profile.phoneNumber || 'Chưa cập nhật'}</span>
-            </div>
-            <div className="info-item">
-              <label>Giới tính:</label>
-              <span>
-                {profile.gender === 'male'
-                  ? 'Nam'
-                  : profile.gender === 'female'
-                  ? 'Nữ'
-                  : 'Khác'}
-              </span>
-            </div>
-            <div className="info-item">
-              <label>Vai trò:</label>
-              <span>{profile.role}</span>
-            </div>
-            <div className="info-item">
-              <label>Mật khẩu:</label>
-              <span>*********</span>
-            </div>
+          <div className="profile-info">
+            <div><strong>Tên đăng nhập:</strong> {profile.username}</div>
+            <div><strong>Email:</strong> {profile.email}</div>
+            <div><strong>Số điện thoại:</strong> {profile.phoneNumber || "Chưa có"}</div>
+            <div><strong>Giới tính:</strong> {profile.gender || "Chưa rõ"}</div>
+            <div><strong>Vai trò:</strong> {profile.role}</div>
           </div>
 
-          <div className="button-group">
-            <button className="btn btn-edit" onClick={() => setEditMode(true)}>
+          <div className="profile-actions">
+            <button onClick={() => setMode("editUser")} className="btn-primary">
               Chỉnh sửa
             </button>
-
             {!isSocial && (
-              <button
-                className="btn btn-change-password"
-                onClick={() => setShowChangePassword(true)}
-              >
+              <button onClick={() => setMode("changePassword")} className="btn-secondary">
                 Đổi mật khẩu
               </button>
             )}
-
-            {profile.role === 'student' && (
-              <button
-                className="btn btn-apply-tutor"
-                onClick={() => navigate('/tutor-application')}
-              >
+            {profile.role === "student" && (
+              <button onClick={() => navigate("/tutor-application")} className="btn-outline">
                 Trở thành gia sư
               </button>
             )}
-
-            {profile.role === 'tutor' && (
-              <button
-                className="btn btn-edit-tutor"
-                onClick={() => setEditTutorMode(true)}
-              >
+            {profile.role === "tutor" && (
+              <button onClick={() => setMode("editTutor")} className="btn-outline">
                 Cập nhật hồ sơ gia sư
               </button>
             )}
           </div>
         </div>
+      )}
+
+      {/* 🔸 Form chỉnh sửa user */}
+      {mode === "editUser" && (
+        <form className="profile-form" onSubmit={handleSubmitUser}>
+          <div className="profile-avatar-edit">
+            <img src={imagePreview || "/default-avatar.png"} alt="" />
+            <label htmlFor="upload">Thay ảnh đại diện</label>
+            <input
+              type="file"
+              id="upload"
+              accept="image/*"
+              ref={fileRef}
+              onChange={handleImageChange}
+            />
+          </div>
+          <input name="username" value={formUser.username} onChange={handleUserChange} placeholder="Tên đăng nhập" />
+          <input name="email" value={formUser.email} disabled={isSocial} onChange={handleUserChange} placeholder="Email" />
+          <input name="phoneNumber" value={formUser.phoneNumber || ""} onChange={handleUserChange} placeholder="Số điện thoại" />
+          <select name="gender" value={formUser.gender} onChange={handleUserChange}>
+            <option value="male">Nam</option>
+            <option value="female">Nữ</option>
+            <option value="other">Khác</option>
+          </select>
+          <div className="form-actions">
+            <button type="submit" className="btn-primary">Lưu</button>
+            <button type="button" className="btn-secondary" onClick={() => setMode("view")}>Hủy</button>
+          </div>
+        </form>
+      )}
+
+      {/* 🔸 Form chỉnh sửa gia sư */}
+      {mode === "editTutor" && (
+        <form className="profile-form" onSubmit={handleSubmitTutor}>
+          <textarea
+            name="bio"
+            value={formTutor.bio}
+            onChange={handleTutorChange}
+            placeholder="Giới thiệu bản thân..."
+          />
+          <Select
+            isMulti
+            closeMenuOnSelect={false}
+            components={animatedComponents}
+            options={allSubjects.map((s) => ({
+              value: s._id,
+              label: `${s.name} (${s.classLevel})`,
+            }))}
+            value={allSubjects
+              .filter((s) => formTutor.subjects.includes(s._id))
+              .map((s) => ({ value: s._id, label: `${s.name} (${s.classLevel})` }))}
+            onChange={handleSubjectsChange}
+          />
+          <input name="pricePerHour" value={formTutor.pricePerHour} onChange={handleTutorChange} placeholder="Giá mỗi giờ (VND)" />
+          <input name="location" value={formTutor.location} onChange={handleTutorChange} placeholder="Khu vực" />
+          <input name="languages" value={formTutor.languages} onChange={handleTutorChange} placeholder="Ngôn ngữ (phân tách bằng dấu phẩy)" />
+          <div className="form-actions">
+            <button type="submit" className="btn-primary">Lưu</button>
+            <button type="button" className="btn-secondary" onClick={() => setMode("view")}>Hủy</button>
+          </div>
+        </form>
+      )}
+
+      {/* 🔸 Đổi mật khẩu */}
+      {mode === "changePassword" && (
+        <ChangePasswordForm onClose={() => setMode("view")} />
       )}
     </div>
   );

@@ -56,56 +56,40 @@ const getReviewsByTutor = async (tutorId) => {
   };
   export const submitTutorApplication = async (formData) => {
     try {
+      const token = Cookies.get("accessToken");
+      if (!token) throw new Error("Unauthorized: No access token");
+  
       const data = new FormData();
   
-      // Append all form data fields
       Object.entries(formData).forEach(([key, value]) => {
-        if (key === 'availableTimes') {
-          data.append(key, JSON.stringify(value));
-        } else if (Array.isArray(value)) {
-          value.forEach(v => data.append(key, v));
+        if (Array.isArray(value)) {
+          value.forEach((v) => data.append(key, v));
         } else {
           data.append(key, value);
         }
       });
   
-      const token = Cookies.get('accessToken');
-  
-      if (!token) {
-        throw new Error('Unauthorized: No access token');
-      }
-  
-      // Debug: In nội dung FormData
-      for (let pair of data.entries()) {
-        console.log(`FormData Entry: ${pair[0]}, Value: ${pair[1]}`);
-      }
-  
-      // ✅ GỠ BỎ Content-Type - axios sẽ tự thêm boundary đúng
-      const response = await axios.post('/api/tutor/application', data, {
+      const response = await axios.post("/api/tutor/application", data, {
         headers: {
-          Authorization: `Bearer ${token}`
-        }
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data",
+        },
       });
   
-      return {
-        success: true,
-        message: 'Nộp đơn thành công!',
-        data: response.data
-      };
-  
+      return response;
     } catch (error) {
-      console.error('Error submitting tutor application:', error);
-      return {
-        success: false,
-        message: error.response?.data?.message || error.message || 'Đã xảy ra lỗi khi nộp đơn.',
-        error: error.response?.data || error
-      };
+      console.error("❌ Error submitting tutor application:");
+      if (error.response) {
+        console.error("📡 Status:", error.response.status);
+        console.error("🧾 Data:", error.response.data);
+        console.error("🧠 Message:", error.response.data.message || error.message);
+      } else {
+        console.error("🚨 Không có response:", error.message);
+      }
+      throw error; // để FE xử lý tiếp
     }
   };
-
-
   
-
   export const ApiGetMyTutor = async () => {
     try {
       const token = Cookies.get("accessToken");
@@ -133,6 +117,7 @@ const getReviewsByTutor = async (tutorId) => {
   export const ApiGetAllSubjects = async () => {
     try {
       const res = await axios.get("/api/tutor/subjects");
+      console.log(res)
       return res;
     } catch (err) {
       throw err.response || err;

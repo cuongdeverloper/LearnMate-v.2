@@ -1,278 +1,219 @@
-import React, { useState } from 'react';
-import Header from '../../components/Layout/Header/Header';
-import Footer from '../../components/Layout/Footer/Footer';
-import './TutorApplicationForm.scss';
+// src/pages/tutor/TutorApplicationForm.js
+import React, { useState, useEffect } from "react";
+import { toast } from "react-toastify";
+import Select from "react-select";
+import makeAnimated from "react-select/animated";
+import {
+  ApiGetAllSubjects,
+  submitTutorApplication,
+} from "../../Service/ApiService/ApiTutor";
+import "./TutorApplicationForm.scss";
 
-// Import the new API function
-import { submitTutorApplication } from '../../Service/ApiService/ApiTutor'; // Adjust path if needed
+const animated = makeAnimated();
 
-const classSubjectsMap = {
-  1: ["Toán", "Tiếng Việt"],
-  2: ["Toán", "Tiếng Việt", "Tiếng Anh"],
-  3: ["Toán", "Tiếng Việt", "Tiếng Anh"],
-  4: ["Toán", "Tiếng Việt", "Tiếng Anh", "Khoa học"],
-  5: ["Toán", "Tiếng Việt", "Tiếng Anh", "Khoa học", "Lịch Sử", "Địa Lý"],
-  6: ["Toán", "Ngữ Văn", "Tiếng Anh", "Vật Lý", "Lịch Sử", "Địa Lý"],
-  7: ["Toán", "Ngữ Văn", "Tiếng Anh", "Vật Lý", "Hóa Học", "Sinh Học", "Lịch Sử", "Địa Lý"],
-  8: ["Toán", "Ngữ Văn", "Tiếng Anh", "Vật Lý", "Hóa Học", "Sinh Học", "Lịch Sử", "Địa Lý"],
-  9: ["Toán", "Ngữ Văn", "Tiếng Anh", "Vật Lý", "Hóa Học", "Sinh Học", "Lịch Sử", "Địa Lý"],
-  10: ["Toán", "Ngữ Văn", "Tiếng Anh", "Vật Lý", "Hóa Học", "Sinh Học", "Tin Học", "Lịch Sử", "Địa Lý", "GDCD"],
-  11: ["Toán", "Ngữ Văn", "Tiếng Anh", "Vật Lý", "Hóa Học", "Sinh Học", "Tin Học", "Lịch Sử", "Địa Lý", "GDCD"],
-  12: ["Toán", "Ngữ Văn", "Tiếng Anh", "Vật Lý", "Hóa Học", "Sinh Học", "Tin Học", "Lịch Sử", "Địa Lý", "GDCD"],
-};
-
-const classOptions = Array.from({ length: 12 }, (_, i) => (i + 1).toString());
-const days = ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ nhật'];
-const timeSlots = [
-  "07:00 - 09:00",
-  "09:30 - 11:30",
-  "12:00 - 14:00",
-  "14:30 - 16:30",
-  "17:00 - 19:00",
-  "19:30 - 21:30",
+// Danh sách 63 tỉnh/thành Việt Nam
+const cities = [
+  "Hà Nội", "TP Hồ Chí Minh", "Đà Nẵng", "Hải Phòng", "Cần Thơ",
+  "An Giang", "Bà Rịa - Vũng Tàu", "Bắc Giang", "Bắc Kạn", "Bạc Liêu",
+  "Bắc Ninh", "Bến Tre", "Bình Dương", "Bình Định", "Bình Phước",
+  "Bình Thuận", "Cà Mau", "Cao Bằng", "Đắk Lắk", "Đắk Nông", "Điện Biên",
+  "Đồng Nai", "Đồng Tháp", "Gia Lai", "Hà Giang", "Hà Nam", "Hà Tĩnh",
+  "Hải Dương", "Hậu Giang", "Hòa Bình", "Hưng Yên", "Khánh Hòa", "Kiên Giang",
+  "Kon Tum", "Lai Châu", "Lâm Đồng", "Lạng Sơn", "Lào Cai", "Long An",
+  "Nam Định", "Nghệ An", "Ninh Bình", "Ninh Thuận", "Phú Thọ", "Phú Yên",
+  "Quảng Bình", "Quảng Nam", "Quảng Ngãi", "Quảng Ninh", "Quảng Trị",
+  "Sóc Trăng", "Sơn La", "Tây Ninh", "Thái Bình", "Thái Nguyên", "Thanh Hóa",
+  "Thừa Thiên - Huế", "Tiền Giang", "Trà Vinh", "Tuyên Quang", "Vĩnh Long",
+  "Vĩnh Phúc", "Yên Bái",
 ];
 
 const TutorApplicationForm = () => {
   const [formData, setFormData] = useState({
-    experience: '',
-    education: '',
+    experience: "",
+    education: "",
+    bio: "",
+    pricePerHour: "",
+    address: "",
+    city: "",
     subjects: [],
-    bio: '',
-    pricePerHour: '',
-    location: '',
-    languages: '',
-    certificates: '',
-    classes: [],
-    availableTimes: [],
-    cvFile: null
+    languages: "",
+    certificates: "",
+    cvFile: null,
   });
-  const [message, setMessage] = useState(null);
 
-  const [groupedFilteredSubjects, setGroupedFilteredSubjects] = useState({});
+  const [subjectOptions, setSubjectOptions] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  React.useEffect(() => {
-    const newGroupedSubjects = {};
-    formData.classes.sort((a, b) => parseInt(a) - parseInt(b)).forEach(cls => {
-      if (classSubjectsMap[cls]) {
-        newGroupedSubjects[cls] = classSubjectsMap[cls];
+  useEffect(() => {
+    const fetchSubjects = async () => {
+      try {
+        const res = await ApiGetAllSubjects();
+        const subjectList = Array.isArray(res) ? res : [];
+        const options = subjectList.map((s) => ({
+          value: s._id,
+          label: `${s.name} (Lớp ${s.classLevel})`,
+        }));
+        setSubjectOptions(options);
+      } catch (err) {
+        console.error(err);
+        toast.error("Không thể tải danh sách môn học.");
+      } finally {
+        setLoading(false);
       }
-    });
-    setGroupedFilteredSubjects(newGroupedSubjects);
+    };
+    fetchSubjects();
+  }, []);
 
-    setFormData(prev => {
-      const availableSubjects = Object.values(newGroupedSubjects).flat();
-      const updatedSubjects = prev.subjects.filter(subject =>
-        availableSubjects.includes(subject)
-      );
-      return { ...prev, subjects: updatedSubjects };
-    });
-
-  }, [formData.classes]);
-
-  const handleChange = e => {
-    const { name, value, files } = e.target;
-    if (files) {
-      setFormData(prev => ({ ...prev, [name]: files[0] }));
-    } else {
-      setFormData(prev => ({ ...prev, [name]: value }));
-    }
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleClassToggle = cls => {
-    setFormData(prev => {
-      const classes = new Set(prev.classes);
-      classes.has(cls) ? classes.delete(cls) : classes.add(cls);
-      return { ...prev, classes: Array.from(classes) };
-    });
+  const handleSubjectChange = (selected) => {
+    setFormData((prev) => ({
+      ...prev,
+      subjects: selected.map((s) => s.value),
+    }));
   };
 
-  const handleSubjectToggle = subject => {
-    setFormData(prev => {
-      const subjects = new Set(prev.subjects);
-      subjects.has(subject) ? subjects.delete(subject) : subjects.add(subject);
-      return { ...prev, subjects: Array.from(subjects) };
-    });
+  const handleFileChange = (e) => {
+    setFormData((prev) => ({ ...prev, cvFile: e.target.files[0] }));
   };
 
-  const handleSlotChange = (day, slot, checked) => {
-    setFormData(prev => {
-      const current = [...prev.availableTimes];
-      const value = { day, slot };
-      const exists = current.some(item => item.day === day && item.slot === slot);
-      const updated = checked
-        ? exists ? current : [...current, value]
-        : current.filter(item => !(item.day === day && item.slot === slot));
-      return { ...prev, availableTimes: updated };
-    });
-  };
-
-  const handleSubmit = async e => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setMessage(null); // Clear previous messages
 
-    // --- FRONTEND VALIDATION ---
-    const requiredFields = [
-      { field: 'experience', label: 'Kinh nghiệm' },
-      { field: 'education', label: 'Học vấn' },
-      { field: 'bio', label: 'Giới thiệu bản thân' },
-      { field: 'pricePerHour', label: 'Giá mỗi giờ' },
-      { field: 'location', label: 'Địa điểm' },
-      { field: 'cvFile', label: 'CV' },
-    ];
-
-    for (const { field, label } of requiredFields) {
-      if (!formData[field] || (typeof formData[field] === 'string' && formData[field].trim() === '')) {
-        setMessage(`❌ Vui lòng điền đầy đủ thông tin: ${label}.`);
-        return; // Stop submission
-      }
-    }
-
-    // Additional checks for arrays
-    if (formData.classes.length === 0) {
-      setMessage('❌ Vui lòng chọn ít nhất một khối lớp bạn có thể dạy.');
-      return;
-    }
-    if (formData.subjects.length === 0) {
-      setMessage('❌ Vui lòng chọn ít nhất một môn học bạn muốn dạy.');
-      return;
-    }
-    if (formData.availableTimes.length === 0) {
-      setMessage('❌ Vui lòng chọn ít nhất một khung thời gian rảnh.');
-      return;
-    }
+    const fullLocation = formData.city
+      ? `${formData.address.trim()}, ${formData.city}`
+      : formData.address.trim();
 
     try {
-      const result = await submitTutorApplication(formData);
+      const res = await submitTutorApplication({
+        ...formData,
+        location: fullLocation,
+      });
 
-      if (result.success) {
-        setMessage('✅ Nộp đơn thành công! Chờ admin duyệt.');
-        // Optionally, reset form data here
+      if (res?.errorCode === 0) {
+        toast.success(res.data.message || "Đăng ký thành công!");
         setFormData({
-            experience: '',
-            education: '',
-            subjects: [],
-            bio: '',
-            pricePerHour: '',
-            location: '',
-            languages: '',
-            certificates: '',
-            classes: [],
-            availableTimes: [],
-            cvFile: null
+          experience: "",
+          education: "",
+          bio: "",
+          pricePerHour: "",
+          address: "",
+          city: "",
+          subjects: [],
+          languages: "",
+          certificates: "",
+          cvFile: null,
         });
       } else {
-        // Display the specific error message from the backend
-        setMessage(`❌ ${result.message}`);
-        console.error('API Error:', result.error);
+        toast.error(res?.data?.message || "Gửi đơn thất bại, vui lòng thử lại!");
       }
     } catch (err) {
-      console.error('Unexpected error from API call (frontend catch block):', err);
-      setMessage('❌ Đã xảy ra lỗi không mong muốn khi nộp đơn. Vui lòng thử lại.');
+      console.error("❌ Lỗi khi gửi đơn:", err);
+      const message =
+        err.response?.data?.message ||
+        err.message ||
+        "Gửi đơn thất bại, vui lòng thử lại!";
+      toast.error(message);
     }
   };
 
   return (
-    <>
-      <Header />
-      <div className="application-container">
-        <h2>Đăng ký trở thành gia sư</h2>
-        <form onSubmit={handleSubmit} encType="multipart/form-data">
-          <label>Kinh nghiệm: <span style={{ color: 'red' }}>*</span></label>
-          <textarea name="experience" value={formData.experience} onChange={handleChange} required />
+    <div className="tutor-application-container">
+      <h2 className="form-title">Đăng ký trở thành gia sư</h2>
 
-          <label>Học vấn: <span style={{ color: 'red' }}>*</span></label>
-          <textarea name="education" value={formData.education} onChange={handleChange} required />
+      <form className="tutor-application-form" onSubmit={handleSubmit}>
+        <div className="form-group">
+          <label>Kinh nghiệm</label>
+          <textarea name="experience" value={formData.experience} onChange={handleChange} />
+        </div>
 
-          <label>Chọn khối lớp bạn có thể dạy: <span style={{ color: 'red' }}>*</span></label>
-          <div className="checkbox-group class-selection">
-            {classOptions.map(cls => (
-              <label key={cls}>
-                <input
-                  type="checkbox"
-                  value={cls}
-                  checked={formData.classes.includes(cls)}
-                  onChange={() => handleClassToggle(cls)}
-                />
-                Lớp {cls}
-              </label>
-            ))}
+        <div className="form-group">
+          <label>Học vấn</label>
+          <input type="text" name="education" value={formData.education} onChange={handleChange} />
+        </div>
+
+        <div className="form-group">
+          <label>Giới thiệu bản thân</label>
+          <textarea name="bio" value={formData.bio} onChange={handleChange} />
+        </div>
+
+        <div className="form-group-inline">
+          <div>
+            <label>Địa chỉ chi tiết</label>
+            <input type="text" name="address" value={formData.address} onChange={handleChange} />
           </div>
 
-          {Object.keys(groupedFilteredSubjects).length > 0 && (
-            <>
-              <label>Chọn môn học bạn muốn dạy (tương ứng với lớp đã chọn): <span style={{ color: 'red' }}>*</span></label>
-              <div className="checkbox-group subject-selection">
-                {Object.entries(groupedFilteredSubjects).map(([cls, subjects]) => (
-                  <div key={cls} className={`class-subject-group class-${cls}`}>
-                    <h3>Lớp {cls}</h3>
-                    <div className="subjects-for-class">
-                      {subjects.map(subj => (
-                        <label key={`${cls}-${subj}`}>
-                          <input
-                            type="checkbox"
-                            value={subj}
-                            checked={formData.subjects.includes(subj)}
-                            onChange={() => handleSubjectToggle(subj)}
-                          />
-                          {subj}
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </>
+          <div>
+            <label>Thành phố / Tỉnh</label>
+            <select name="city" value={formData.city} onChange={handleChange}>
+              <option value="">-- Chọn thành phố --</option>
+              {cities.map((city) => (
+                <option key={city} value={city}>
+                  {city}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        <div className="form-group">
+          <label>Giá mỗi giờ (VNĐ)</label>
+          <input type="number" name="pricePerHour" value={formData.pricePerHour} onChange={handleChange} />
+        </div>
+
+        <div className="form-group">
+          <label>Môn học</label>
+          {loading ? (
+            <p className="loading-text">Đang tải danh sách môn học...</p>
+          ) : (
+            <Select
+              closeMenuOnSelect={false}
+              components={animated}
+              isMulti
+              options={subjectOptions}
+              value={subjectOptions.filter((opt) => formData.subjects.includes(opt.value))}
+              onChange={handleSubjectChange}
+              placeholder="Chọn môn dạy..."
+              className="tutor-application-select"
+            />
           )}
+        </div>
 
-          <label>Giới thiệu bản thân: <span style={{ color: 'red' }}>*</span></label>
-          <textarea name="bio" value={formData.bio} onChange={handleChange} required />
+        <div className="form-group">
+          <label>Ngôn ngữ</label>
+          <input
+            type="text"
+            name="languages"
+            value={formData.languages}
+            onChange={handleChange}
+            placeholder="Ví dụ: Tiếng Anh, Tiếng Việt"
+          />
+        </div>
 
-          <label>Giá mỗi giờ (VND): <span style={{ color: 'red' }}>*</span></label>
-          <input type="number" name="pricePerHour" value={formData.pricePerHour} onChange={handleChange} required />
+        <div className="form-group">
+          <label>Chứng chỉ (nếu có)</label>
+          <input
+            type="text"
+            name="certificates"
+            value={formData.certificates}
+            onChange={handleChange}
+            placeholder="Ví dụ: IELTS, TOEIC"
+          />
+        </div>
 
-          <label>Địa điểm: <span style={{ color: 'red' }}>*</span></label>
-          <input name="location" value={formData.location} onChange={handleChange} required />
+        <div className="form-group">
+          <label>Upload CV</label>
+          <input type="file" name="cvFile" accept=".pdf,.doc,.docx" onChange={handleFileChange} />
+        </div>
 
-          <label>Ngôn ngữ (phân cách dấu phẩy):</label>
-          <input name="languages" value={formData.languages} onChange={handleChange} />
-
-          <label>Chứng chỉ (phân cách dấu phẩy):</label>
-          <input name="certificates" value={formData.certificates} onChange={handleChange} />
-
-          <label>Thời gian rảnh: <span style={{ color: 'red' }}>*</span></label>
-          <div className="time-slot-grid">
-            <div className="grid-header">
-              <div></div>
-              {timeSlots.map(slot => <div key={slot}>{slot}</div>)}
-            </div>
-            {days.map(day => (
-              <div className="grid-row" key={day}>
-                <div className="day-label">{day}</div>
-                {timeSlots.map(slot => {
-                  const checked = formData.availableTimes.some(t => t.day === day && t.slot === slot);
-                  return (
-                    <label key={`${day}-${slot}`} className="slot-cell">
-                      <input
-                        type="checkbox"
-                        checked={checked}
-                        onChange={e => handleSlotChange(day, slot, e.target.checked)}
-                      />
-                    </label>
-                  );
-                })}
-              </div>
-            ))}
-          </div>
-
-          <label>CV (PDF): <span style={{ color: 'red' }}>*</span></label>
-          <input type="file" name="cvFile" accept=".pdf" onChange={handleChange} required />
-
-          <button type="submit" className="btn-primary">Gửi đơn</button>
-        </form>
-        {message && <div className="application-message">{message}</div>}
-      </div>
-      <Footer />
-    </>
+        <button type="submit" className="submit-btn">
+          Gửi đơn đăng ký
+        </button>
+      </form>
+    </div>
   );
 };
 

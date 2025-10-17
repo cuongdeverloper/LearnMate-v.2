@@ -7,13 +7,18 @@ const Subject = require('../../modal/Subject'); // import Subject model
 
 exports.getTutors = async (req, res) => {
   try {
-    const { name, subject, subjects, minPrice, maxPrice, minRating, class: classGrade } = req.query;
+    const { name, subject, subjects, minPrice, maxPrice, minRating, class: classGrade, location } = req.query;
 
     let filter = {};
     let userFilter = {};
 
     if (name) {
       userFilter.username = { $regex: name, $options: "i" };
+    }
+
+    if (location) {
+      // tìm theo từ khóa, không phân biệt hoa thường
+      filter.location = { $regex: location, $options: "i" };
     }
 
     if (subjects) {
@@ -45,7 +50,6 @@ exports.getTutors = async (req, res) => {
 
     tutors = tutors.filter(t => t.user !== null);
 
-    // ✅ Tính rating trung bình từ Review
     const tutorIds = tutors.map(t => t._id);
     const reviews = await Review.aggregate([
       { $match: { tutor: { $in: tutorIds } } },
@@ -62,7 +66,6 @@ exports.getTutors = async (req, res) => {
       return { ...tutor.toObject(), rating: avgRating };
     });
 
-    // ✅ Lọc theo minRating
     const finalTutors = minRating
       ? resultTutors.filter(t => t.rating >= Number(minRating))
       : resultTutors;
@@ -73,6 +76,7 @@ exports.getTutors = async (req, res) => {
     res.status(500).json({ success: false, message: err.message });
   }
 };
+
 exports.getTutorById = async (req, res) => {
   try {
     const tutor = await Tutor.findById(req.params.tutorId)
