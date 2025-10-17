@@ -1,24 +1,29 @@
-// models/Question.js
 const mongoose = require("mongoose");
 
 const QuestionSchema = new mongoose.Schema({
+  bookingId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Booking",
+    required: true, 
+  },
+  quizId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Quiz",
+    required: true,
+  },
   subjectId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Subject',
-    required: true
+    ref: "Subject",
+    required: true,
   },
   tutorId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Tutor',
-    required: true
-  },
-  quiz: { type: mongoose.Schema.Types.ObjectId, ref: "Quiz" },
-  text: { type: String, required: true },
-  options: [{ type: String, required: true }], // danh sách lựa chọn
-  correctAnswer: {
-    type: Number, // 0,1,2,3 ứng với A,B,C,D
+    ref: "Tutor",
     required: true,
   },
+  text: { type: String, required: true },
+  options: [{ type: String, required: true }],
+  correctAnswer: { type: Number, required: true },
 });
 
 module.exports = mongoose.model("Question", QuestionSchema);
