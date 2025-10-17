@@ -22,34 +22,34 @@ const UpdateTutorProfile = ({ onUpdate, onCancel }) => {
 
   const [allSubjects, setAllSubjects] = useState([]);
   const [tutorId, setTutorId] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   // ✅ Fetch tutor info + subjects
   useEffect(() => {
     const fetchTutorAndSubjects = async () => {
       try {
+        setLoading(true);
         const [tutorRes, subjectsRes] = await Promise.all([
           ApiGetMyTutor(),
           ApiGetAllSubjects(),
         ]);
 
-        const tutorData = tutorRes;
-        const subjects = subjectsRes || [];
-
-        if (tutorData) {
-          setTutorId(tutorData._id);
+        if (tutorRes) {
+          setTutorId(tutorRes._id);
           setFormData({
-            bio: tutorData.bio || "",
-            subjects: tutorData.subjects?.map((s) => s._id) || [],
-            pricePerHour: tutorData.pricePerHour || "",
-            location: tutorData.location || "",
-            languages: tutorData.languages || [],
+            bio: tutorRes.bio || "",
+            subjects: tutorRes.subjects?.map((s) => s._id) || [],
+            pricePerHour: tutorRes.pricePerHour || "",
+            location: tutorRes.location || "",
+            languages: tutorRes.languages || [],
           });
         }
-
-        setAllSubjects(subjects);
+        setAllSubjects(subjectsRes || []);
       } catch (err) {
         console.error(err);
         toast.error("Không thể tải dữ liệu gia sư hoặc môn học.");
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -80,35 +80,39 @@ const UpdateTutorProfile = ({ onUpdate, onCancel }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!tutorId) return toast.error("Không tìm thấy ID gia sư.");
-
     try {
+      setLoading(true);
       const res = await ApiUpdateTutor(tutorId, formData);
       toast.success("Cập nhật thông tin gia sư thành công!");
       onUpdate?.(res);
     } catch (err) {
       console.error(err);
       toast.error(err.response?.message || "Cập nhật thất bại.");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="update-tutor-form">
-      <h3>Cập nhật thông tin Gia sư</h3>
-      <form onSubmit={handleSubmit}>
+    <div className="update-tutor-profile-container">
+      <form className="update-tutor-profile-form" onSubmit={handleSubmit}>
+        <h2 className="update-tutor-profile-title">Cập nhật thông tin Gia sư</h2>
+
         {/* Bio */}
-        <div className="form-group">
-          <label>Bio</label>
+        <div className="update-tutor-profile-group">
+          <label className="update-tutor-profile-label">Giới thiệu (Bio)</label>
           <textarea
             name="bio"
             value={formData.bio}
             onChange={handleChange}
             placeholder="Giới thiệu ngắn gọn về bản thân..."
+            className="update-tutor-profile-textarea"
           />
         </div>
 
         {/* Subjects */}
-        <div className="form-group">
-          <label>Subjects</label>
+        <div className="update-tutor-profile-group">
+          <label className="update-tutor-profile-label">Môn giảng dạy</label>
           <Select
             isMulti
             closeMenuOnSelect={false}
@@ -125,52 +129,64 @@ const UpdateTutorProfile = ({ onUpdate, onCancel }) => {
               }))}
             onChange={handleSubjectsChange}
             placeholder="Chọn môn dạy..."
-            className="react-select-container"
+            className="update-tutor-profile-select"
             classNamePrefix="react-select"
           />
         </div>
 
         {/* Price per hour */}
-        <div className="form-group">
-          <label>Price per hour (VND)</label>
+        <div className="update-tutor-profile-group">
+          <label className="update-tutor-profile-label">Giá mỗi giờ (VND)</label>
           <input
             type="number"
             name="pricePerHour"
             value={formData.pricePerHour}
             onChange={handleChange}
             placeholder="VD: 200000"
+            className="update-tutor-profile-input"
           />
         </div>
 
         {/* Location */}
-        <div className="form-group">
-          <label>Location</label>
+        <div className="update-tutor-profile-group">
+          <label className="update-tutor-profile-label">Khu vực</label>
           <input
             type="text"
             name="location"
             value={formData.location}
             onChange={handleChange}
             placeholder="VD: TP.HCM, Hà Nội..."
+            className="update-tutor-profile-input"
           />
         </div>
 
         {/* Languages */}
-        <div className="form-group">
-          <label>Languages (comma separated)</label>
+        <div className="update-tutor-profile-group">
+          <label className="update-tutor-profile-label">Ngôn ngữ (phân tách bằng dấu phẩy)</label>
           <input
             type="text"
             value={formData.languages.join(", ")}
             onChange={handleLanguagesChange}
             placeholder="VD: English, Vietnamese"
+            className="update-tutor-profile-input"
           />
         </div>
 
         {/* Buttons */}
-        <div className="button-group">
-          <button type="submit" className="btn btn-primary">
-            Lưu
+        <div className="update-tutor-profile-actions">
+          <button
+            type="submit"
+            className="update-tutor-profile-btn save"
+            disabled={loading}
+          >
+            {loading ? "Đang lưu..." : "Lưu"}
           </button>
-          <button type="button" className="btn btn-secondary" onClick={onCancel}>
+          <button
+            type="button"
+            className="update-tutor-profile-btn cancel"
+            onClick={onCancel}
+            disabled={loading}
+          >
             Hủy
           </button>
         </div>
