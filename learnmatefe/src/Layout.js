@@ -17,7 +17,7 @@ import ProtectedRoute from "./ProtectRoutes";
 import Header from "./components/Layout/Header/Header";
 import Footer from "./components/Layout/Footer/Footer";
 import TutorProfilePage from "./pages/Tutor/TutorProfilePage";
-import MyCourses from "./pages/User/MyCourse";
+import MyCourses from "./pages/User/AllCoursesSchedule";
 import Profile from "./pages/Profile/Profile";
 import AuthCallback from "./components/Auth/AuthCallback";
 import EnterOTPRegister from "./components/Auth/Sign up/OTP/EnterOTPRegister";
@@ -31,6 +31,13 @@ import TutorApplicationForm from "./pages/Profile/TutorApplicationForm";
 import ReviewCoursePage from "./pages/Review/ReviewCoursePage";
 
 import AdminDashboard from "./components/Admin/AdminDashboard";
+import MyCoursesPage from "./pages/User/MyCoursesPage";
+import CourseDetails from "./pages/User/CourseDetails";
+import StudentQuizTake from "./pages/User/StudentQuizTake";
+import StudentQuizResult from "./pages/User/StudentQuizResult";
+import StudentQuizOverview from "./pages/User/StudentQuizOverview";
+import SubmitAssignment from "./pages/User/SubmitAssignment";
+import ViewAssignmentFeedback from "./pages/User/ViewAssignmentFeedback";
 
 const AppLayout = ({ children }) => {
   const location = useLocation();
@@ -163,7 +170,68 @@ const Layout = () => {
             element={
               <ProtectedRoute allowedRoles={["tutor", "student"]}>
                 <AppLayout>
-                  <MyCourses />
+                  <MyCoursesPage />
+                  {/* <MyCourses /> */}
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/user/my-courses/:id"
+            element={
+              <ProtectedRoute allowedRoles={["tutor", "student"]}>
+                <AppLayout>
+                  <CourseDetails />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/user/quiz/:id"
+            element={
+              <ProtectedRoute allowedRoles={["tutor", "student"]}>
+                <AppLayout>
+                  <StudentQuizOverview />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/user/quiz/:id/take"
+            element={
+              <ProtectedRoute allowedRoles={["tutor", "student"]}>
+                <AppLayout>
+                  <StudentQuizTake />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/user/quiz/:id/result"
+            element={
+              <ProtectedRoute allowedRoles={["tutor", "student"]}>
+                <AppLayout>
+                  <StudentQuizResult />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/student/course/:courseId/assignment/:id/submit"
+            element={
+              <ProtectedRoute allowedRoles={["tutor", "student"]}>
+                <AppLayout>
+                  <SubmitAssignment />
+                </AppLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/student/course/:courseId/assignment/:id/feedback"
+            element={
+              <ProtectedRoute allowedRoles={["tutor", "student"]}>
+                <AppLayout>
+                  <ViewAssignmentFeedback />
                 </AppLayout>
               </ProtectedRoute>
             }
