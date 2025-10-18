@@ -29,8 +29,8 @@ const languageOptions = [
 
 export default function LangLogin() {
   const [selected, setSelected] = useState(languageOptions[0]);
-  const isAuthenticated = useSelector(state => state.user.isAuthenticated);
-  const user = useSelector(state => state.user.account); 
+  const isAuthenticated = useSelector((state) => state.user.isAuthenticated);
+  const user = useSelector((state) => state.user.account);
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
@@ -58,7 +58,9 @@ export default function LangLogin() {
         </button>
       ) : (
         <div className="user-info">
-          <span style={{marginRight:'12px'}}>{user?.username || "Tài khoản"}</span>
+          <span style={{ marginRight: "12px" }}>
+            {user?.username || "Tài khoản"}
+          </span>
           <button className="login-btn logout-btn" onClick={handleLogout}>
             Đăng xuất
           </button>
