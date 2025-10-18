@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import Select from "react-select";
 import "./TutorCreateQuiz.scss";
 import {
   getSubjectsByTutor,
@@ -28,7 +29,7 @@ const TutorCreateQuiz = () => {
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  // ✅ Load dữ liệu ban đầu: môn học + buổi học
+  // ✅ Load dữ liệu ban đầu
   useEffect(() => {
     const fetchInitial = async () => {
       try {
@@ -57,8 +58,8 @@ const TutorCreateQuiz = () => {
     }
   };
 
-  const handleSelectBooking = async (e) => {
-    const id = e.target.value;
+  const handleSelectBooking = async (selected) => {
+    const id = selected?.value || "";
     setSelectedBooking(id);
     setSelectedQuiz("");
     setQuizTitle("");
@@ -91,9 +92,9 @@ const TutorCreateQuiz = () => {
     }
   };
 
-  // ✅ Chọn quiz có sẵn để xem câu hỏi
-  const handleSelectExistingQuiz = async (e) => {
-    const id = e.target.value;
+  // ✅ Chọn quiz có sẵn
+  const handleSelectExistingQuiz = async (selected) => {
+    const id = selected?.value || "";
     setSelectedQuiz(id);
     setQuizId(id);
     if (!id) return setQuestions([]);
@@ -128,7 +129,7 @@ const TutorCreateQuiz = () => {
     }
   };
 
-  // ✅ Xoá câu hỏi
+  // ✅ Xoá / cập nhật câu hỏi
   const handleDeleteQuestion = async (id) => {
     if (!window.confirm("Bạn có chắc muốn xoá câu hỏi này không?")) return;
     try {
@@ -140,13 +141,11 @@ const TutorCreateQuiz = () => {
     }
   };
 
-  // ✅ Cập nhật câu hỏi (inline edit)
   const handleEditQuestion = async (id, field, value) => {
     const updatedQuestions = questions.map((q) =>
       q._id === id ? { ...q, [field]: value } : q
     );
     setQuestions(updatedQuestions);
-
     try {
       await updateQuestion(id, { [field]: value });
     } catch (err) {
@@ -154,7 +153,6 @@ const TutorCreateQuiz = () => {
     }
   };
 
-  // ✅ Cập nhật đáp án đúng
   const handleCorrectAnswerChange = async (qId, idx) => {
     const updated = questions.map((q) =>
       q._id === qId ? { ...q, correctAnswer: idx } : q
@@ -168,6 +166,32 @@ const TutorCreateQuiz = () => {
     }
   };
 
+  // ✅ Tạo option cho react-select
+  const bookingOptions = bookings.map((b) => ({
+    value: b._id,
+    label: (
+      <div className="booking-option">
+        <strong>📘 {b.subjectId?.name || "Không rõ môn"} - Lớp {b.subjectId?.classLevel}</strong>
+        <div>👤 {b.learnerId?.username || "Không rõ học viên"}</div>
+        <div>
+          💰 {b.sessionCost?.toLocaleString("vi-VN")}₫/buổi • 🗓️{" "}
+          {b.numberOfSessions || 0} buổi
+        </div>
+        <div>🧾 {b.note || "Không có ghi chú"}</div>
+      </div>
+    ),
+  }));
+
+  const quizOptions = quizzes.map((q) => ({
+    value: q._id,
+    label: (
+      <div className="quiz-option">
+        <strong>{q.title}</strong>
+        <div>{q.subjectId?.name || "Không rõ môn"}</div>
+      </div>
+    ),
+  }));
+
   return (
     <div className="tutor-create-quiz">
       <h2>🧩 Quản lý Quiz theo buổi học</h2>
@@ -175,16 +199,13 @@ const TutorCreateQuiz = () => {
       {/* --- CHỌN BUỔI HỌC --- */}
       <div className="form-group">
         <label>📅 Chọn buổi học:</label>
-        <select value={selectedBooking} onChange={handleSelectBooking}>
-          <option value="">-- Chọn buổi học --</option>
-          {bookings.map((b) => (
-            <option key={b._id} value={b._id}>
-              {b.learnerId?.username || "Không rõ học viên"} -{" "}
-              {b.subjectId?.name || "Không rõ môn"} (Lớp{" "}
-              {b.subjectId?.classLevel || "?"})
-            </option>
-          ))}
-        </select>
+        <Select
+          options={bookingOptions}
+          onChange={handleSelectBooking}
+          placeholder="🔍 Tìm kiếm theo học viên hoặc môn học..."
+          isClearable
+          isSearchable
+        />
       </div>
 
       {/* --- CHỌN QUIZ --- */}
@@ -192,16 +213,16 @@ const TutorCreateQuiz = () => {
         <>
           <div className="form-group">
             <label>🎓 Chọn quiz:</label>
-            <select value={selectedQuiz} onChange={handleSelectExistingQuiz}>
-              <option value="">-- Chưa chọn quiz --</option>
-              {quizzes.map((q) => (
-                <option key={q._id} value={q._id}>
-                  {q.title} ({q.subjectId?.name})
-                </option>
-              ))}
-            </select>
+            <Select
+              options={quizOptions}
+              onChange={handleSelectExistingQuiz}
+              placeholder="🔍 Chọn hoặc tìm quiz có sẵn..."
+              isClearable
+              isSearchable
+            />
           </div>
 
+          {/* --- FORM TẠO QUIZ --- */}
           {!selectedQuiz && (
             <div className="quiz-form">
               <h4>🆕 Tạo quiz mới</h4>

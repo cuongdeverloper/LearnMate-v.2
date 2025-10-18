@@ -103,3 +103,44 @@
     }
   }
 }
+.booking-option, .quiz-option {
+  display: flex;
+  flex-direction: column;
+  font-size: 14px;
+  gap: 2px;
+}
+
+.booking-option strong {
+  color: #1a73e8;
+}
+
+.quiz-option strong {
+  color: #2b8a3e;
+}
+
+.tutor-create-quiz {
+  max-width: 850px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.import-section {
+  margin-top: 25px;
+}
+
+.question-item {
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  padding: 12px;
+  margin-bottom: 10px;
+}
+
+.question-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
