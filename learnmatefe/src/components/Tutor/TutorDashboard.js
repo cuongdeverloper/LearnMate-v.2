@@ -1,29 +1,27 @@
-import React, { useState } from 'react';
-import TutorBookingList from './view/TutorBookingList';
-import ScheduleManager from './view/ScheduleManager';
-import ProgressTracker from './view/ProgressTracker';
-import MaterialUploader from './view/MaterialUploader';
-import './TutorDashboard.scss';
-import BookingSchedule from '../../pages/Booking/Schedule/BookingSchedule';
-import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
-import { doLogout } from '../../redux/action/userAction';
+import React, { useState } from "react";
+import TutorBookingList from "./view/TutorBookingList";
+import ScheduleManager from "./view/ScheduleManager";
+import ProgressTracker from "./view/ProgressTracker";
+import MaterialUploader from "./view/MaterialUploader";
+import "./TutorDashboard.scss";
+import BookingSchedule from "../../pages/Booking/Schedule/BookingSchedule";
+import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import { doLogout } from "../../redux/action/userAction";
 
 // Import asset icons
-import BookingIcon from '../../asset/Booking.png';
-import ScheduleIcon from '../../asset/schedule.png';
-import ProgressIcon from '../../asset/Progress.png';
-import MaterialIcon from '../../asset/material.png';
-import LogoutIcon from '../../asset/logout.png';
-import AvailableSchedule from './view/AvailableSchedule';
-import TutorCreateQuiz from './view/TutorCreateQuiz';
+import BookingIcon from "../../asset/Booking.png";
+import ScheduleIcon from "../../asset/schedule.png";
+import ProgressIcon from "../../asset/Progress.png";
+import MaterialIcon from "../../asset/material.png";
+import LogoutIcon from "../../asset/logout.png";
 
 const TutorDashboard = () => {
-  const [activeTab, setActiveTab] = useState('bookings');
+  const [activeTab, setActiveTab] = useState("bookings");
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const isAuthenticated = useSelector(state => state.user.isAuthenticated);
-  const user = useSelector(state => state.user.account); 
+  const isAuthenticated = useSelector((state) => state.user.isAuthenticated);
+  const user = useSelector((state) => state.user.account);
 
   const handleBackToHome = () => {
     navigate("/");
@@ -36,59 +34,49 @@ const TutorDashboard = () => {
 
   const renderTab = () => {
     switch (activeTab) {
-      case 'bookings': return <TutorBookingList />;
-      case 'schedule': return <BookingSchedule />;
-      case 'progress': return <ProgressTracker />;
-      case 'materials': return <MaterialUploader />;
-      case 'availableSchedule': return <AvailableSchedule />;
-      case 'createquiz': return <TutorCreateQuiz />;
-      default: return <TutorBookingList />;
+      case "bookings":
+        return <TutorBookingList />;
+      case "schedule":
+        return <BookingSchedule />;
+      case "progress":
+        return <ProgressTracker />;
+      case "materials":
+        return <MaterialUploader />;
+      default:
+        return <TutorBookingList />;
     }
   };
 
   const menuItems = [
-    { 
-      id: 'bookings', 
-      icon: BookingIcon, 
-      label: 'Quản lý Booking', 
-      description: 'Duyệt và quản lý các yêu cầu học' 
+    {
+      id: "bookings",
+      icon: BookingIcon,
+      label: "Quản lý Booking",
+      description: "Duyệt và quản lý các yêu cầu học",
     },
-    { 
-      id: 'schedule', 
-      icon: ScheduleIcon, 
-      label: 'Lịch học', 
-      description: 'Xem và sắp xếp lịch dạy' 
+    {
+      id: "schedule",
+      icon: ScheduleIcon,
+      label: "Lịch học",
+      description: "Xem và sắp xếp lịch dạy",
     },
-    { 
-      id: 'progress', 
-      icon: ProgressIcon, 
-      label: 'Tiến độ học tập', 
-      description: 'Theo dõi tiến bộ của học viên' 
+    {
+      id: "progress",
+      icon: ProgressIcon,
+      label: "Tiến độ học tập",
+      description: "Theo dõi tiến bộ của học viên",
     },
-    { 
-      id: 'materials', 
-      icon: MaterialIcon, 
-      label: 'Tài liệu', 
-      description: 'Chia sẻ tài liệu học tập' 
-    },
-    { 
-      id: 'availableSchedule', 
-      icon: MaterialIcon, 
-      label: 'Lịch trống', 
-      description: 'Đặt lịch trống cho gia sư' 
-    },
-    { 
-      id: 'createquiz', 
-      icon: MaterialIcon, 
-      label: 'Tạo quiz', 
-      description: 'Tạo quiz cho từng môn học' 
+    {
+      id: "materials",
+      icon: MaterialIcon,
+      label: "Tài liệu",
+      description: "Chia sẻ tài liệu học tập",
     },
   ];
 
-
   const getActiveMenuLabel = () => {
-    const activeItem = menuItems.find(item => item.id === activeTab);
-    return activeItem ? activeItem.label : 'Dashboard';
+    const activeItem = menuItems.find((item) => item.id === activeTab);
+    return activeItem ? activeItem.label : "Dashboard";
   };
 
   return (
@@ -129,9 +117,7 @@ const TutorDashboard = () => {
             {menuItems.map((item) => (
               <div
                 key={item.id}
-                className={`menu-card ${
-                  activeTab === item.id ? "active" : ""
-                }`}
+                className={`menu-card ${activeTab === item.id ? "active" : ""}`}
                 onClick={() => setActiveTab(item.id)}
               >
                 <div className="icon">

@@ -8,7 +8,8 @@ import {
   getMaterialsByBookingId,
   getMyBookings,
   reportBooking,
-  requestChangeSchedule,getMyChangeRequests // Make sure this is correctly imported
+  requestChangeSchedule,
+  getMyChangeRequests, // Make sure this is correctly imported
 } from "../../Service/ApiService/ApiBooking";
 import {
   getMyWeeklySchedules,
@@ -218,7 +219,7 @@ const ReportModal = ({ isOpen, onClose, onSubmit, bookingId }) => {
   );
 };
 
-function MyCourses() {
+function AllCoursesSchedule() {
   const navigate = useNavigate();
   const getWeekStart = () => {
     const today = new Date();
@@ -663,117 +664,119 @@ function MyCourses() {
           </button>
         </div>
         {(activeTab === "inProgress" || activeTab === "finished") && (
-        <div className="bookings-list">
-          {filteredBookings.length === 0 ? (
-            <p className="no-bookings">
-              {activeTab === "inProgress"
-                ? "Bạn không có khóa học nào đang diễn ra."
-                : "Bạn không có khóa học nào đã hoàn thành."}
-            </p>
-          ) : (
-            filteredBookings.map((booking) => (
-              <div
-                key={booking._id}
-                className={`booking-card ${
-                  booking.completed ? "completed" : ""
-                } ${booking.reported ? "reported" : ""}`}
-              >
-                <p>
-                  <strong>Môn học:</strong>{" "}
-                  {booking.subjectId?.name || "Chưa có tên môn"}
-                </p>
-                <p>
-                  <strong>Gia sư:</strong>{" "}
-                  {booking.tutorId?.user?.username || "N/A"}
-                </p>
-                <p>
-                  <strong>Số buổi học:</strong> {booking.numberOfSessions}
-                </p>
-                <p>
-                  <strong>Chi phí mỗi buổi:</strong>{" "}
-                  {booking.sessionCost?.toLocaleString("vi-VN")} VNĐ
-                </p>
-                <p>
-                  <strong>Tổng tiền:</strong>{" "}
-                  {booking.amount?.toLocaleString("vi-VN")} VNĐ
-                </p>
-                <p>
-                  <strong>Tiền cọc:</strong>{" "}
-                  {booking.deposit?.toLocaleString("vi-VN")} VNĐ
-                </p>
-                <p>
-                  <strong>Ghi chú:</strong> {booking.note || "Không có"}
-                </p>
-
-                {booking.completed && (
-                  <>
-                    <p className="completed-message">Khóa học đã hoàn tất 🎉</p>
-                    <button
-                      className="review-button"
-                      onClick={() =>
-                        navigate(`/review/${booking._id}`, {
-                          state: {
-                            tutorId: booking.tutorId?._id || booking.tutorId,
-                          },
-                        })
-                      }
-                    >
-                      Viết đánh giá
-                    </button>
-                  </>
-                )}
-
-                <button
-                  className="view-materials-button"
-                  onClick={() =>
-                    handleViewMaterialsClick(
-                      booking._id,
-                      `Khóa học với ${
-                        booking.tutorId?.user?.username || "Gia sư"
-                      }`
-                    )
-                  }
+          <div className="bookings-list">
+            {filteredBookings.length === 0 ? (
+              <p className="no-bookings">
+                {activeTab === "inProgress"
+                  ? "Bạn không có khóa học nào đang diễn ra."
+                  : "Bạn không có khóa học nào đã hoàn thành."}
+              </p>
+            ) : (
+              filteredBookings.map((booking) => (
+                <div
+                  key={booking._id}
+                  className={`booking-card ${
+                    booking.completed ? "completed" : ""
+                  } ${booking.reported ? "reported" : ""}`}
                 >
-                  Xem tài liệu
-                </button>
+                  <p>
+                    <strong>Môn học:</strong>{" "}
+                    {booking.subjectId?.name || "Chưa có tên môn"}
+                  </p>
+                  <p>
+                    <strong>Gia sư:</strong>{" "}
+                    {booking.tutorId?.user?.username || "N/A"}
+                  </p>
+                  <p>
+                    <strong>Số buổi học:</strong> {booking.numberOfSessions}
+                  </p>
+                  <p>
+                    <strong>Chi phí mỗi buổi:</strong>{" "}
+                    {booking.sessionCost?.toLocaleString("vi-VN")} VNĐ
+                  </p>
+                  <p>
+                    <strong>Tổng tiền:</strong>{" "}
+                    {booking.amount?.toLocaleString("vi-VN")} VNĐ
+                  </p>
+                  <p>
+                    <strong>Tiền cọc:</strong>{" "}
+                    {booking.deposit?.toLocaleString("vi-VN")} VNĐ
+                  </p>
+                  <p>
+                    <strong>Ghi chú:</strong> {booking.note || "Không có"}
+                  </p>
 
-                {/* Report and Finish Booking Buttons */}
-                {!booking.completed && (
-                  <div className="booking-actions">
-                    <button
-                      className="finish-course-button"
-                      onClick={() => handleFinishBooking(booking._id)}
-                    >
-                      Hoàn tất khóa học
-                    </button>
-
-                    {booking.reported ? ( // Assuming `booking.reported` is a boolean from your API
-                      <button className="report-button reported" disabled>
-                        Đã báo cáo
-                      </button>
-                    ) : (
+                  {booking.completed && (
+                    <>
+                      <p className="completed-message">
+                        Khóa học đã hoàn tất 🎉
+                      </p>
                       <button
-                        className="report-button"
-                        onClick={() => handleOpenReportModal(booking._id)} // Open modal
+                        className="review-button"
+                        onClick={() =>
+                          navigate(`/review/${booking._id}`, {
+                            state: {
+                              tutorId: booking.tutorId?._id || booking.tutorId,
+                            },
+                          })
+                        }
                       >
-                        Báo cáo
+                        Viết đánh giá
                       </button>
-                    )}
-                    <button
-                      className="change-schedule-button"
-                      onClick={() => {
-                        setChangingBookingId(booking._id);
-                        setShowChangeScheduleModal(true);
-                      }}
-                    >
-                      Yêu cầu đổi lịch
-                    </button>
-                  </div>
-                )}
-              </div>
-            ))
-          )}
-        </div>
+                    </>
+                  )}
+
+                  <button
+                    className="view-materials-button"
+                    onClick={() =>
+                      handleViewMaterialsClick(
+                        booking._id,
+                        `Khóa học với ${
+                          booking.tutorId?.user?.username || "Gia sư"
+                        }`
+                      )
+                    }
+                  >
+                    Xem tài liệu
+                  </button>
+
+                  {/* Report and Finish Booking Buttons */}
+                  {!booking.completed && (
+                    <div className="booking-actions">
+                      <button
+                        className="finish-course-button"
+                        onClick={() => handleFinishBooking(booking._id)}
+                      >
+                        Hoàn tất khóa học
+                      </button>
+
+                      {booking.reported ? ( // Assuming `booking.reported` is a boolean from your API
+                        <button className="report-button reported" disabled>
+                          Đã báo cáo
+                        </button>
+                      ) : (
+                        <button
+                          className="report-button"
+                          onClick={() => handleOpenReportModal(booking._id)} // Open modal
+                        >
+                          Báo cáo
+                        </button>
+                      )}
+                      <button
+                        className="change-schedule-button"
+                        onClick={() => {
+                          setChangingBookingId(booking._id);
+                          setShowChangeScheduleModal(true);
+                        }}
+                      >
+                        Yêu cầu đổi lịch
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ))
+            )}
+          </div>
         )}
         {activeTab === "changeRequests" && (
           <div className="change-requests-section">
@@ -918,4 +921,4 @@ function MyCourses() {
   );
 }
 
-export default MyCourses;
+export default AllCoursesSchedule;
