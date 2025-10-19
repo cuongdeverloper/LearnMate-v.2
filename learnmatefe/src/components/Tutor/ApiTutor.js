@@ -450,3 +450,51 @@ export const deleteAssignment = async (assignmentId) => {
     return { errorCode: 1, message: msg };
   }
 };
+
+export const getTutorChangeRequests = async () => {
+  try {
+    const token = Cookies.get("accessToken");
+    if (!token) throw new Error("Unauthorized");
+
+    const res = await axios.get(`/api/tutor/getChangeRequestsTutor`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return { errorCode: 0, data: res };
+  } catch (error) {
+    console.error("❌ Lỗi khi lấy change requests:", error);
+    const msg = error?.response?.message || "Không thể lấy danh sách yêu cầu thay đổi";
+    return { errorCode: 1, message: msg };
+  }
+};
+
+export const acceptChangeRequest = async (id) => {
+  try {
+    const token = Cookies.get("accessToken");
+    if (!token) throw new Error("Unauthorized");
+
+    const res = await axios.put(`/api/tutor/${id}/accept`, {}, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return { errorCode: 0, message: res };
+  } catch (error) {
+    console.error("❌ Lỗi khi duyệt yêu cầu:", error);
+    const msg = error?.response?.message || "Không thể duyệt yêu cầu";
+    return { errorCode: 1, message: msg };
+  }
+};
+
+export const rejectChangeRequest = async (id) => {
+  try {
+    const token = Cookies.get("accessToken");
+    if (!token) throw new Error("Unauthorized");
+
+    const res = await axios.put(`/api/tutor/${id}/reject`, {}, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return { errorCode: 0, message: res };
+  } catch (error) {
+    console.error("❌ Lỗi khi từ chối yêu cầu:", error);
+    const msg = error?.response?.message || "Không thể từ chối yêu cầu";
+    return { errorCode: 1, message: msg };
+  }
+};
