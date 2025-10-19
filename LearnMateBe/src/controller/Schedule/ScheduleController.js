@@ -3,7 +3,7 @@ const Booking = require("../../modal/Booking");
 const ChangeRequest = require("../../modal/ChangeRequest");
 const User = require("../../modal/User");
 const FinancialHistory = require("../../modal/FinancialHistory");
-
+const Tutor = require("../../modal/Tutor");
 
 function addDays(date, days) {
   const d = new Date(date);
@@ -31,7 +31,7 @@ exports.requestChangeSchedule = async (req, res) => {
     const existingRequest = await ChangeRequest.findOne({
       scheduleId,
       learnerId: req.user._id || req.user.id,
-      status: "pending", // 
+      status: "pending", //
     });
     if (existingRequest) {
       return res.status(400).json({
@@ -259,12 +259,14 @@ exports.markAttendance = async (req, res) => {
     if (
       schedule.learnerId.toString() !== (req.user.id || req.user._id).toString()
     ) {
-      return res
-        .status(403)
-        .json({
-          message: "Forbidden: Bạn không có quyền cập nhật lịch trình này.",
-        });
+      return res.status(403).json({
+        message: "Forbidden: Bạn không có quyền cập nhật lịch trình này.",
+      });
     }
+    const tutorModel = await Tutor.findById(schedule.tutorId._id);
+    const tutorUser = await User.findById(tutorModel.user._id);
+    if (!tutorUser)
+      return res.status(404).json({ message: "Không tìm thấy gia sư." });
 
     const booking = await Booking.findById(schedule.bookingId);
     if (!booking) {
@@ -275,11 +277,9 @@ exports.markAttendance = async (req, res) => {
       return res.status(400).json({ message: "Booking không còn hiệu lực." });
     }
     if (booking.completed && attended === false) {
-      return res
-        .status(400)
-        .json({
-          message: "Booking này đã hoàn thành, không thể hủy điểm danh nữa.",
-        });
+      return res.status(400).json({
+        message: "Booking này đã hoàn thành, không thể hủy điểm danh nữa.",
+      });
     }
 
     const now = new Date();
@@ -321,6 +321,19 @@ exports.markAttendance = async (req, res) => {
         } cho booking ${booking._id.toString().slice(-6)}`,
         date: new Date(),
       });
+      // Cộng tiền tutor
+      tutorUser.balance = (tutorUser.balance || 0) + booking.sessionCost;
+      await tutorUser.save();
+
+      await FinancialHistory.create({
+        userId: tutorUser._id,
+        amount: booking.sessionCost,
+        balanceChange: +booking.sessionCost,
+        type: "earning",
+        status: "success",
+        description: `Nhận tiền từ học viên ${learner.username} cho buổi học ngày ${schedule.date}`,
+        date: new Date(),
+      });
 
       booking.paidSessions += 1;
 
@@ -342,7 +355,20 @@ exports.markAttendance = async (req, res) => {
         } do hủy điểm danh (${booking._id.toString().slice(-6)})`,
         date: new Date(),
       });
+      
+      if (tutorUser.balance >= booking.sessionCost) {
+        tutorUser.balance -= booking.sessionCost;
+        await tutorUser.save();
 
+        await FinancialHistory.create({
+          userId: tutorUser._id,
+          amount: booking.sessionCost,
+          balanceChange: -booking.sessionCost,
+          type: "withdraw",
+          status: "success",
+          description: `Hoàn lại tiền do học viên ${user.username} hủy điểm danh buổi học ngày ${schedule.date}`,
+        });
+      }
       booking.paidSessions = Math.max(booking.paidSessions - 1, 0);
     }
 
