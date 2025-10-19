@@ -19,60 +19,63 @@ const {
   approveApplication,
   rejectApplication,
 } = require("../controller/Tutor/TutorApplicationController");
+const { acceptChangeRequest, rejectChangeRequest, getChangeRequestsByTutor } = require("../controller/Schedule/ScheduleController");
+const { checkTutorRole } = require("../middleware/tutorMiddleware");
 RouterTutor.post("/bookings/respond", tutorCtrl.respondBooking);
 RouterTutor.post("/bookings/cancel", tutorCtrl.cancelBooking);
 RouterTutor.get("/bookings/pending/:tutorId", tutorCtrl.getPendingBookings);
 
-RouterTutor.post("/schedule", tutorCtrl.createSchedule);
-RouterTutor.get("/schedule/:tutorId", tutorCtrl.getSchedule);
-RouterTutor.put("/schedule/:id", tutorCtrl.updateSchedule);
-RouterTutor.delete("/schedule/:id", tutorCtrl.deleteSchedule);
+RouterTutor.post("/schedule",checkAccessToken, checkTutorRole,tutorCtrl.createSchedule);
+RouterTutor.get("/schedule/:tutorId",checkAccessToken,checkTutorRole, tutorCtrl.getSchedule);
+RouterTutor.put("/schedule/:id", checkAccessToken,checkTutorRole,tutorCtrl.updateSchedule);
+RouterTutor.delete("/schedule/:id",checkAccessToken ,checkTutorRole,tutorCtrl.deleteSchedule);
 
-RouterTutor.post("/progress", tutorCtrl.updateProgress);
-RouterTutor.get("/progress/:studentId", tutorCtrl.getProgress);
+RouterTutor.post("/progress", checkTutorRole,tutorCtrl.updateProgress);
+RouterTutor.get("/progress/:studentId", checkTutorRole,tutorCtrl.getProgress);
 
 // RouterTutor.post('/material/upload', tutorCtrl.uploadMaterial);
 RouterTutor.post(
   "/material/upload",
   uploadDocs.single("file"),
+  checkTutorRole,
   tutorCtrl.uploadMaterial
 );
-RouterTutor.get("/material/:bookingId", tutorCtrl.getMaterials);
+RouterTutor.get("/material/:bookingId", checkAccessToken,checkTutorRole,tutorCtrl.getMaterials);
 
 RouterTutor.post(
   "/tutor/application",
   checkAccessToken,
-  uploadCloud.single("cvFile"),
+  uploadCloud.single("cvFile"),checkTutorRole,
   TutorApplication.submitApplication
 );
 
 RouterTutor.get(
   "/tutor/applications",
-  checkAccessToken,
+  checkAccessToken,checkTutorRole,
   TutorApplication.getTutorApplications
 );
 RouterTutor.get(
   "/tutor/:tutorId/bookings",
-  checkAccessToken,
+  checkAccessToken,checkTutorRole,
   BookingController.getAllBookingsByTutorId
 );
 RouterTutor.get(
   "/materials/booking/:bookingId",
-  checkAccessToken,
+  checkAccessToken,checkTutorRole,
   tutorCtrl.getMaterials
 );
-RouterTutor.get("/students", getAllStudents);
-RouterTutor.get("/:tutorId/availability", tutorCtrl.getTutorAvailability);
-RouterTutor.get("/review/:tutorId", ReviewController.getReviewsByTutor);
+RouterTutor.get("/students", checkAccessToken,checkTutorRole,getAllStudents);
+RouterTutor.get("/:tutorId/availability", checkAccessToken,checkTutorRole,tutorCtrl.getTutorAvailability);
+RouterTutor.get("/review/:tutorId", checkAccessToken,checkTutorRole,ReviewController.getReviewsByTutor);
 RouterTutor.get("/active-status", checkAccessToken, tutorCtrl.getActiveStatus);
 RouterTutor.put(
   "/active-status",
-  checkAccessToken,
+  checkAccessToken,checkTutorRole,
   tutorCtrl.updateActiveStatus
 );
 RouterTutor.post(
   "/application",
-  checkAccessToken,
+  checkAccessToken,checkTutorRole,
   uploadCloud.single("cvFile"), 
   submitApplication
 );
@@ -81,7 +84,11 @@ RouterTutor.get("/me", checkAccessToken, getMyTutor);
 RouterTutor.put("/:id", checkAccessToken, updateTutor);
 RouterTutor.get("/subjects", getAllSubjects);
 
-RouterTutor.post("/createavailability", checkAccessToken, tutorCtrl.createAvailability);
-RouterTutor.delete("/:availabilityId", checkAccessToken, tutorCtrl.deleteAvailability);
-RouterTutor.get("/subjects-by-tutor", checkAccessToken, getSubjectsByTutor);
+RouterTutor.post("/createavailability", checkAccessToken, checkTutorRole,tutorCtrl.createAvailability);
+RouterTutor.delete("/:availabilityId", checkAccessToken, checkTutorRole,tutorCtrl.deleteAvailability);
+RouterTutor.get("/subjects-by-tutor", checkAccessToken, checkTutorRole,getSubjectsByTutor);
+
+RouterTutor.put("/:requestId/accept", checkAccessToken, checkTutorRole,acceptChangeRequest);
+RouterTutor.put("/:requestId/reject", checkAccessToken, checkTutorRole,rejectChangeRequest);
+RouterTutor.get("/getChangeRequestsTutor", checkAccessToken, checkTutorRole,getChangeRequestsByTutor);
 module.exports = RouterTutor;

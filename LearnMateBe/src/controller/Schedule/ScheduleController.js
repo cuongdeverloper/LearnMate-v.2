@@ -2,6 +2,7 @@ const Schedule = require("../../modal/Schedule");
 const Booking = require("../../modal/Booking");
 const ChangeRequest = require("../../modal/ChangeRequest");
 const User = require("../../modal/User");
+const Tutor = require("../../modal/Tutor");
 const FinancialHistory = require("../../modal/FinancialHistory");
 const Tutor = require("../../modal/Tutor");
 
@@ -376,5 +377,131 @@ exports.markAttendance = async (req, res) => {
   } catch (error) {
     console.error("Error marking attendance:", error);
     res.status(500).json({ message: "Lỗi server khi cập nhật điểm danh." });
+  }
+};
+
+exports.acceptChangeRequest = async (req, res) => {
+  try {
+    const { requestId } = req.params;
+    const userId = req.user.id; 
+
+    const tutor = await Tutor.findOne({ user: userId });
+    if (!tutor) {
+      return res.status(404).json({ success: false, message: "Không tìm thấy thông tin gia sư." });
+    }
+
+    const changeRequest = await ChangeRequest.findById(requestId).populate("scheduleId");
+    if (!changeRequest) {
+      return res.status(404).json({ success: false, message: "Không tìm thấy yêu cầu thay đổi." });
+    }
+
+    const schedule = await Schedule.findById(changeRequest.scheduleId);
+    if (!schedule) {
+      return res.status(404).json({ success: false, message: "Không tìm thấy lịch học." });
+    }
+    if (schedule.tutorId.toString() !== tutor._id.toString()) {
+      return res.status(403).json({ success: false, message: "Bạn không có quyền phê duyệt yêu cầu này." });
+    }
+
+    changeRequest.status = "approved";
+    await changeRequest.save();
+
+    schedule.date = changeRequest.newDate;
+    schedule.startTime = changeRequest.newStartTime;
+    schedule.endTime = changeRequest.newEndTime;
+    await schedule.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Đã chấp nhận yêu cầu thay đổi và cập nhật lịch thành công.",
+      changeRequest,
+      updatedSchedule: schedule,
+    });
+  } catch (error) {
+    console.error("Lỗi khi chấp nhận yêu cầu thay đổi:", error);
+    res.status(500).json({
+      success: false,
+      message: "Đã xảy ra lỗi khi xử lý yêu cầu thay đổi.",
+      error: error.message,
+    });
+  }
+};
+
+exports.rejectChangeRequest = async (req, res) => {
+  try {
+    const { requestId } = req.params;
+    const userId = req.user.id;
+
+    const tutor = await Tutor.findOne({ user: userId });
+    if (!tutor) {
+      return res.status(404).json({ success: false, message: "Không tìm thấy thông tin gia sư." });
+    }
+
+    const changeRequest = await ChangeRequest.findById(requestId).populate("scheduleId");
+    if (!changeRequest) {
+      return res.status(404).json({ success: false, message: "Không tìm thấy yêu cầu thay đổi." });
+    }
+
+    const schedule = await Schedule.findById(changeRequest.scheduleId);
+    if (!schedule) {
+      return res.status(404).json({ success: false, message: "Không tìm thấy lịch học." });
+    }
+    if (schedule.tutorId.toString() !== tutor._id.toString()) {
+      return res.status(403).json({ success: false, message: "Bạn không có quyền từ chối yêu cầu này." });
+    }
+
+    changeRequest.status = "rejected";
+    await changeRequest.save();
+
+    res.status(200).json({
+      success: true,
+      message: "❌ Đã từ chối yêu cầu thay đổi lịch.",
+      changeRequest,
+    });
+  } catch (error) {
+    console.error("Lỗi khi từ chối yêu cầu thay đổi:", error);
+    res.status(500).json({
+      success: false,
+      message: "Đã xảy ra lỗi khi xử lý yêu cầu thay đổi.",
+      error: error.message,
+    });
+  }
+};
+
+exports.getChangeRequestsByTutor = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const tutor = await Tutor.findOne({ user: userId });
+    if (!tutor) {
+      return res.status(404).json({ success: false, message: "Không tìm thấy thông tin gia sư." });
+    }
+
+    const schedules = await Schedule.find({ tutorId: tutor._id }).select("_id");
+    const scheduleIds = schedules.map((s) => s._id);
+
+    const changeRequests = await ChangeRequest.find({ scheduleId: { $in: scheduleIds } })
+      .populate({
+        path: "scheduleId",
+        populate: [
+          { path: "learnerId", select: "username email" },
+          { path: "tutorId", select: "username" },
+        ],
+      })
+      .populate("learnerId", "username email")
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      total: changeRequests.length,
+      changeRequests,
+    });
+  } catch (error) {
+    console.error("Lỗi khi lấy danh sách yêu cầu thay đổi:", error);
+    res.status(500).json({
+      success: false,
+      message: "Đã xảy ra lỗi khi lấy danh sách yêu cầu thay đổi.",
+      error: error.message,
+    });
   }
 };
