@@ -151,6 +151,7 @@ const getPendingBookings = async (req, res) => {
   }
 };
 
+
 // Create schedule
 const createSchedule = async (req, res) => {
   try {

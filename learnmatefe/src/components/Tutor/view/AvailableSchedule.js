@@ -18,9 +18,9 @@ const TutorManageAvailability = () => {
     return monday;
   });
 
-  const [availabilities, setAvailabilities] = useState([]); // slot rảnh trong tuần
-  const [selectedSlots, setSelectedSlots] = useState([]); // slot sắp thêm
-  const [isAllBusy, setIsAllBusy] = useState(false); // nếu tuần này chưa có slot nào → bận toàn tuần
+  const [availabilities, setAvailabilities] = useState([]); 
+  const [selectedSlots, setSelectedSlots] = useState([]); 
+  const [isAllBusy, setIsAllBusy] = useState(false); 
 
   const token = useSelector((state) => state.user.account.access_token);
   const tutorId = useSelector((state) => state.user.account.id);
@@ -48,12 +48,10 @@ const TutorManageAvailability = () => {
     const res = await getTutorAvailability(
       weekStart.toISOString().split("T")[0]
     );
-console.log(res)
     if (res.errorCode === 0) {
       const data = res.data?.data || [];
       
       setAvailabilities(data);
-      // Nếu tuần này chưa có slot nào → xem như bận toàn tuần
       setIsAllBusy(data.length === 0);
     } else {
       toast.error(res.message);
@@ -76,7 +74,6 @@ console.log(res)
     setWeekStart(next);
   };
 
-  // 🟡 Khi click chọn slot
   const toggleSlot = (day, slotStr) => {
     const [startTime, endTime] = slotStr.split(" - ");
     const dateStr = day.toISOString().split("T")[0];
@@ -88,13 +85,11 @@ console.log(res)
         a.endTime === endTime
     );
 
-    // Nếu slot đã mở → click xoá
     if (existing) {
       handleDelete(existing._id);
       return;
     }
 
-    // Nếu slot chưa có → thêm mới
     const found = selectedSlots.find(
       (s) => s.date === dateStr && s.startTime === startTime && s.endTime === endTime
     );
@@ -104,11 +99,9 @@ console.log(res)
       setSelectedSlots([...selectedSlots, { date: dateStr, startTime, endTime }]);
     }
 
-    // Khi click thêm slot đầu tiên → chuyển từ “bận toàn tuần” sang có trống
     if (isAllBusy) setIsAllBusy(false);
   };
 
-  // 🟢 Lưu slot mới
   const handleSave = async () => {
   if (!selectedSlots.length) {
     toast.warn("Chưa chọn slot nào!");
@@ -253,7 +246,7 @@ const handleDelete = async (availabilityId) => {
                       : selected
                       ? "selected"
                       : isAllBusy
-                      ? "busy" // toàn tuần bận
+                      ? "busy"
                       : "empty";
 
                     return (
