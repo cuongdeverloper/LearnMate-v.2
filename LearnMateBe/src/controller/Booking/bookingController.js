@@ -3,6 +3,7 @@ const User = require("../../modal/User");
 const Schedule = require("../../modal/Schedule");
 const FinancialHistory = require("../../modal/FinancialHistory");
 const TutorAvailability = require("../../modal/TutorAvailability");
+const Tutor = require("../../modal/Tutor");
 
 const Report = require("../../modal/Report");
 
@@ -385,9 +386,11 @@ exports.finishBooking = async (req, res) => {
 exports.getAllBookingsByTutorId = async (req, res) => {
   try {
     const { tutorId } = req.params;
-
+    const user = await User.findById(tutorId);
+    const tutor = await Tutor.findOne({ user: user._id });
+    const IdTutor = tutor._id;
     // Kiểm tra định dạng ID
-    if (!tutorId || !tutorId.match(/^[0-9a-fA-F]{24}$/)) {
+    if (!IdTutor || !IdTutor.toString().match(/^[0-9a-fA-F]{24}$/)) {
       return res.status(400).json({
         success: false,
         message: "❌ Định dạng tutor ID không hợp lệ.",
@@ -395,7 +398,7 @@ exports.getAllBookingsByTutorId = async (req, res) => {
     }
 
     // Tìm các booking của tutor đó
-    const bookings = await Booking.find({ tutorId })
+    const bookings = await Booking.find({ tutorId: IdTutor })
       .populate({
         path: "learnerId",
         select: "username email phoneNumber gender image",
