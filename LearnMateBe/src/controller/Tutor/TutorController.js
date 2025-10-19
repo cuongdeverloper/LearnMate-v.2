@@ -4,6 +4,7 @@ const Material = require("../../modal/Material");
 const Progress = require("../../modal/Progress");
 const TutorAvailability = require("../../modal/TutorAvailability");
 const Tutor = require ("../../modal/Tutor")
+const User = require ("../../modal/User")
 
 const respondBooking = async (req, res) => {
 
@@ -135,9 +136,11 @@ const getPendingBookings = async (req, res) => {
     // if (!tutor) {
     //   return res.status(404).json({ message: 'Tutor not found' });
     // }
-
+    const user = await User.findById(tutorUserId);
+    const tutor = await Tutor.findOne({ user: user._id });
+    const IdTutor = tutor._id;
     const bookings = await Booking.find({
-      tutorId: tutorUserId,
+      tutorId: IdTutor,
       status: "pending",
     }).populate("learnerId", "username email");
 
