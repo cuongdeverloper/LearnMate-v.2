@@ -49,7 +49,7 @@ const AssignmentsTab = ({ courseTitle }) => {
   };
 
   const handleSubmit = (assignmentId) => {
-    return;
+    navigate(`/user/my-courses/${courseId}/assignments/${assignmentId}/submit`);
   };
 
   const handleViewFeedback = (assignmentId) => {

@@ -217,7 +217,7 @@ const Layout = () => {
             }
           />
           <Route
-            path="/student/course/:courseId/assignment/:id/submit"
+            path="/user/my-courses/:courseId/assignments/:id/submit"
             element={
               <ProtectedRoute allowedRoles={["tutor", "student"]}>
                 <AppLayout>
@@ -227,7 +227,7 @@ const Layout = () => {
             }
           />
           <Route
-            path="/student/course/:courseId/assignment/:id/feedback"
+            path="/user/myy-courses/:courseId/assignments/:id/feedback"
             element={
               <ProtectedRoute allowedRoles={["tutor", "student"]}>
                 <AppLayout>
