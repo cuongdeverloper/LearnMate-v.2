@@ -9,15 +9,17 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { doLogout } from '../../redux/action/userAction';
 
-// Import asset icons
 import BookingIcon from '../../asset/Booking.png';
 import ScheduleIcon from '../../asset/schedule.png';
 import ProgressIcon from '../../asset/Progress.png';
 import MaterialIcon from '../../asset/material.png';
 import LogoutIcon from '../../asset/logout.png';
+import QuizIcon from '../../asset/Quiz.png';
+import AssignmentIcon from '../../asset/Assignment.png';
 import AvailableSchedule from './view/AvailableSchedule';
 import TutorCreateQuiz from './view/TutorCreateQuiz';
 import TutorAssignmentManager from './view/TutorAssignmentManager';
+import TutorChangeRequests from './view/TutorChangeRequests';
 
 const TutorDashboard = () => {
   const [activeTab, setActiveTab] = useState('bookings');
@@ -44,6 +46,7 @@ const TutorDashboard = () => {
       case 'availableSchedule': return <AvailableSchedule />;
       case 'createquiz': return <TutorCreateQuiz />;
       case 'createassignment': return <TutorAssignmentManager />;
+      case 'changerequestschedule': return <TutorChangeRequests />;
       default: return <TutorBookingList />;
     }
   };
@@ -81,15 +84,21 @@ const TutorDashboard = () => {
     },
     { 
       id: 'createquiz', 
-      icon: MaterialIcon, 
+      icon: QuizIcon, 
       label: 'Tạo quiz', 
       description: 'Tạo quiz cho từng lịch booking' 
     },
     { 
       id: 'createassignment', 
-      icon: MaterialIcon, 
+      icon: AssignmentIcon, 
       label: 'Tạo Assignment', 
       description: 'Tạo assignment cho từng lịch booking' 
+    },
+    { 
+      id: 'changerequestschedule', 
+      icon: MaterialIcon, 
+      label: 'Đổi lịch', 
+      description: 'Quản lý đổi lịch' 
     },
   ];
 
