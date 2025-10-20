@@ -1,3 +1,6 @@
+import axios from "../../Service/AxiosCustomize";
+import Cookies from "js-cookie";
+
 // ✅ Lấy tiến trình một khóa học
 export const fetchProgress = (courseId) => async (dispatch) => {
   dispatch({ type: "PROGRESS_FETCH_REQUEST" });

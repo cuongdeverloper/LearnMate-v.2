@@ -1,18 +1,17 @@
-// ✅ Trạng thái khởi tạo
 const initialState = {
-  list: [], // Danh sách quiz của khóa học hiện tại
-  selectedQuiz: null, // Quiz đang làm / đang xem
-  userAnswers: {}, // Câu trả lời tạm thời trước khi nộp
-  submitting: false, // Đang gửi bài
-  loading: false, // Đang tải danh sách hoặc quiz chi tiết
-  score: null, // Điểm số nhận được sau khi nộp
-  error: null, // Lỗi API hoặc logic
+  list: [],
+  selectedQuiz: null,
+  quizDetails: null,
+  userAnswers: {},
+  submitting: false,
+  loading: false,
+  score: null,
+  error: null,
 };
 
 // ✅ Reducer
 const quizReducer = (state = initialState, action) => {
   switch (action.type) {
-    // --- Lấy danh sách quiz ---
     case "QUIZ_LIST_REQUEST":
       return { ...state, loading: true, error: null };
 
@@ -20,6 +19,15 @@ const quizReducer = (state = initialState, action) => {
       return { ...state, loading: false, list: action.payload };
 
     case "QUIZ_LIST_FAILURE":
+      return { ...state, loading: false, error: action.payload };
+
+    case "QUIZ_DETAILS_REQUEST":
+      return { ...state, loading: true, error: null };
+
+    case "QUIZ_DETAILS_SUCCESS":
+      return { ...state, loading: false, quizDetails: action.payload };
+
+    case "QUIZ_DETAILS_FAILURE":
       return { ...state, loading: false, error: action.payload };
 
     // --- Chọn quiz để làm ---
