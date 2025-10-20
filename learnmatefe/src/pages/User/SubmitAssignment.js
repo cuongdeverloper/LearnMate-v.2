@@ -102,7 +102,7 @@ const SubmitAssignment = () => {
     try {
       await new Promise((resolve) => setTimeout(resolve, 1000));
       toast.success("Assignment submitted successfully!");
-      navigate(`/student/course/${courseId}`);
+      navigate(`/user/my-courses/${courseId}`);
     } catch (error) {
       toast.error("Failed to submit assignment");
     } finally {
