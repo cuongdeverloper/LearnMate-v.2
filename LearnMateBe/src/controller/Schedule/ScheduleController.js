@@ -4,7 +4,6 @@ const ChangeRequest = require("../../modal/ChangeRequest");
 const User = require("../../modal/User");
 const Tutor = require("../../modal/Tutor");
 const FinancialHistory = require("../../modal/FinancialHistory");
-const Tutor = require("../../modal/Tutor");
 
 function addDays(date, days) {
   const d = new Date(date);
