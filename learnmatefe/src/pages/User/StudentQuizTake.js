@@ -24,20 +24,8 @@ import {
 } from "../../components/ui/Sheet";
 
 import { Label } from "../../components/ui/Label";
-
-const QUESTIONS = Array.from({ length: 10 }).map((_, i) => ({
-  id: `q${i + 1}`,
-  text:
-    i === 0
-      ? "Choose the correct verb form: She ___ to school every day."
-      : `Question ${i + 1}: Select the best answer.`,
-  options: [
-    { key: "A", text: "go" },
-    { key: "B", text: "goes" },
-    { key: "C", text: "going" },
-    { key: "D", text: "gone" },
-  ],
-}));
+import { useDispatch, useSelector } from "react-redux";
+import { fetchQuizDetailsById } from "../../redux/action/quizActions";
 
 const formatTime = (sec) => {
   const m = String(Math.floor(sec / 60)).padStart(2, "0");
@@ -47,12 +35,32 @@ const formatTime = (sec) => {
 
 const StudentQuizTake = () => {
   const { id } = useParams();
+  const dispatch = useDispatch();
+
+  const {
+    selectedQuiz,
+    quizDetails,
+    userAnswers,
+    submitting,
+    loading: quizLoading,
+    score,
+    error: quizError,
+  } = useSelector((state) => state.quizzes);
+
+  useEffect(() => {
+    if (!selectedQuiz) {
+      navigate("/");
+    }
+
+    dispatch(fetchQuizDetailsById(selectedQuiz._id));
+  }, [dispatch]);
+
   const navigate = useNavigate();
   const storageKey = `quiz-${id}-state`;
 
   const [state, setState] = useState(() => {
-    const saved = localStorage.getItem(storageKey);
-    if (saved) return JSON.parse(saved);
+    // const saved = localStorage.getItem(storageKey);
+    // if (saved) return JSON.parse(saved);
     return {
       currentIndex: 0,
       answers: {},
@@ -95,7 +103,7 @@ const StudentQuizTake = () => {
   }, [state.timer]);
 
   const currentQuestion = useMemo(
-    () => QUESTIONS[state.currentIndex],
+    () => quizDetails.questions[state.currentIndex],
     [state.currentIndex]
   );
 
@@ -114,17 +122,22 @@ const StudentQuizTake = () => {
     }
   };
 
+  console.log(quizDetails.questions[0]);
+  console.log("currentIndex", state.currentIndex);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-secondary/10 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-5xl mx-auto">
         <div className="sticky top-16 z-30 border-b bg-gray-50/95 backdrop-blur">
           <div className="container py-3 flex items-center justify-between gap-4">
             <div className="min-w-0">
-              <h2 className="font-semibold text-lg truncate">Grammar Test 1</h2>
+              <h2 className="font-semibold text-lg truncate">
+                {quizDetails.title}
+              </h2>
               <div className="flex items-center gap-3 mt-1">
                 <div className="w-40 hidden sm:block"></div>
                 <div className="text-xs text-muted-foreground">
-                  {answeredCount}/{QUESTIONS.length} questions
+                  {answeredCount}/{quizDetails.questions.length} questions
                 </div>
               </div>
             </div>
@@ -157,27 +170,27 @@ const StudentQuizTake = () => {
               </div>
               <RadioGroup
                 value={state.answers[currentQuestion.id]}
-                onValueChange={(v) => selectAnswer(currentQuestion.id, v)}
+                onValueChange={(v) => selectAnswer(state.currentIndex, v)}
                 className="space-y-3"
               >
-                {currentQuestion.options.map((opt) => (
+                {currentQuestion.options.map((opt, id) => (
                   <div
-                    key={opt.key}
+                    key={id}
                     className={cn(
                       "flex items-center gap-3 rounded-md border p-3",
-                      state.answers[currentQuestion.id] === opt.key &&
+                      state.answers[state.currentIndex] === id &&
                         "border-primary bg-primary/5"
                     )}
                   >
                     <RadioGroupItem
-                      value={opt.key}
-                      id={`opt-${currentQuestion.id}-${opt.key}`}
+                      value={opt}
+                      id={`opt-${currentQuestion._id}-${id}`}
                     />
                     <Label
-                      htmlFor={`opt-${currentQuestion.id}-${opt.key}`}
+                      htmlFor={`opt-${currentQuestion._id}-${opt.key}`}
                       className="cursor-pointer"
                     >
-                      {opt.text}
+                      {opt}
                     </Label>
                   </div>
                 ))}
@@ -198,13 +211,15 @@ const StudentQuizTake = () => {
                 Previous
               </Button>
               <Button
-                disabled={state.currentIndex === QUESTIONS.length - 1}
+                disabled={
+                  state.currentIndex === quizDetails.questions.length - 1
+                }
                 onClick={() =>
                   setState((s) => ({
                     ...s,
                     currentIndex: Math.min(
                       s.currentIndex + 1,
-                      QUESTIONS.length - 1
+                      quizDetails.questions.length - 1
                     ),
                   }))
                 }
@@ -215,14 +230,14 @@ const StudentQuizTake = () => {
           </div>
           <aside className="lg:col-span-1">
             <Card className="p-4 w-full max-w-[240px] lg:max-w-none">
-              <h3 className="font-semibold mb-3">Question Navigator</h3>
+              <h3 className="font-semibold mb-3 text-xl">Question Navigator</h3>
               <div className="grid grid-cols-5 gap-2">
-                {QUESTIONS.map((q, idx) => {
-                  const answered = !!state.answers[q.id];
+                {quizDetails.questions.map((q, idx) => {
+                  const answered = !!state.answers[idx];
                   const isCurrent = idx === state.currentIndex;
                   return (
                     <button
-                      key={q.id}
+                      key={q._id}
                       onClick={() =>
                         setState((s) => ({ ...s, currentIndex: idx }))
                       }
@@ -251,8 +266,9 @@ const StudentQuizTake = () => {
             <AlertDialogHeader>
               <AlertDialogTitle>Submit Quiz?</AlertDialogTitle>
               <AlertDialogDescription>
-                You have answered {answeredCount} of {QUESTIONS.length}{" "}
-                questions. Once submitted, you cannot change your answers.
+                You have answered {answeredCount} of{" "}
+                {quizDetails.questions.length} questions. Once submitted, you
+                cannot change your answers.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
@@ -273,12 +289,12 @@ const StudentQuizTake = () => {
               <SheetTitle>Questions Navigator</SheetTitle>
             </SheetHeader>
             <div className="mt-4 grid grid-cols-5 gap-2">
-              {QUESTIONS.map((q, idx) => {
-                const answered = !!state.answers[q.id];
+              {quizDetails.questions.map((q, idx) => {
+                const answered = !!state.answers[q._id];
                 const isCurrent = idx === state.currentIndex;
                 return (
                   <button
-                    key={q.id}
+                    key={q._id}
                     onClick={() => {
                       setState((s) => ({ ...s, currentIndex: idx }));
                       setNavOpen(false);

@@ -4,10 +4,15 @@ import { Card, CardHeader, CardContent } from "../ui/Card";
 import { Button } from "../ui/Button";
 import Progress from "../ui/Progress";
 
-const CourseCard = ({ id, title, teacher, progress, nextDue }) => {
+const CourseCard = ({
+  id,
+  course,
+  progress = 80,
+  nextDue = "Project due: Oct 25",
+}) => {
   const navigate = useNavigate();
   const handleEnter = () => {
-    navigate(`/user/my-courses/${id}`);
+    navigate(`/user/my-courses/${course._id}`);
   };
   return (
     <Card className="h-full hover:shadow-lg hover-scale-103 transition-all duration-300 cursor-pointer group">
@@ -16,9 +21,11 @@ const CourseCard = ({ id, title, teacher, progress, nextDue }) => {
           className="text-lg font-semibold text-foreground line-clamp-2 group-hover:text-primary transition-colors"
           onClick={handleEnter}
         >
-          {title}
+          {course?.subjectId?.name}
         </h3>
-        <p className="text-sm text-muted-foreground">{teacher}</p>
+        <p className="text-sm text-muted-foreground">
+          {course?.tutorId?.user?.username}
+        </p>
       </CardHeader>
       <CardContent className="space-y-4">
         <div>
