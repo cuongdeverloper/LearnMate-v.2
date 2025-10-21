@@ -11,10 +11,11 @@
 
 .messenger {
   display: flex;
-  height: 100vh;
+  flex: 1; /* thay height: 100vh */
   background-color: var(--bg);
   color: var(--text);
   font-family: "Segoe UI", sans-serif;
+  overflow: hidden; /* ngăn thừa scroll */
 }
 
 .chatMenu, .chatOnline {
@@ -162,4 +163,48 @@
   font-size: 18px;
   margin-left: 15px;
   cursor: pointer;
+}
+.chatInputContainer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  position: relative;
+  width: 100%;
+}
+
+.iconButton {
+  background: none;
+  border: none;
+  font-size: 22px;
+  cursor: pointer;
+}
+
+.emojiPicker,
+.stickerPicker {
+  position: absolute;
+  bottom: 60px;
+  left: 10px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.15);
+  z-index: 10;
+}
+
+.stickerPicker {
+  display: flex;
+  gap: 6px;
+  padding: 8px;
+  flex-wrap: wrap;
+  width: 200px;
+}
+
+.stickerItem {
+  width: 50px;
+  height: 50px;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.stickerItem:hover {
+  transform: scale(1.1);
 }

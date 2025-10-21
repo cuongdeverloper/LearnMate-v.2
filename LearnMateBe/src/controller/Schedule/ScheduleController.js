@@ -356,7 +356,7 @@ exports.markAttendance = async (req, res) => {
         } do hủy điểm danh (${booking._id.toString().slice(-6)})`,
         date: new Date(),
       });
-      
+
       if (tutorUser.balance >= booking.sessionCost) {
         tutorUser.balance -= booking.sessionCost;
         await tutorUser.save();
@@ -383,24 +383,37 @@ exports.markAttendance = async (req, res) => {
 exports.acceptChangeRequest = async (req, res) => {
   try {
     const { requestId } = req.params;
-    const userId = req.user.id; 
+    const userId = req.user.id;
 
     const tutor = await Tutor.findOne({ user: userId });
     if (!tutor) {
-      return res.status(404).json({ success: false, message: "Không tìm thấy thông tin gia sư." });
+      return res
+        .status(404)
+        .json({ success: false, message: "Không tìm thấy thông tin gia sư." });
     }
 
-    const changeRequest = await ChangeRequest.findById(requestId).populate("scheduleId");
+    const changeRequest = await ChangeRequest.findById(requestId).populate(
+      "scheduleId"
+    );
     if (!changeRequest) {
-      return res.status(404).json({ success: false, message: "Không tìm thấy yêu cầu thay đổi." });
+      return res
+        .status(404)
+        .json({ success: false, message: "Không tìm thấy yêu cầu thay đổi." });
     }
 
     const schedule = await Schedule.findById(changeRequest.scheduleId);
     if (!schedule) {
-      return res.status(404).json({ success: false, message: "Không tìm thấy lịch học." });
+      return res
+        .status(404)
+        .json({ success: false, message: "Không tìm thấy lịch học." });
     }
     if (schedule.tutorId.toString() !== tutor._id.toString()) {
-      return res.status(403).json({ success: false, message: "Bạn không có quyền phê duyệt yêu cầu này." });
+      return res
+        .status(403)
+        .json({
+          success: false,
+          message: "Bạn không có quyền phê duyệt yêu cầu này.",
+        });
     }
 
     changeRequest.status = "approved";
@@ -434,20 +447,33 @@ exports.rejectChangeRequest = async (req, res) => {
 
     const tutor = await Tutor.findOne({ user: userId });
     if (!tutor) {
-      return res.status(404).json({ success: false, message: "Không tìm thấy thông tin gia sư." });
+      return res
+        .status(404)
+        .json({ success: false, message: "Không tìm thấy thông tin gia sư." });
     }
 
-    const changeRequest = await ChangeRequest.findById(requestId).populate("scheduleId");
+    const changeRequest = await ChangeRequest.findById(requestId).populate(
+      "scheduleId"
+    );
     if (!changeRequest) {
-      return res.status(404).json({ success: false, message: "Không tìm thấy yêu cầu thay đổi." });
+      return res
+        .status(404)
+        .json({ success: false, message: "Không tìm thấy yêu cầu thay đổi." });
     }
 
     const schedule = await Schedule.findById(changeRequest.scheduleId);
     if (!schedule) {
-      return res.status(404).json({ success: false, message: "Không tìm thấy lịch học." });
+      return res
+        .status(404)
+        .json({ success: false, message: "Không tìm thấy lịch học." });
     }
     if (schedule.tutorId.toString() !== tutor._id.toString()) {
-      return res.status(403).json({ success: false, message: "Bạn không có quyền từ chối yêu cầu này." });
+      return res
+        .status(403)
+        .json({
+          success: false,
+          message: "Bạn không có quyền từ chối yêu cầu này.",
+        });
     }
 
     changeRequest.status = "rejected";
@@ -474,13 +500,17 @@ exports.getChangeRequestsByTutor = async (req, res) => {
 
     const tutor = await Tutor.findOne({ user: userId });
     if (!tutor) {
-      return res.status(404).json({ success: false, message: "Không tìm thấy thông tin gia sư." });
+      return res
+        .status(404)
+        .json({ success: false, message: "Không tìm thấy thông tin gia sư." });
     }
 
     const schedules = await Schedule.find({ tutorId: tutor._id }).select("_id");
     const scheduleIds = schedules.map((s) => s._id);
 
-    const changeRequests = await ChangeRequest.find({ scheduleId: { $in: scheduleIds } })
+    const changeRequests = await ChangeRequest.find({
+      scheduleId: { $in: scheduleIds },
+    })
       .populate({
         path: "scheduleId",
         populate: [

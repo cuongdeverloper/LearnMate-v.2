@@ -1,11 +1,18 @@
+import axios from "../../Service/AxiosCustomize";
+import Cookies from "js-cookie";
+
 export const fetchCourses = () => async (dispatch) => {
-  dispatch({ type: "MY_COURSE_REQUEST" });
+  const token = Cookies.get("accessToken");
+  dispatch({ type: "COURSE_REQUEST" });
   try {
-    const res = await fetch("/api/courses");
-    const data = await res.json();
-    dispatch({ type: "MY_COURSE_SUCCESS", payload: data });
+    const res = await axios.get("/api/booking/bookings/my-courses", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    dispatch({ type: "COURSE_SUCCESS", payload: res });
   } catch (err) {
-    dispatch({ type: "MY_COURSE_FAILURE", payload: err.message });
+    dispatch({ type: "COURSE_FAILURE", payload: err.message });
   }
 };
 

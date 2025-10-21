@@ -251,35 +251,35 @@ const resendOTPVerificationCode = async (req, res) => {
 const requestPasswordReset = async (req, res) => {
   try {
     const { email } = req.body;
-
     if (!email) {
       return res.status(400).json({ errorCode: 1, message: 'Email is required' });
     }
 
-    // Find user by email
-    const userRecord = await user.findOne({ email });
+    const userRecord = await User.findOne({ email });
     if (!userRecord) {
       return res.status(203).json({ errorCode: 2, message: 'Email does not exist' });
     }
 
-    const payload = {
-      id:userRecord._id,
-      email: userRecord.email,
-    };
-    // Create a reset token with 1 minute expiration
-    const resetToken = createJWTResetPassword(payload);
+    if (userRecord.socialLogin) {
+      return res.status(203).json({
+        errorCode: 8,
+        message: 'This account uses Google login and cannot reset password.',
+      });
+    }
 
-    // Create a reset link with the token
+    const payload = { id: userRecord._id, email: userRecord.email };
+    const resetToken = createJWTResetPassword(payload);
     const resetLink = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
 
-    // Send email with reset link
-    const emailSubject = 'Password Reset Request';
-    const emailContent = `Click <a href="${resetLink}">here</a> to reset your password. This link will expire in 5 minute.`;
-    await sendMail(email, emailSubject, emailContent);
+    await sendMail(
+      email,
+      'Password Reset Request',
+      `Click <a href="${resetLink}">here</a> to reset your password. This link will expire in 5 minutes.`
+    );
 
     return res.status(200).json({
       errorCode: 0,
-      message: 'Password reset email sent successfully. The link will expire in 1 minute.',
+      message: 'Password reset email sent successfully.',
     });
   } catch (error) {
     console.error('Forgot Password error:', error);
@@ -290,22 +290,54 @@ const requestPasswordReset = async (req, res) => {
   }
 };
 
+
 const resetPassword = async (req, res) => {
   try {
     const { token, newPassword } = req.body;
     if (!token || !newPassword) {
-      return res.status(400).json({ errorCode: 1, message: 'Token and new password are required' });
+      return res.status(400).json({
+        errorCode: 1,
+        message: 'Token and new password are required',
+      });
     }
 
     const decodedToken = verifyAccessToken(token);
     if (!decodedToken) {
-      return res.status(203).json({ errorCode: 2, message: 'Invalid or expired token' });
+      return res.status(403).json({
+        errorCode: 2,
+        message: 'Invalid or expired token',
+      });
     }
 
+
     const userRecord = await user.findById(decodedToken.id);
-    console.log(userRecord.password)
+
     if (!userRecord) {
-      return res.status(400).json({ errorCode: 3, message: 'User not found' });
+      return res.status(404).json({
+        errorCode: 3,
+        message: 'User not found',
+      });
+    }
+
+    // ❌ Nếu là tài khoản Google
+    if (userRecord.socialLogin && userRecord.password) {
+      return res.status(400).json({
+        errorCode: 8,
+        message: 'Google account cannot reset password.',
+      });
+    }
+
+    // ✅ Trường hợp đặc biệt: cho phép user Google đặt mật khẩu lần đầu
+    if (userRecord.socialLogin && !userRecord.password) {
+      userRecord.password = newPassword;
+      userRecord.socialLogin = false; // giờ họ có thể đăng nhập bằng email/password
+      userRecord.type = 'Local';
+      await userRecord.save();
+
+      return res.status(200).json({
+        errorCode: 0,
+        message: 'Password set successfully. You can now login using email/password.',
+      });
     }
 
    
@@ -313,17 +345,16 @@ const resetPassword = async (req, res) => {
     if (isSamePassword) {
       return res.status(400).json({
         errorCode: 4,
-        message: 'New password cannot be the same as the old password',
+        message: 'New password cannot be the same as old password',
       });
     }
 
     userRecord.password = newPassword;
-
     await userRecord.save();
 
     return res.status(200).json({
       errorCode: 0,
-      message: 'Password reset successful',
+      message: 'Password reset successfully',
     });
   } catch (error) {
     console.error('Reset Password error:', error);
@@ -335,10 +366,26 @@ const resetPassword = async (req, res) => {
 };
 
 
+
 const changePassword = async (req, res) => {
   try {
-    const userId = req.user.id || req.user._id; // lấy từ middleware auth (decode từ accessToken)
+    const userId = req.user.id || req.user._id;
     const { oldPassword, newPassword, confirmPassword } = req.body;
+
+    const userRecord = await User.findById(userId);
+    if (!userRecord) {
+      return res.status(404).json({
+        errorCode: 3,
+        message: 'User not found',
+      });
+    }
+
+    if (!userRecord.socialLogin) {
+      return res.status(400).json({
+        errorCode: 7,
+        message: 'This account uses Google login and cannot change password directly.',
+      });
+    }
 
     if (!oldPassword || !newPassword || !confirmPassword) {
       return res.status(400).json({
@@ -354,15 +401,7 @@ const changePassword = async (req, res) => {
       });
     }
 
-    const userRecord = await User.findById(userId);
-    if (!userRecord) {
-      return res.status(404).json({
-        errorCode: 3,
-        message: 'User not found',
-      });
-    }
-
-    const isMatch = await bcrypt.compare(oldPassword, userRecord.password);
+    const isMatch = await userRecord.comparePassword(oldPassword);
     if (!isMatch) {
       return res.status(400).json({
         errorCode: 4,
@@ -393,6 +432,7 @@ const changePassword = async (req, res) => {
     });
   }
 };
+
 
 const verifyAccountByLink = async (req, res) => {
   try {
