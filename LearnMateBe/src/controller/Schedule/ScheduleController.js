@@ -216,10 +216,11 @@ exports.getLearnerWeeklySchedules = async (req, res) => {
       learnerId: learnerId,
       date: { $gte: startDate, $lte: endDate }, // CHỈNH SỬA Ở ĐÂY
     })
-      .populate({
-        path: "bookingId",
-        select: "tutorId",
-        populate: {
+    .populate({
+      path: "bookingId",
+      select: "tutorId subjectId",
+      populate: [
+        {
           path: "tutorId",
           select: "user",
           populate: {
@@ -227,8 +228,14 @@ exports.getLearnerWeeklySchedules = async (req, res) => {
             select: "username",
           },
         },
-      })
-      .select("date startTime endTime bookingId attended");
+        {
+          path: "subjectId",
+          select: "name classLevel",
+        },
+      ],
+    })
+    .select("date startTime endTime bookingId attended");
+      
 
     res.json(schedules);
   } catch (error) {

@@ -31,136 +31,176 @@ exports.getBookingById = async (req, res) => {
 exports.createBooking = async (req, res) => {
   try {
     const { tutorId } = req.params;
-    console.log(tutorId)
     const {
       amount,
-      numberOfSessions,
+      numberOfMonths,
       note,
       subjectId,
-      option,
       availabilityIds,
+      addressDetail,
+      province,
+      depositOption,
     } = req.body;
 
-    if (!tutorId || !amount || !subjectId || !numberOfSessions) {
+    if (
+      !tutorId ||
+      !amount ||
+      !subjectId ||
+      !availabilityIds?.length ||
+      !numberOfMonths ||
+      !depositOption
+    ) {
       return res
         .status(400)
-        .json({
-          success: false,
-          message:
-            "Missing required fields: tutorId, amount, subjectId, numberOfSessions",
-        });
+        .json({ success: false, message: "Missing required fields" });
     }
-
-    if (!req.user) {
+    if (!req.user)
       return res.status(401).json({ success: false, message: "Unauthorized" });
-    }
+
     const learnerId = req.user.id;
-    const tutormd = await Tutor.findById(tutorId);
-    console.log('13',tutormd)
-    if (learnerId === tutormd.user.toString()) {
-      return res.status(400).json({
-        success: false,
-        message: "Bạn không thể đặt lịch với chính mình.",
-      });
-    }
-    const user = await User.findById(req.user.id || req.user._id);
+    const tutorDoc = await Tutor.findById(tutorId);
+    if (!tutorDoc)
+      return res
+        .status(404)
+        .json({ success: false, message: "Tutor not found" });
+    // if (learnerId === tutorDoc.user.toString()) {
+    //   return res.status(400).json({
+    //     success: false,
+    //     message: "Bạn không thể đặt lịch với chính mình.",
+    //   });
+    // }
+
+    const user = await User.findById(learnerId);
     if (!user)
       return res
         .status(404)
         .json({ success: false, message: "User not found" });
+
     const existingBooking = await Booking.findOne({
-      learnerId: user._id,
+      learnerId,
       tutorId,
       subjectId,
-      status: { $in: ["pending", "approve"] }, // booking đang hoạt động
+      status: { $in: ["pending", "approve"] },
     });
-
-    if (existingBooking) {
-      return res.status(400).json({
-        success: false,
-        message:
-          "Bạn đã có một booking đang hoạt động với gia sư này cho cùng môn học. Vui lòng hoàn tất hoặc hủy booking cũ trước khi tạo mới.",
-      });
-    }
-    const deposit = Math.round(amount * 0.3); // 30% cọc
-    const sessionCost = Math.round((amount * 0.7) / numberOfSessions); // 70% chia đều mỗi buổi
-
-    if (user.balance < deposit) {
+    if (existingBooking)
       return res
         .status(400)
-        .json({
-          success: false,
-          message: "Số dư không đủ để đặt lịch (cần tối thiểu 30% cọc)",
-        });
+        .json({ success: false, message: "Bạn đã có booking đang hoạt động." });
+
+    const depositPercent = depositOption === 60 ? 60 : 30;
+
+    const baseSlots = await TutorAvailability.find({
+      _id: { $in: availabilityIds },
+      isBooked: false,
+    });
+    if (baseSlots.length !== availabilityIds.length) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Một số slot đã được đặt" });
     }
 
-    // ✅ Trừ 30% ngay
+    const totalSessions = baseSlots.length * numberOfMonths * 4;
+    const totalAmount = tutorDoc.pricePerHour * totalSessions;
+    const deposit = Math.round(totalAmount * (depositPercent / 100));
+    const remaining = totalAmount - deposit;
+    const monthlyPayment = Math.round(remaining / numberOfMonths);
+
+    if (user.balance < deposit)
+      return res
+        .status(400)
+        .json({ success: false, message: "Số dư không đủ để đặt cọc." });
+
+    // Trừ tiền cọc
     user.balance -= deposit;
     await user.save();
-
     await FinancialHistory.create({
-      userId: user._id,
+      userId: learnerId,
       amount: deposit,
       balanceChange: -deposit,
       type: "spend",
       status: "success",
-      description: `Đặt cọc 30% cho booking với gia sư ${tutorId
-        .toString()
-        .slice(-6)}`,
+      description: `Đặt cọc ${depositPercent}% cho booking với gia sư ${tutorId.slice(
+        -6
+      )}`,
       date: new Date(),
     });
 
-    // ✅ Tạo booking
+    const fullAddress = `${addressDetail?.trim() || ""}, ${
+      province?.trim() || ""
+    }`;
+
     const booking = await Booking.create({
-      learnerId: req.user.id || req.user._id,
+      learnerId,
       tutorId,
       subjectId,
-      amount,
-      numberOfSessions,
+      amount: totalAmount,
       deposit,
-      sessionCost,
-      paidSessions: 0, // số buổi đã trả trong phần 70%
+      depositPercent,
+      monthlyPayment,
+      numberOfMonths,
+      paidMonths: 0,
       status: "pending",
       note,
+      address: fullAddress,
+      numberOfSession: totalSessions,
     });
 
-    // ✅ Nếu chọn lịch sẵn
-    if (
-      option === "schedule" &&
-      Array.isArray(availabilityIds) &&
-      availabilityIds.length > 0
-    ) {
-      const slots = await TutorAvailability.find({
-        _id: { $in: availabilityIds },
-        isBooked: false,
-      });
+    // Mark slots as booked
+    await TutorAvailability.updateMany(
+      { _id: { $in: availabilityIds } },
+      { $set: { isBooked: true } }
+    );
 
-      if (slots.length !== availabilityIds.length) {
-        return res
-          .status(400)
-          .json({ success: false, message: "Một số slot đã được đặt" });
+    // Tạo lịch Schedule dựa trên dayOfWeek
+    const schedulesData = [];
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // reset giờ phút giây
+
+    for (const slot of baseSlots) {
+      // dayOfWeek: T2=1, ..., CN=0
+      let dayOffset = slot.dayOfWeek === 0 ? 0 : slot.dayOfWeek; // CN=0, T2=1,...
+
+      // tính ngày slot tuần hiện tại
+      const slotDate = new Date(today);
+      const diff = (dayOffset + 7 - today.getDay()) % 7;
+      slotDate.setDate(today.getDate() + diff);
+
+      // Nếu slot trong tuần này đã qua, bắt đầu từ tuần kế tiếp
+      let firstWeekOffset = 0;
+      if (slotDate < today) firstWeekOffset = 1;
+
+      for (
+        let weekOffset = firstWeekOffset;
+        weekOffset < numberOfMonths * 4;
+        weekOffset++
+      ) {
+        const scheduleDate = new Date(slotDate);
+        scheduleDate.setDate(slotDate.getDate() + weekOffset * 7);
+
+        schedulesData.push({
+          tutorId,
+          learnerId,
+          bookingId: booking._id,
+          date: scheduleDate,
+          startTime: slot.startTime,
+          endTime: slot.endTime,
+        });
       }
-
-      await TutorAvailability.updateMany(
-        { _id: { $in: availabilityIds } },
-        { $set: { isBooked: true } }
-      );
-
-      const schedulesData = slots.map((slot) => ({
-        tutorId,
-        learnerId: req.user.id || req.user._id,
-        bookingId: booking._id,
-        date: slot.date,
-        startTime: slot.startTime,
-        endTime: slot.endTime,
-      }));
-
-      const insertedSchedules = await Schedule.insertMany(schedulesData);
-      booking.scheduleIds = insertedSchedules.map((s) => s._id);
-      await booking.save();
     }
+    const insertedSchedules = await Schedule.insertMany(schedulesData);
+    booking.scheduleIds = insertedSchedules.map((s) => s._id);
+    await booking.save();
 
-    res.status(201).json({ success: true, bookingId: booking._id });
+    res.status(201).json({
+      success: true,
+      bookingId: booking._id,
+      deposit,
+      depositPercent,
+      monthlyPayment,
+      numberOfMonths,
+      totalSessions,
+      totalAmount,
+    });
   } catch (error) {
     console.error("Error creating booking:", error);
     res.status(500).json({ success: false, message: error.message });
@@ -212,7 +252,7 @@ exports.getApprovedBookingsForLearner = async (req, res) => {
       })
       .populate({
         path: "subjectId",
-        select: "name description",
+        select: "name classLevel",
       })
       .sort({ createdAt: -1 });
 
@@ -228,75 +268,69 @@ exports.getApprovedBookingsForLearner = async (req, res) => {
 exports.cancelBooking = async (req, res) => {
   try {
     const { bookingId } = req.params;
-    const userId = req.user.id || req.user._id; // Lấy ID người dùng từ token
+    const userId = req.user.id || req.user._id;
 
-    // Tìm booking
     const booking = await Booking.findById(bookingId);
-
-    if (!booking) {
+    if (!booking)
       return res
         .status(404)
         .json({ success: false, message: "Booking not found." });
-    }
+    if (booking.learnerId.toString() !== userId.toString())
+      return res.status(403).json({ success: false, message: "Unauthorized." });
+    if (booking.status !== "pending")
+      return res.status(400).json({
+        success: false,
+        message: "Only pending bookings can be cancelled.",
+      });
 
-    // Đảm bảo người dùng hiện tại là người tạo booking này
-    if (booking.learnerId.toString() !== userId.toString()) {
-      return res
-        .status(403)
-        .json({
-          success: false,
-          message: "Unauthorized: You can only cancel your own bookings.",
-        });
-    }
-
-    // Chỉ cho phép hủy các booking có trạng thái 'pending'
-    if (booking.status !== "pending") {
-      return res
-        .status(400)
-        .json({
-          success: false,
-          message: "Only pending bookings can be cancelled.",
-        });
-    }
-
-    // Cập nhật trạng thái booking thành 'cancelled'
     booking.status = "cancelled";
     await booking.save();
 
-    // Hoàn tiền cho người dùng
     const user = await User.findById(userId);
-    if (!user) {
-      // Đây là một trường hợp lỗi hiếm gặp nếu người dùng không tồn tại sau khi tìm thấy booking
-      console.error(`User with ID ${userId} not found for refund.`);
+    if (!user)
       return res
         .status(500)
-        .json({
-          success: false,
-          message: "Error processing refund: User not found.",
-        });
-    }
+        .json({ success: false, message: "User not found." });
 
-    user.balance += booking.deposit; // Hoàn lại số tiền booking
+    user.balance += booking.deposit;
     await user.save();
+
     await FinancialHistory.create({
-      userId: userId,
+      userId,
       amount: booking.deposit,
       balanceChange: booking.deposit,
       type: "earning",
       status: "success",
-      description: `Hoàn tiền cọc sau khi hủy  khóa học (${booking._id
+      description: `Hoàn tiền cọc sau khi hủy khóa học (${booking._id
         .toString()
         .slice(-6)})`,
       date: new Date(),
     });
 
-    res
-      .status(200)
-      .json({
-        success: true,
-        message: "Booking cancelled and refunded deposit successfully.",
-        bookingId: booking._id,
-      });
+    // Reset TutorAvailability slots
+    const schedules = await Schedule.find({ bookingId: booking._id });
+    const dayTimePairs = schedules.map((s) => ({
+      dayOfWeek: s.date.getDay(),
+      startTime: s.startTime,
+      endTime: s.endTime,
+    }));
+    for (const pair of dayTimePairs) {
+      await TutorAvailability.updateMany(
+        {
+          tutorId: booking.tutorId,
+          dayOfWeek: pair.dayOfWeek,
+          startTime: pair.startTime,
+          endTime: pair.endTime,
+        },
+        { $set: { isBooked: false } }
+      );
+    }
+    await Schedule.deleteMany({ bookingId: booking._id });
+    res.status(200).json({
+      success: true,
+      message: "Booking cancelled and refunded successfully.",
+      bookingId: booking._id,
+    });
   } catch (error) {
     console.error("Error cancelling booking:", error);
     res.status(500).json({ success: false, message: error.message });
@@ -314,11 +348,9 @@ exports.finishBooking = async (req, res) => {
       return res.status(400).json({ message: "Invalid bookingId" });
     }
     if (!booking.tutorId || !booking.tutorId.user) {
-      return res
-        .status(500)
-        .json({
-          message: "Thiếu thông tin người dạy (tutor.user) trong booking",
-        });
+      return res.status(500).json({
+        message: "Thiếu thông tin người dạy (tutor.user) trong booking",
+      });
     }
 
     console.log("📦 booking chi tiết:", booking);
@@ -384,12 +416,10 @@ exports.finishBooking = async (req, res) => {
   } catch (error) {
     console.error("❌ Error finishing booking:", error.message);
     console.error("📦 Full error object:", error); // In cả stack trace
-    res
-      .status(500)
-      .json({
-        message: "Lỗi server khi hoàn tất khóa học",
-        error: error.message,
-      });
+    res.status(500).json({
+      message: "Lỗi server khi hoàn tất khóa học",
+      error: error.message,
+    });
   }
 };
 exports.getAllBookingsByTutorId = async (req, res) => {
@@ -507,12 +537,10 @@ exports.getAllReports = async (req, res) => {
     return res.status(200).json({ success: true, data: reports });
   } catch (err) {
     console.error("Error fetching reports:", err);
-    return res
-      .status(500)
-      .json({
-        success: false,
-        message: "Lỗi server khi lấy danh sách báo cáo.",
-      });
+    return res.status(500).json({
+      success: false,
+      message: "Lỗi server khi lấy danh sách báo cáo.",
+    });
   }
 };
 
