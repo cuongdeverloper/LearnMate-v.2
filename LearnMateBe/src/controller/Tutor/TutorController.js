@@ -4,6 +4,7 @@ const Material = require("../../modal/Material");
 const Progress = require("../../modal/Progress");
 const TutorAvailability = require("../../modal/TutorAvailability");
 const Tutor = require ("../../modal/Tutor")
+const User = require ("../../modal/User")
 
 const respondBooking = async (req, res) => {
 

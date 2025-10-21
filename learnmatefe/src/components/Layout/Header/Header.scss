@@ -267,3 +267,25 @@
     }
   }
 }
+.tutor-status-toggle {
+
+  &.active {
+    .status-label {
+      color: #4effa1;
+      text-shadow: 0 0 6px rgba(78, 255, 161, 0.6),
+                   0 0 12px rgba(78, 255, 161, 0.3);
+      animation: glowPulse 2s ease-in-out infinite;
+      font-weight: bold;
+    }
+  }
+
+  &.inactive {
+    opacity: 0.9;
+
+    .status-label {
+      color: #c9c9c9;
+      font-style: italic;
+      text-shadow: 0 0 4px rgba(255, 255, 255, 0.1);
+    }
+  }
+}
