@@ -24,23 +24,23 @@ const Messenger = () => {
   const socket = useRef();
   const scrollRef = useRef();
   const isAuthenticated = useSelector(user => user.user.isAuthenticated);
-const [receiver, setReceiver] = useState(null);
-useEffect(() => {
-  const fetchReceiver = async () => {
-    if (currentChat) {
-      const friendId = currentChat.members.find((m) => m !== user.account.id);
-      if (friendId) {
-        try {
-          const res = await ApiGetUserByUserId(friendId);
-          setReceiver(res);
-        } catch (err) {
-          console.error("Failed to fetch receiver:", err);
+  const [receiver, setReceiver] = useState(null);
+  useEffect(() => {
+    const fetchReceiver = async () => {
+      if (currentChat) {
+        const friendId = currentChat.members.find((m) => m !== user.account.id);
+        if (friendId) {
+          try {
+            const res = await ApiGetUserByUserId(friendId);
+            setReceiver(res);
+          } catch (err) {
+            console.error("Failed to fetch receiver:", err);
+          }
         }
       }
-    }
-  };
-  fetchReceiver();
-}, [currentChat, user.account.id]);
+    };
+    fetchReceiver();
+  }, [currentChat, user.account.id]);
   const navigate = useNavigate();
   useEffect(() => {
     if (!conversationId || conversations.length === 0) return;
@@ -54,36 +54,36 @@ useEffect(() => {
 
 
   useEffect(() => {
-  socket.current = io("http://localhost:6060", {
-    transports: ["websocket", "polling"],
-    withCredentials: true,
-  });
-
-  socket.current.on("getMessage", (data) => {
-    setArrivalMessage({
-      sender: data.senderId,
-      text: data.text,
-      createdAt: Date.now(),
-      conversationId: data.conversationId,
+    socket.current = io("http://localhost:6060", {
+      transports: ["websocket", "polling"],
+      withCredentials: true,
     });
-  });
 
-  return () => {
-    socket.current.disconnect();
-  };
-}, []);
+    socket.current.on("getMessage", (data) => {
+      setArrivalMessage({
+        sender: data.senderId,
+        text: data.text,
+        createdAt: Date.now(),
+        conversationId: data.conversationId,
+      });
+    });
+
+    return () => {
+      socket.current.disconnect();
+    };
+  }, []);
 
 
   useEffect(() => {
-    if (
-      arrivalMessage &&
-      currentChat &&
-      arrivalMessage.conversationId === currentChat._id &&
-      arrivalMessage.sender !== user.account.id
-    ) {
+    if (!arrivalMessage) return;
+
+    if (currentChat && arrivalMessage.conversationId === currentChat._id) {
       setMessages((prev) => [...prev, arrivalMessage]);
+    } else {
+      console.log("Tin nhắn đến nhưng khác conversation:", arrivalMessage);
     }
-  }, [arrivalMessage, currentChat, user.account.id]);
+  }, [arrivalMessage, currentChat]);
+
 
 
   useEffect(() => {
@@ -98,14 +98,15 @@ useEffect(() => {
   }, [user]);
   const handleSubmit = async (e) => {
     e.preventDefault();
-    // const message = {
-    //   sender: user.account.id,
-    //   text: newMessage,
-    //   conversationId: currentChat._id,
-    // };
+
+    if (!newMessage || newMessage.trim() === "") {
+      return;
+    }
+
     const receiverId = currentChat.members.find(
-      (member) => member !== user.account.id,
+      (member) => member !== user.account.id
     );
+
     socket.current.emit("sendMessage", {
       senderId: user.account.id,
       receiverId,
@@ -114,20 +115,20 @@ useEffect(() => {
     });
 
     try {
-      const data = await ApiSendMessage(receiverId, newMessage);
+      const data = await ApiSendMessage(receiverId, newMessage, currentChat._id);
 
       const newMsg = {
         ...data,
-        sender: { _id: user.account.id, image: user.account.image }
+        sender: { _id: user.account.id, image: user.account.image },
       };
 
-      setMessages([...messages, newMsg]);
+      setMessages((prev) => [...prev, newMsg]);
       setNewMessage("");
     } catch (err) {
-      console.log(err);
+      console.error("Lỗi khi gửi tin nhắn:", err);
     }
-
   };
+
   useEffect(() => {
     if (!isAuthenticated) {
       navigate("/signin");
@@ -180,8 +181,8 @@ useEffect(() => {
   return (
     <>
       {/* <Topbar /> */}
-      <Header/>
-      <div className="messenger">
+      <Header />
+      <div className="messenger" >
         <div className="chatMenu">
           <div className="chatMenuWrapper">
             <input placeholder="Search for friends" className="chatMenuInput" />
@@ -195,16 +196,16 @@ useEffect(() => {
           </div>
         </div>
         <ChatBox
-  currentChat={currentChat}
-  messages={messages}
-  newMessage={newMessage}
-  setNewMessage={setNewMessage}
-  handleSubmit={handleSubmit}
-  scrollRef={scrollRef}
-  user={user}
-  receiver={receiver}
-  socket={socket}
-/>
+          currentChat={currentChat}
+          messages={messages}
+          newMessage={newMessage}
+          setNewMessage={setNewMessage}
+          handleSubmit={handleSubmit}
+          scrollRef={scrollRef}
+          user={user}
+          receiver={receiver}
+          socket={socket}
+        />
 
         <div className="chatOnline">
         </div>

@@ -2,41 +2,57 @@ const Message = require("../modal/Socket IO/Message");
 const Conversation = require("../modal/Socket IO/Conversation");
 const User = require("../modal/User");
 const SendMessage = async (req, res) => {
-    try {
-        const { receiverId, text } = req.body;
-        const senderId = req.user.id; 
+  try {
+    const { receiverId, text, conversationId } = req.body;
+    const senderId = req.user.id;
 
-        if (!receiverId || !text) {
-            return res.status(400).json({ error: "receiverId and text are required" });
-        }
-
-        const receiver = await User.findById(receiverId);
-        if (!receiver) {
-            return res.status(404).json({ error: "Receiver not found" });
-        }
-
-        let conversation = await Conversation.findOne({
-            members: { $all: [senderId, receiverId] },
-        });
-
-        if (!conversation) {
-            conversation = new Conversation({ members: [senderId, receiverId] });
-            await conversation.save();
-        }
-
-        const newMessage = new Message({
-            conversationId: conversation._id,
-            sender: senderId,
-            text,
-            seen: false,
-        });
-
-        const savedMessage = await newMessage.save();
-        res.status(200).json(savedMessage);
-    } catch (err) {
-        res.status(500).json({ error: err.message });
+    if (!receiverId || !text) {
+      return res.status(400).json({ error: "receiverId and text are required" });
     }
+
+    const receiver = await User.findById(receiverId);
+    if (!receiver) {
+      return res.status(404).json({ error: "Receiver not found" });
+    }
+
+    let conversation;
+
+    if (conversationId) {
+      // ✅ Nếu đã có conversationId (frontend gửi)
+      conversation = await Conversation.findById(conversationId);
+    } else {
+      // ✅ Nếu chưa có, tìm giữa sender và receiver
+      conversation = await Conversation.findOne({
+        members: { $all: [senderId, receiverId] },
+      });
+
+      if (!conversation) {
+        // ✅ Nếu chưa có thật, thì tạo mới
+        conversation = new Conversation({ members: [senderId, receiverId] });
+        await conversation.save();
+      }
+    }
+
+    // ✅ Tạo và lưu tin nhắn
+    const newMessage = new Message({
+      conversationId: conversation._id,
+      sender: senderId,
+      text,
+      seen: false,
+    });
+
+    const savedMessage = await newMessage.save();
+
+    // ✅ Populate thêm thông tin sender để frontend render ngay
+    const populatedMessage = await savedMessage.populate("sender", "username image");
+
+    res.status(200).json(populatedMessage);
+  } catch (err) {
+    console.error("SendMessage Error:", err);
+    res.status(500).json({ error: err.message });
+  }
 };
+
 
 const GetMessages = async (req, res) => {
     try {

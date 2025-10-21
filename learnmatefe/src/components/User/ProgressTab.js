@@ -4,10 +4,10 @@ import { BarChart3 } from "lucide-react";
 
 const ProgressTab = () => {
   const progressItems = [
-    { label: "Assignments Completed", value: 2, total: 3, percentage: 67 },
-    { label: "Quizzes Completed", value: 1, total: 3, percentage: 33 },
-    { label: "Class Attendance", value: 8, total: 10, percentage: 80 },
-    { label: "Overall Progress", value: 75, total: 100, percentage: 75 },
+    { label: "Bài tập đã hoàn thành", value: 2, total: 3, percentage: 67 },
+    { label: "Bài kiểm tra đã hoàn thành", value: 1, total: 3, percentage: 33 },
+    { label: "Điểm danh lớp học", value: 8, total: 10, percentage: 80 },
+    { label: "Tiến độ chung", value: 75, total: 100, percentage: 75 },
   ];
 
   return (
@@ -15,12 +15,14 @@ const ProgressTab = () => {
       {progressItems.map((item, index) => (
         <div key={index}>
           <div className="flex justify-between items-center mb-2">
-            <h3 className="font-semibold text-foreground">{item.label}</h3>
+            <h3 className="font-semibold text-foreground text-lg">
+              {item.label}
+            </h3>
             <span className="text-sm font-semibold text-primary">
               {item.percentage}%
             </span>
           </div>
-          <div className="w-full bg-secondary rounded-full h-3 overflow-hidden">
+          <div className="w-full bg-secondary rounded-full h-2 overflow-hidden">
             <div
               className="bg-primary h-full rounded-full transition-all duration-300"
               style={{ width: `${item.percentage}%` }}
@@ -36,10 +38,12 @@ const ProgressTab = () => {
         <div className="flex items-start gap-3">
           <BarChart3 className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
           <div>
-            <h4 className="font-semibold text-foreground mb-1">Course Grade</h4>
+            <h4 className="font-semibold text-foreground mb-1">
+              Điểm khóa học
+            </h4>
             <p className="text-2xl font-bold text-primary mb-2">A (92%)</p>
             <p className="text-sm text-muted-foreground">
-              You're performing excellently! Keep up the great work.
+              Bạn làm rất tốt! Hãy tiếp tục phát huy nhé.
             </p>
           </div>
         </div>
