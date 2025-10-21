@@ -105,7 +105,7 @@ const Header = () => {
                 )}
               </div>
               {role === "tutor" && (
-                <div className="tutor-status-toggle">
+                <div className={`tutor-status-toggle ${isActive ? "active" : "inactive"}`}>
                   <label className="switch">
                     <input
                       type="checkbox"
