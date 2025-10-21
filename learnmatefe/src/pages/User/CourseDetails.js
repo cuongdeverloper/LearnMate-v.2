@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "../../components/ui/Button";
 import {
@@ -19,6 +19,8 @@ import AssignmentsTab from "../../components/User/AssignmentsTab";
 import QuizzesTab from "../../components/User/QuizzesTab";
 import ProgressTab from "../../components/User/ProgressTab";
 import CourseSchedule from "../../components/User/CourseSchedule";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchQuizzesByCourseId } from "../../redux/action/quizActions";
 
 const COURSE_DATA = {
   1: {
@@ -60,11 +62,39 @@ const COURSE_DATA = {
 };
 
 const CourseDetails = () => {
-  const { id } = useParams();
-  const navigate = useNavigate();
-  const course = id ? COURSE_DATA[id] : null;
+  const dispatch = useDispatch();
+  const {
+    list: myCourses,
+    selectedCourse,
+    loading: courseLoading,
+    error: courseError,
+  } = useSelector((state) => state.courses);
 
-  if (!course) {
+  const {
+    list: quizzes,
+    selectedQuiz,
+    userAnswers,
+    submitting,
+    loading: quizLoading,
+    score,
+    error: quizError,
+  } = useSelector((state) => state.quizzes);
+
+  const { id: courseId } = useParams();
+
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    myCourses.forEach((c) => {
+      if (c._id === courseId) {
+        dispatch({ type: "SELECT_COURSE", payload: c });
+      }
+    });
+
+    dispatch(fetchQuizzesByCourseId(courseId));
+  }, [dispatch, myCourses, courseId]);
+
+  if (!selectedCourse) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background via-background to-secondary/10 py-8 px-4 sm:px-6 lg:px-8">
         <div className="max-w-5xl mx-auto">
@@ -74,26 +104,27 @@ const CourseDetails = () => {
             className="mb-6 gap-2"
           >
             <ArrowLeft className="w-4 h-4" />
-            Back to Courses
+            Quay lại các khóa học
           </Button>
           <div className="bg-card border border-border rounded-lg shadow-sm p-8 text-center">
             <h1 className="text-2xl font-bold text-foreground mb-2">
-              Course Not Found
+              Khóa học không tìm thấy
             </h1>
             <p className="text-muted-foreground mb-6">
-              The course you're looking for doesn't exist.
+              Khóa học bạn đang tìm kiếm không tồn tại.
             </p>
             <Button
               onClick={() => navigate("/user/my-courses")}
               variant="default"
             >
-              Return to Courses
+              Quay lại Khóa học
             </Button>
           </div>
         </div>
       </div>
     );
   }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-secondary/10 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-5xl mx-auto">
@@ -103,38 +134,40 @@ const CourseDetails = () => {
           className="mb-6 gap-2"
         >
           <ArrowLeft className="w-4 h-4" />
-          Back to Courses
+          Quay lại các khóa học
         </Button>
         <div className="bg-card border border-border rounded-lg shadow-sm p-8 mb-6">
-          <h1 className="text-4xl font-bold text-foreground mb-2">
-            {course.title}
+          <h1 className="text-4xl font-bold text-foreground mb-4">
+            {selectedCourse?.subjectId?.name}
           </h1>
-          <p className="text-lg text-muted-foreground mb-4">
-            Instructor:{" "}
+          <p className="text-lg text-muted-foreground mb-2">
+            Gia sư:{" "}
             <span className="font-semibold text-foreground">
-              {course.instructor}
+              {selectedCourse?.tutorId.user.username}
             </span>
           </p>
-          <p className="text-foreground">{course.description}</p>
+          <p className="text-foreground">
+            Môn học: {selectedCourse?.subjectId?.name}
+          </p>
         </div>
         <div className="bg-card border border-border rounded-lg shadow-sm p-6">
           <Tabs defaultValue="schedule" className="w-full">
             <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 mb-6">
               <TabsTrigger value="schedule" className="gap-2">
                 <Calendar className="w-4 h-4" />
-                <span className="hidden sm:inline">Schedule</span>
+                <span className="hidden sm:inline">Lịch học</span>
               </TabsTrigger>
               <TabsTrigger value="assignments" className="gap-2">
                 <BookOpen className="w-4 h-4" />
-                <span className="hidden sm:inline">Assignments</span>
+                <span className="hidden sm:inline">Bài tập</span>
               </TabsTrigger>
               <TabsTrigger value="quizzes" className="gap-2">
                 <CheckCircle2 className="w-4 h-4" />
-                <span className="hidden sm:inline">Quizzes</span>
+                <span className="hidden sm:inline">Câu đố</span>
               </TabsTrigger>
               <TabsTrigger value="progress" className="gap-2">
                 <BarChart3 className="w-4 h-4" />
-                <span className="hidden sm:inline">Progress</span>
+                <span className="hidden sm:inline">Tiến độ</span>
               </TabsTrigger>
             </TabsList>
 
@@ -145,7 +178,7 @@ const CourseDetails = () => {
 
             {/* Assignments Tab */}
             <TabsContent value="assignments" className="mt-6">
-              <AssignmentsTab courseTitle={course.title} />
+              <AssignmentsTab courseTitle={selectedCourse?.subjectId?.name} />
             </TabsContent>
 
             {/* Quizzes Tab */}
