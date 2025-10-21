@@ -3,6 +3,7 @@ const User = require("../../modal/User");
 const Schedule = require("../../modal/Schedule");
 const FinancialHistory = require("../../modal/FinancialHistory");
 const TutorAvailability = require("../../modal/TutorAvailability");
+const Tutor = require("../../modal/Tutor");
 
 const Report = require("../../modal/Report");
 
@@ -30,6 +31,7 @@ exports.getBookingById = async (req, res) => {
 exports.createBooking = async (req, res) => {
   try {
     const { tutorId } = req.params;
+    console.log(tutorId)
     const {
       amount,
       numberOfSessions,
@@ -52,7 +54,15 @@ exports.createBooking = async (req, res) => {
     if (!req.user) {
       return res.status(401).json({ success: false, message: "Unauthorized" });
     }
-
+    const learnerId = req.user.id;
+    const tutormd = await Tutor.findById(tutorId);
+    console.log('13',tutormd)
+    if (learnerId === tutormd.user.toString()) {
+      return res.status(400).json({
+        success: false,
+        message: "Bạn không thể đặt lịch với chính mình.",
+      });
+    }
     const user = await User.findById(req.user.id || req.user._id);
     if (!user)
       return res

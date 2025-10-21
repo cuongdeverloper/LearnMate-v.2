@@ -98,9 +98,6 @@ const Layout = () => {
           <Route path="/forgot-password" element={<RequestPasswordReset />} />
           <Route path="/reset-password" element={<ResetPassword />} />
 
-          <Route path="/forgot-password" element={<RequestPasswordReset />} />
-          <Route path="/reset-password" element={<ResetPassword />} />
-
           <Route
             path="/admin/dashboard"
             element={
