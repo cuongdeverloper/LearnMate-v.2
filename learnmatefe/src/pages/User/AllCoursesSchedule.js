@@ -378,7 +378,30 @@ function AllCoursesSchedule() {
       toast.error(result.message || "Lỗi hoàn tất khóa học.");
     }
   };
+  const getNextPaymentStatus = (booking) => {
+    if (booking.completed) return { showButton: false, message: "" };
 
+    const currentMonthIndex = booking.paidMonths + 1; // Tháng tiếp theo
+    if (currentMonthIndex > booking.numberOfMonths) {
+      return { showButton: false, message: "Đã thanh toán đủ." };
+    }
+
+    const today = new Date();
+    // Giả sử học viên bắt đầu học từ ngày booking.createdAt
+    const startDate = new Date(booking.createdAt);
+    const dueDate = new Date(startDate);
+    dueDate.setMonth(startDate.getMonth() + currentMonthIndex - 1);
+
+    // Nếu tới hạn thanh toán (hoặc quá hạn)
+    if (today >= dueDate) {
+      return {
+        showButton: true,
+        message: `Tháng ${currentMonthIndex} cần thanh toán`,
+      };
+    }
+
+    return { showButton: false, message: "" }; // Chưa tới hạn
+  };
   const fetchAllWeeklySchedules = async () => {
     setLoadingSchedules(true);
     setErrorSchedules(null);
@@ -588,10 +611,18 @@ function AllCoursesSchedule() {
                         {slot.bookingId &&
                           slot.bookingId.tutorId &&
                           slot.bookingId.tutorId.user && (
-                            <span className="tutor-name">
-                              Gia sư: {slot.bookingId.tutorId.user.username}
-                            </span>
+                            <div className="tutor-name">
+                              <strong>Gia sư:</strong>{" "}
+                              {slot.bookingId.tutorId.user.username}
+                            </div>
                           )}
+                        {slot.bookingId && slot.bookingId.subjectId && (
+                          <div className="subject-name">
+                            <strong>Môn học:</strong>{" "}
+                            {slot.bookingId.subjectId.name} -{" "}
+                            {slot.bookingId.subjectId.classLevel}
+                          </div>
+                        )}
                         {shouldShowAttendanceButton && (
                           <button
                             className={`attendance-button ${
@@ -681,7 +712,9 @@ function AllCoursesSchedule() {
                 >
                   <p>
                     <strong>Môn học:</strong>{" "}
-                    {booking.subjectId?.name || "Chưa có tên môn"}
+                    {booking.subjectId?.name +
+                      " Lớp " +
+                      booking.subjectId?.classLevel || "Chưa có tên môn"}
                   </p>
                   <p>
                     <strong>Gia sư:</strong>{" "}
@@ -771,6 +804,7 @@ function AllCoursesSchedule() {
                       >
                         Yêu cầu đổi lịch
                       </button>
+                      
                     </div>
                   )}
                 </div>

@@ -9,18 +9,19 @@ const bookingSchema = new mongoose.Schema({
 
   status: { 
     type: String, 
-    enum: ['pending', 'approve', 'cancelled','rejected','completed'], 
+    enum: ['pending', 'approve', 'cancelled', 'rejected', 'completed'], 
     default: 'pending' 
   },
-
-  amount: { type: Number, required: true },           
-  deposit: { type: Number, default: 0 },            
-  sessionCost: { type: Number, default: 0 },         
-  numberOfSessions: { type: Number, default: 0 },    
-  paidSessions: { type: Number, default: 0 },         
-  completed: { type: Boolean, default: false },
+  address: { type: String, default: '' },
+  amount: { type: Number, required: true }, // Tổng tiền toàn khóa
+  deposit: { type: Number, default: 0 }, // Số tiền cọc
+  depositPercent: { type: Number, default: 30 }, // 30% hoặc 60%
+  monthlyPayment: { type: Number, default: 0 }, // Số tiền mỗi tháng
+  numberOfMonths: { type: Number, default: 1 }, // Tổng số tháng học
+  numberOfSession: { type: Number, default: 1 },
+  paidMonths: { type: Number, default: 0 }, // Số tháng đã thanh toán
   note: { type: String, default: '' },
-  completed: { type: Boolean, default: false },       
+  completed: { type: Boolean, default: false },
   reported: { type: Boolean, default: false },
   reportedAt: { type: Date }
 }, { timestamps: true });

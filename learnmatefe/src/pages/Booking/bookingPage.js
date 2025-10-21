@@ -18,32 +18,89 @@ export default function BookingPage() {
   const { tutorId } = useParams();
   const [tutor, setTutor] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [numberOfSessions, setNumberOfSessions] = useState(1);
+  const [numberOfMonths, setNumberOfMonths] = useState(1);
+  const [depositOption, setDepositOption] = useState(30); // % cọc
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [balance, setBalance] = useState(null);
   const [note, setNote] = useState("");
   const [reviews, setReviews] = useState([]);
   const [subjects, setSubjects] = useState([]);
   const [selectedSubject, setSelectedSubject] = useState("");
-  const [mode, setMode] = useState("longterm"); // longterm | availability
-  const [availabilities, setAvailabilities] = useState([]); // list of availability objects from BE
-  const [selectedSlots, setSelectedSlots] = useState([]); // array of availability IDs
+  const [availabilities, setAvailabilities] = useState([]);
+  const [selectedSlots, setSelectedSlots] = useState([]);
+  const [addressDetail, setAddressDetail] = useState("");
+  const [province, setProvince] = useState("");
 
-  // weekStart as a Date object (Monday)
-  const [weekStart, setWeekStart] = useState(() => {
-    const today = new Date();
-    const day = today.getDay();
-    const diff = today.getDate() - day + (day === 0 ? -6 : 1);
-    const weekStartDate = new Date(today.setDate(diff));
-    weekStartDate.setHours(0, 0, 0, 0);
-    return weekStartDate;
-  });
+  const provinces = [
+    "An Giang",
+    "Bà Rịa - Vũng Tàu",
+    "Bắc Giang",
+    "Bắc Kạn",
+    "Bạc Liêu",
+    "Bắc Ninh",
+    "Bến Tre",
+    "Bình Dương",
+    "Bình Định",
+    "Bình Phước",
+    "Bình Thuận",
+    "Cà Mau",
+    "Cao Bằng",
+    "Đắk Lắk",
+    "Đắk Nông",
+    "Điện Biên",
+    "Đồng Nai",
+    "Đồng Tháp",
+    "Gia Lai",
+    "Hà Giang",
+    "Hà Nam",
+    "Hà Nội",
+    "Hà Tĩnh",
+    "Hải Dương",
+    "Hải Phòng",
+    "Hậu Giang",
+    "Hòa Bình",
+    "Hưng Yên",
+    "Khánh Hòa",
+    "Kiên Giang",
+    "Kon Tum",
+    "Lai Châu",
+    "Lâm Đồng",
+    "Lạng Sơn",
+    "Lào Cai",
+    "Long An",
+    "Nam Định",
+    "Nghệ An",
+    "Ninh Bình",
+    "Ninh Thuận",
+    "Phú Thọ",
+    "Phú Yên",
+    "Quảng Bình",
+    "Quảng Nam",
+    "Quảng Ngãi",
+    "Quảng Ninh",
+    "Quảng Trị",
+    "Sóc Trăng",
+    "Sơn La",
+    "Tây Ninh",
+    "Thái Bình",
+    "Thái Nguyên",
+    "Thanh Hóa",
+    "Thừa Thiên Huế",
+    "Tiền Giang",
+    "TP Hồ Chí Minh",
+    "Trà Vinh",
+    "Tuyên Quang",
+    "Vĩnh Long",
+    "Vĩnh Phúc",
+    "Yên Bái",
+    "Đà Nẵng",
+    "Cần Thơ",
+  ];
 
   const userId = useSelector((state) => state.user.account.id);
   const token = useSelector((state) => state.user.account.access_token);
   const navigate = useNavigate();
 
-  // exact time slots you requested
   const timeSlots = [
     "07:00 - 09:00",
     "09:30 - 11:30",
@@ -53,21 +110,27 @@ export default function BookingPage() {
     "19:30 - 21:30",
   ];
 
+  // Lấy ngày hiện tại làm tuần gốc
+  const [weekStart] = useState(() => {
+    const today = new Date();
+    const day = today.getDay();
+    const diff = today.getDate() - day + (day === 0 ? -6 : 1);
+    const weekStartDate = new Date(today.setDate(diff));
+    weekStartDate.setHours(0, 0, 0, 0);
+    return weekStartDate;
+  });
+
   const handleChatNow = async () => {
     try {
       const res = await ApiCreateConversation(tutor.user._id);
-      if (res) {
-        navigate(`/messenger/${res._id}`);
-      } else {
-        toast.error("Không thể tạo cuộc trò chuyện");
-      }
+      if (res) navigate(`/messenger/${res._id}`);
+      else toast.error("Không thể tạo cuộc trò chuyện");
     } catch (err) {
-      console.error("Lỗi tạo cuộc trò chuyện:", err);
       toast.error("Lỗi khi bắt đầu trò chuyện");
     }
   };
 
-  // initial data: tutor, balance, reviews
+  // Load dữ liệu gia sư, số dư, đánh giá
   useEffect(() => {
     const fetchTutor = async () => {
       try {
@@ -75,187 +138,129 @@ export default function BookingPage() {
         if (res?.tutor) {
           setTutor(res.tutor);
           setSubjects(res.tutor.subjects || []);
-        } else {
-          toast.error("Không thể tải thông tin gia sư");
-        }
-      } catch (err) {
+        } else toast.error("Không thể tải thông tin gia sư");
+      } catch {
         toast.error("Lỗi khi tải thông tin gia sư");
       }
     };
-
     const fetchBalance = async () => {
       try {
         const b = await getUserBalance();
         if (b !== null && b !== undefined) setBalance(b);
-      } catch (err) {
+      } catch {
         toast.error("Không thể lấy thông tin số dư");
       }
     };
-
     const fetchReviews = async () => {
       try {
         const res = await getReviewsByTutor(tutorId);
         if (res) setReviews(res);
-      } catch (err) {
-        console.error("Lỗi khi tải review:", err);
+      } catch {
         toast.error("Lỗi khi tải đánh giá");
       }
     };
-
     if (tutorId) {
       fetchTutor();
       fetchBalance();
       fetchReviews();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tutorId]);
 
-  // fetch availabilities for the tutor for current weekStart
+  // Lấy lịch trống tuần hiện tại (chỉ tuần gốc, không chuyển tuần)
   const fetchAvailabilities = async () => {
     if (!tutorId || !weekStart) return;
     try {
-      // pass weekStart to backend so it can filter per week if API supports it
       const params = { weekStart: weekStart.toISOString().split("T")[0] };
       const res = await axios.get(`/api/tutor/${tutorId}/availability`, {
         params,
       });
       const body = res?.data ?? res;
-      console.log(body);
-
-      // tolerate several response shapes:
-      if (Array.isArray(body)) {
-        setAvailabilities(body);
-      } else if (body?.success) {
-        // assume body.data is array
-        setAvailabilities(Array.isArray(body.data) ? body.data : []);
-      } else if (Array.isArray(body?.data)) {
-        setAvailabilities(body.data);
-      } else if (Array.isArray(body?.availabilities)) {
+      if (Array.isArray(body)) setAvailabilities(body);
+      else if (Array.isArray(body?.data)) setAvailabilities(body.data);
+      else if (Array.isArray(body?.availabilities))
         setAvailabilities(body.availabilities);
-      } else {
-        // fallback empty
-        setAvailabilities([]);
-      }
-      // clear selectedSlots when availabilities change (to avoid stale ids)
+      else setAvailabilities([]);
       setSelectedSlots([]);
-    } catch (err) {
-      console.error("fetchAvailabilities err:", err);
+    } catch {
       toast.error("Lỗi khi tải lịch trống");
       setAvailabilities([]);
     }
   };
 
-  // whenever user switches to availability mode or changes weekStart, reload availabilities
   useEffect(() => {
-    if (mode === "availability") {
-      fetchAvailabilities();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mode, tutorId, weekStart]);
+    fetchAvailabilities();
+  }, [tutorId, weekStart]);
 
   const getWeekDays = () => {
     const days = [];
+    const today = new Date();
     for (let i = 0; i < 7; i++) {
-      const day = new Date(weekStart);
-      day.setDate(weekStart.getDate() + i);
+      const day = new Date(today);
+      day.setDate(today.getDate() + ((i - today.getDay() + 7) % 7));
       days.push(day);
     }
     return days;
   };
 
-  const handlePrevWeek = () => {
-    const prevWeek = new Date(weekStart);
-    prevWeek.setDate(weekStart.getDate() - 7);
-    setWeekStart(prevWeek);
-  };
-
-  const handleNextWeek = () => {
-    const nextWeek = new Date(weekStart);
-    nextWeek.setDate(weekStart.getDate() + 7);
-    setWeekStart(nextWeek);
-  };
-
-  const handleBooking = async () => {
-    if (!selectedSubject) {
-      toast.warn("Vui lòng chọn môn học");
-      return;
-    }
-
-    if (mode === "longterm" && (!numberOfSessions || numberOfSessions <= 0)) {
-      toast.warn("Vui lòng nhập số buổi học hợp lệ");
-      return;
-    }
-
-    if (mode === "availability" && selectedSlots.length === 0) {
-      toast.warn("Vui lòng chọn ít nhất 1 lịch trống");
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const totalAmount =
-        tutor.pricePerHour *
-        (mode === "longterm" ? numberOfSessions : selectedSlots.length);
-
-      if (balance < totalAmount) {
-        toast.error("Số dư không đủ để thanh toán");
-        setLoading(false);
-        return;
-      }
-
-      // call backend to create booking (pass schedule availability ids)
-      const res = await axios.post(
-        `/api/learner/bookings/${tutorId}`,
-        {
-          amount: totalAmount,
-          numberOfSessions:
-            mode === "longterm" ? numberOfSessions : selectedSlots.length,
-          note,
-          subjectId: selectedSubject,
-          option: mode === "availability" ? "schedule" : "longterm", // thêm option
-          availabilityIds: mode === "availability" ? selectedSlots : [], // đổi key cho đúng BE
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      const body = res?.data ?? res;
-      if (body?.success || body?.booking) {
-        toast.success("Đặt lịch thành công!");
-        // update balance locally if possible
-        setBalance((prev) =>
-          typeof prev === "number" ? prev - totalAmount * 0.3 : prev
-        );
-        // refresh availabilities so booked slots become unavailable
-        await fetchAvailabilities();
-        setSelectedSlots([]);
-      } else {
-        toast.error(body?.message || "Đặt lịch thất bại");
-      }
-    } catch (err) {
-      console.error("Lỗi đặt lịch:", err);
-      toast.error(
-        err?.response?.data?.message || err.message || "Đặt lịch thất bại"
-      );
-    } finally {
-      setLoading(false);
-      setShowConfirmModal(false);
-    }
-  };
-
-  const handleShowConfirm = () => {
-    setShowConfirmModal(true);
-  };
-
-  const toggleSlot = (slotId) => {
+  const toggleSlot = (slotId) =>
     setSelectedSlots((prev) =>
       prev.includes(slotId)
         ? prev.filter((id) => id !== slotId)
         : [...prev, slotId]
     );
+
+  const handleBooking = async () => {
+    if (!selectedSubject) return toast.warn("Vui lòng chọn môn học");
+    if (selectedSlots.length === 0)
+      return toast.warn("Vui lòng chọn ít nhất 1 lịch trống");
+    if (!province || !addressDetail)
+      return toast.warn("Vui lòng nhập địa chỉ học");
+    setLoading(true);
+    try {
+      const totalSessions = selectedSlots.length * numberOfMonths * 4; // tự nhân 4 tuần/tháng
+      const totalAmount = tutor.pricePerHour * totalSessions;
+      const deposit = Math.round(totalAmount * (depositOption / 100));
+      const remaining = totalAmount - deposit;
+      const monthlyPayment = Math.round(remaining / numberOfMonths);
+
+      if (balance < deposit) {
+        toast.error(`Số dư không đủ để đặt cọc (${depositOption}%)`);
+        setLoading(false);
+        return;
+      }
+
+      const address = `${addressDetail}, ${province}`.trim();
+
+      const res = await axios.post(
+        `/api/learner/bookings/${tutorId}`,
+        {
+          amount: totalAmount,
+          numberOfMonths,
+          note,
+          subjectId: selectedSubject,
+          availabilityIds: selectedSlots,
+          addressDetail,
+          province,
+          depositOption,
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      const body = res?.data ?? res;
+      if (body?.success || body?.bookingId) {
+        toast.success("Đặt lịch thành công!");
+        setBalance((prev) =>
+          typeof prev === "number" ? prev - deposit : prev
+        );
+        await fetchAvailabilities();
+        setSelectedSlots([]);
+      } else toast.error(body?.message || "Đặt lịch thất bại");
+    } catch (err) {
+      toast.error(err?.response?.data?.message || "Đặt lịch thất bại");
+    } finally {
+      setLoading(false);
+      setShowConfirmModal(false);
+    }
   };
 
   const renderTutorInfo = () => {
@@ -285,10 +290,8 @@ export default function BookingPage() {
           </p>
           <p>
             <strong>Môn:</strong>{" "}
-            {subjects && subjects.length > 0
-              ? subjects
-                  .map((sub) => `${sub.name} (${sub.classLevel})`)
-                  .join(", ")
+            {subjects?.length
+              ? subjects.map((s) => `${s.name} (${s.classLevel})`).join(", ")
               : "Không rõ"}
           </p>
           <p>
@@ -306,11 +309,17 @@ export default function BookingPage() {
     );
   };
 
+  const totalSessions = selectedSlots.length * numberOfMonths * 4;
+  const totalAmount = tutor ? tutor.pricePerHour * totalSessions : 0;
+  const deposit = Math.round(totalAmount * (depositOption / 100));
+  const remaining = totalAmount - deposit;
+  const monthlyPayment =
+    numberOfMonths > 0 ? Math.round(remaining / numberOfMonths) : 0;
+
   return (
     <>
       <Header />
       <div className="booking-wrapper">
-        {/* Left Panel: Reviews */}
         <div className="side-panel left-panel">
           <h3>Đánh giá từ học viên</h3>
           {reviews.length ? (
@@ -326,14 +335,11 @@ export default function BookingPage() {
           )}
         </div>
 
-        {/* Center */}
         <div className="booking-container">
           <div className="booking-card">
             <h2>Xác nhận đặt lịch học</h2>
-
             {tutor ? renderTutorInfo() : <p>Đang tải...</p>}
 
-            {/* Subject select */}
             <div className="form-group">
               <label>Chọn môn học</label>
               <select
@@ -341,96 +347,69 @@ export default function BookingPage() {
                 onChange={(e) => setSelectedSubject(e.target.value)}
               >
                 <option value="">--Chọn môn--</option>
-                {subjects.map((sub, idx) => (
-                  <option key={idx} value={sub._id}>
+                {subjects.map((sub) => (
+                  <option key={sub._id} value={sub._id}>
                     {sub.name} ({sub.classLevel})
                   </option>
                 ))}
               </select>
             </div>
 
-            {/* Mode select */}
             <div className="form-group">
-              <label>Hình thức đặt lịch</label>
+              <label>Số tháng học</label>
+              <input
+                type="number"
+                min={1}
+                value={numberOfMonths}
+                onChange={(e) => setNumberOfMonths(Number(e.target.value))}
+              />
+            </div>
+
+            <div className="form-group">
+              <label>Chọn phần trăm cọc</label>
               <select
-                value={mode}
-                onChange={(e) => {
-                  setMode(e.target.value);
-                }}
+                value={depositOption}
+                onChange={(e) => setDepositOption(Number(e.target.value))}
               >
-                <option value="longterm">Đặt lâu dài (theo số buổi)</option>
-                <option value="availability">Chọn theo lịch trống</option>
+                <option value={30}>30%</option>
+                <option value={60}>60%</option>
               </select>
             </div>
 
-            {mode === "longterm" && (
-              <div className="form-group">
-                <label>Số buổi học</label>
-                <input
-                  type="number"
-                  min={1}
-                  value={numberOfSessions}
-                  onChange={(e) => setNumberOfSessions(Number(e.target.value))}
-                />
-              </div>
-            )}
-
-            {mode === "availability" && (
-              <div className="form-group">
-                <label>Chọn lịch trống</label>
-
-                <div className="week-controls">
-                  <button onClick={handlePrevWeek}>← Tuần trước</button>
-                  <span>
-                    Tuần bắt đầu: {weekStart.toLocaleDateString("vi-VN")}
-                  </span>
-                  <button onClick={handleNextWeek}>Tuần sau →</button>
+            <div className="form-group">
+              <label>Chọn lịch trống</label>
+              <div className="weekly-schedule-grid">
+                <div className="grid-header">
+                  {["T2", "T3", "T4", "T5", "T6", "T7", "CN"].map(
+                    (dayName, idx) => (
+                      <div key={idx} className="grid-header-day">
+                        {dayName}
+                      </div>
+                    )
+                  )}
                 </div>
 
-                <div className="weekly-schedule-grid">
-                  <div className="grid-header">
-                    {getWeekDays().map((day, idx) => (
-                      <div key={idx} className="grid-header-day">
-                        {day.toLocaleDateString("vi-VN", {
-                          weekday: "short",
-                          day: "numeric",
-                          month: "numeric",
-                        })}
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="grid-body">
-                    {getWeekDays().map((day, idx) => {
-                      const dayStr = day.toISOString().split("T")[0];
-
+                <div className="grid-body">
+                  {["T2", "T3", "T4", "T5", "T6", "T7", "CN"].map(
+                    (dayName, idx) => {
                       return (
                         <div key={idx} className="grid-day-column">
                           {timeSlots.map((slotStr) => {
                             const [startTime, endTime] = slotStr
                               .split(" - ")
                               .map((s) => s.trim());
-                            // find availability object for this date/time
-                            const avail = availabilities.find((a) => {
-                              const aDate = new Date(a.date)
-                                .toISOString()
-                                .split("T")[0];
-                              return (
-                                aDate === dayStr &&
+                            // map dayName sang dayOfWeek: T2->1, ..., CN->0
+                            const dayOfWeek = idx === 6 ? 0 : idx + 1;
+                            const avail = availabilities.find(
+                              (a) =>
+                                a.dayOfWeek === dayOfWeek &&
                                 a.startTime === startTime &&
                                 a.endTime === endTime
-                              );
-                            });
-
-                            const isSelected = !!(
-                              avail && selectedSlots.includes(avail._id)
                             );
-                            // if backend returns booking info on availability
-                            const isBooked = !!(
-                              avail &&
-                              (avail.bookingId || avail.isBooked)
-                            );
-
+                            const isSelected =
+                              avail && selectedSlots.includes(avail._id);
+                            const isBooked =
+                              avail && (avail.bookingId || avail.isBooked);
                             const cls = !avail
                               ? "not-available"
                               : isBooked
@@ -438,27 +417,23 @@ export default function BookingPage() {
                               : isSelected
                               ? "selected"
                               : "available";
-
                             return (
                               <div
-                                key={`${dayStr}-${slotStr}`}
+                                key={`${dayName}-${slotStr}`}
                                 className={`schedule-slot ${cls}`}
                                 onClick={() => {
-                                  if (!avail) {
-                                    // not available (tutor didn't open this slot)
-                                    toast.info("Khung giờ này gia sư bận.");
-                                    return;
-                                  }
-                                  if (isBooked) {
-                                    toast.info("Khung giờ này đã được đặt.");
-                                    return;
-                                  }
+                                  if (!avail)
+                                    return toast.info(
+                                      "Khung giờ này gia sư bận."
+                                    );
+                                  if (isBooked)
+                                    return toast.info(
+                                      "Khung giờ này đã được đặt."
+                                    );
                                   toggleSlot(avail._id);
                                 }}
                               >
-                                <div className="slot-time">
-                                  {startTime} - {endTime}
-                                </div>
+                                <div className="slot-time">{slotStr}</div>
                                 <div className="slot-status">
                                   {!avail ? (
                                     <small>Not available</small>
@@ -475,17 +450,39 @@ export default function BookingPage() {
                           })}
                         </div>
                       );
-                    })}
-                  </div>
-                </div>
-
-                <div style={{ marginTop: 12 }}>
-                  <strong>Đã chọn:</strong> {selectedSlots.length} ô
+                    }
+                  )}
                 </div>
               </div>
-            )}
+              <div style={{ marginTop: 12 }}>
+                <strong>Đã chọn:</strong> {selectedSlots.length} ô
+              </div>
+            </div>
 
-            {/* Note */}
+            <div className="form-group">
+              <label>Địa chỉ chi tiết</label>
+              <input
+                type="text"
+                placeholder="Nhập địa chỉ chi tiết"
+                value={addressDetail}
+                onChange={(e) => setAddressDetail(e.target.value)}
+              />
+            </div>
+            <div className="form-group">
+              <label>Chọn tỉnh/thành</label>
+              <select
+                value={province}
+                onChange={(e) => setProvince(e.target.value)}
+              >
+                <option value="">--Chọn tỉnh/thành--</option>
+                {provinces.map((prov) => (
+                  <option key={prov} value={prov}>
+                    {prov}
+                  </option>
+                ))}
+              </select>
+            </div>
+
             <div className="form-group">
               <label>Ghi chú</label>
               <textarea
@@ -494,7 +491,6 @@ export default function BookingPage() {
               ></textarea>
             </div>
 
-            {/* Balance */}
             <div className="form-group">
               <label>Số dư tài khoản</label>
               <input
@@ -509,16 +505,15 @@ export default function BookingPage() {
             </div>
 
             <button
-              onClick={handleShowConfirm}
+              onClick={() => setShowConfirmModal(true)}
               disabled={loading || !tutor}
               className="btn-booking"
             >
-              {loading ? "Đang xử lý..." : "Trừ tiền & Đặt lịch"}
+              {loading ? "Đang xử lý..." : "Đặt lịch học"}
             </button>
           </div>
         </div>
 
-        {/* Right Panel */}
         <div className="side-panel right-panel">
           <h3>Cam kết từ gia sư</h3>
           <div className="guarantee-section">
@@ -532,104 +527,55 @@ export default function BookingPage() {
             </div>
             <div className="guarantee-item">
               <h4>Hỗ trợ tận tình</h4>
-              <p>Luôn sẵn sàng giải đáp thắc mắc của học viên</p>
+              <p>Luôn sẵn sàng giải đáp và hỗ trợ học viên</p>
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Confirm modal */}
-        {showConfirmModal && (
-          <div className="modal-overlay">
-            <div className="modal-content payment-modal">
-              <h2 className="modal-title"> Thanh toán đặt lịch</h2>
+      {showConfirmModal && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <h3>Xác nhận đặt lịch</h3>
+            <p>Bạn có chắc chắn muốn đặt lịch học với gia sư này?</p>
+            <p>
+              <strong>Số buổi học:</strong> {totalSessions}
+            </p>
+            <p>
+              <strong>Số tháng học:</strong> {numberOfMonths}
+            </p>
+            <p>
+              <strong>Tổng tiền:</strong> {totalAmount.toLocaleString()} VND
+            </p>
+            <p>
+              <strong>Phần trăm cọc:</strong> {depositOption}%
+            </p>
+            <p>
+              <strong>Số tiền cọc:</strong> {deposit.toLocaleString()} VND
+            </p>
+            <p>
+              <strong>Tiền trả hàng tháng:</strong>{" "}
+              {monthlyPayment.toLocaleString()} VND
+            </p>
 
-              <div className="payment-summary">
-                <div className="summary-row">
-                  <span>Số buổi học:</span>
-                  <strong>
-                    {mode === "longterm"
-                      ? numberOfSessions
-                      : selectedSlots.length}{" "}
-                    buổi
-                  </strong>
-                </div>
-
-                <div className="summary-row">
-                  <span>Giá mỗi buổi:</span>
-                  <strong>{tutor?.pricePerHour?.toLocaleString()} VND</strong>
-                </div>
-
-                <div className="summary-row highlight">
-                  <span>Tổng số tiền:</span>
-                  <strong>
-                    {(
-                      tutor?.pricePerHour *
-                      (mode === "longterm"
-                        ? numberOfSessions
-                        : selectedSlots.length)
-                    ).toLocaleString()}{" "}
-                    VND
-                  </strong>
-                </div>
-
-                <div className="summary-row">
-                  <span>Tiền cọc (30%):</span>
-                  <strong className="deposit">
-                    {(
-                      tutor?.pricePerHour *
-                      (mode === "longterm"
-                        ? numberOfSessions
-                        : selectedSlots.length) *
-                      0.3
-                    ).toLocaleString()}{" "}
-                    VND
-                  </strong>
-                </div>
-
-                <div className="summary-row">
-                  <span>Số tiền còn lại:</span>
-                  <strong className="remaining">
-                    {(
-                      tutor?.pricePerHour *
-                      (mode === "longterm"
-                        ? numberOfSessions
-                        : selectedSlots.length) *
-                      0.7
-                    ).toLocaleString()}{" "}
-                    VND
-                  </strong>
-                </div>
-
-                <hr />
-
-                {note && (
-                  <div className="summary-row">
-                    <span>Ghi chú:</span>
-                    <em>{note}</em>
-                  </div>
-                )}
-              </div>
-
-              <div className="modal-actions">
-                <button
-                  className="btn btn-confirm"
-                  onClick={handleBooking}
-                  disabled={loading}
-                >
-                  {loading ? "Đang xử lý..." : "Xác nhận & Thanh toán"}
-                </button>
-                <button
-                  className="btn btn-cancel"
-                  onClick={() => setShowConfirmModal(false)}
-                  disabled={loading}
-                >
-                  Hủy
-                </button>
-              </div>
+            <div className="modal-actions">
+              <button
+                onClick={() => setShowConfirmModal(false)}
+                className="btn btn-secondary"
+              >
+                Hủy
+              </button>
+              <button
+                onClick={handleBooking}
+                disabled={loading}
+                className="btn btn-primary"
+              >
+                {loading ? "Đang xử lý..." : "Xác nhận"}
+              </button>
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </>
   );
 }
