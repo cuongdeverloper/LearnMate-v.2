@@ -293,7 +293,6 @@ const requestPasswordReset = async (req, res) => {
 const resetPassword = async (req, res) => {
   try {
     const { token, newPassword } = req.body;
-
     if (!token || !newPassword) {
       return res.status(400).json({ errorCode: 1, message: 'Token and new password are required' });
     }
@@ -304,10 +303,12 @@ const resetPassword = async (req, res) => {
     }
 
     const userRecord = await user.findById(decodedToken.id);
+    console.log(userRecord.password)
     if (!userRecord) {
       return res.status(400).json({ errorCode: 3, message: 'User not found' });
     }
 
+   
     const isSamePassword = await bcrypt.compare(newPassword, userRecord.password);
     if (isSamePassword) {
       return res.status(400).json({

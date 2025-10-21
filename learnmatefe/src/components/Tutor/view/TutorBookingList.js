@@ -47,7 +47,7 @@ const TutorBookingList = () => {
   return (
     <div className="booking-page">
       <header className="booking-header">
-        <h1>🌸 Danh sách Booking 🌸</h1>
+        <h1> Danh sách Booking </h1>
         <p>Quản lý các buổi học đang chờ duyệt của bạn</p>
       </header>
 
