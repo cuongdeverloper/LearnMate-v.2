@@ -104,20 +104,20 @@ const CourseDetails = () => {
             className="mb-6 gap-2"
           >
             <ArrowLeft className="w-4 h-4" />
-            Back to Courses
+            Quay lại các khóa học
           </Button>
           <div className="bg-card border border-border rounded-lg shadow-sm p-8 text-center">
             <h1 className="text-2xl font-bold text-foreground mb-2">
-              Course Not Found
+              Khóa học không tìm thấy
             </h1>
             <p className="text-muted-foreground mb-6">
-              The course you're looking for doesn't exist.
+              Khóa học bạn đang tìm kiếm không tồn tại.
             </p>
             <Button
               onClick={() => navigate("/user/my-courses")}
               variant="default"
             >
-              Return to Courses
+              Quay lại Khóa học
             </Button>
           </div>
         </div>
@@ -134,38 +134,40 @@ const CourseDetails = () => {
           className="mb-6 gap-2"
         >
           <ArrowLeft className="w-4 h-4" />
-          Back to Courses
+          Quay lại các khóa học
         </Button>
         <div className="bg-card border border-border rounded-lg shadow-sm p-8 mb-6">
-          <h1 className="text-4xl font-bold text-foreground mb-2">
+          <h1 className="text-4xl font-bold text-foreground mb-4">
             {selectedCourse?.subjectId?.name}
           </h1>
-          <p className="text-lg text-muted-foreground mb-4">
-            Instructor:{" "}
+          <p className="text-lg text-muted-foreground mb-2">
+            Gia sư:{" "}
             <span className="font-semibold text-foreground">
               {selectedCourse?.tutorId.user.username}
             </span>
           </p>
-          <p className="text-foreground">{selectedCourse?.subjectId?.name}</p>
+          <p className="text-foreground">
+            Môn học: {selectedCourse?.subjectId?.name}
+          </p>
         </div>
         <div className="bg-card border border-border rounded-lg shadow-sm p-6">
           <Tabs defaultValue="schedule" className="w-full">
             <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 mb-6">
               <TabsTrigger value="schedule" className="gap-2">
                 <Calendar className="w-4 h-4" />
-                <span className="hidden sm:inline">Schedule</span>
+                <span className="hidden sm:inline">Lịch học</span>
               </TabsTrigger>
               <TabsTrigger value="assignments" className="gap-2">
                 <BookOpen className="w-4 h-4" />
-                <span className="hidden sm:inline">Assignments</span>
+                <span className="hidden sm:inline">Bài tập</span>
               </TabsTrigger>
               <TabsTrigger value="quizzes" className="gap-2">
                 <CheckCircle2 className="w-4 h-4" />
-                <span className="hidden sm:inline">Quizzes</span>
+                <span className="hidden sm:inline">Câu đố</span>
               </TabsTrigger>
               <TabsTrigger value="progress" className="gap-2">
                 <BarChart3 className="w-4 h-4" />
-                <span className="hidden sm:inline">Progress</span>
+                <span className="hidden sm:inline">Tiến độ</span>
               </TabsTrigger>
             </TabsList>
 

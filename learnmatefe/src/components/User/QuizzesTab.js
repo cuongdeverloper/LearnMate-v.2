@@ -59,12 +59,12 @@ const QuizzesTab = () => {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Title</TableHead>
-            <TableHead>Available Date</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Attempts</TableHead>
-            <TableHead>Score</TableHead>
-            <TableHead className="text-right">Action</TableHead>
+            <TableHead>Tiêu đề</TableHead>
+            <TableHead>Thời hạn</TableHead>
+            <TableHead>Trạng thái</TableHead>
+            <TableHead>Các nỗ lực</TableHead>
+            <TableHead>Điểm số</TableHead>
+            <TableHead className="text-right">Hành động</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -117,18 +117,23 @@ const QuizzesTab = () => {
                   </TableCell>
                   <TableCell className="text-right">
                     {status === "Active" && (
-                      <Button asChild onClick={() => handleSelectQuiz(q)}>
-                        <Link to={`/user/quiz/${q._id}/take`}>Start Quiz</Link>
+                      <Button
+                        className="text-white"
+                        asChild
+                        onClick={() => handleSelectQuiz(q)}
+                      >
+                        <Link to={`/user/quiz/${q._id}/take`}>Bắt đầu</Link>
                       </Button>
                     )}
                     {status === "Completed" && (
                       <Button
+                        className="text-white"
                         asChild
                         variant="secondary"
                         onClick={() => handleSelectQuiz(q)}
                       >
                         <Link to={`/user/quiz/${q._id}/result`}>
-                          View Result
+                          Xem kết quả
                         </Link>
                       </Button>
                     )}
@@ -138,7 +143,7 @@ const QuizzesTab = () => {
                         variant="outline"
                         onClick={() => handleSelectQuiz(q)}
                       >
-                        <Link to={`/user/quiz/${q._id}`}>View Details</Link>
+                        <Link to={`/user/quiz/${q._id}`}>Xem thông tin</Link>
                       </Button>
                     )}
                   </TableCell>

@@ -126,14 +126,16 @@ const MyCoursesPage = () => {
                     <div className="text-center max-w-md">
                       <div className="mb-6"></div>
                       <h3 className="text-lg font-semibold text-foreground mb-2">
-                        No Courses Found
+                        Không tìm thấy khoá học nào
                       </h3>
-                      <p className="text-muted-foreground">
-                        You're not enrolled in any courses yet.
-                      </p>
+                      {!searchQuery && (
+                        <p className="text-muted-foreground">
+                          Bạn chưa đăng ký khóa học nào.
+                        </p>
+                      )}
                       {searchQuery && (
                         <p className="text-sm text-muted-foreground mt-2">
-                          Try adjusting your search or filters.
+                          Hãy thử điều chỉnh tìm kiếm hoặc bộ lọc của bạn.
                         </p>
                       )}
                     </div>

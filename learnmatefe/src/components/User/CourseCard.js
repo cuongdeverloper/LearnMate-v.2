@@ -4,12 +4,7 @@ import { Card, CardHeader, CardContent } from "../ui/Card";
 import { Button } from "../ui/Button";
 import Progress from "../ui/Progress";
 
-const CourseCard = ({
-  id,
-  course,
-  progress = 80,
-  nextDue = "Project due: Oct 25",
-}) => {
+const CourseCard = ({ id, course, progress = 80, nextDue = "Oct 25" }) => {
   const navigate = useNavigate();
   const handleEnter = () => {
     navigate(`/user/my-courses/${course._id}`);
@@ -30,9 +25,7 @@ const CourseCard = ({
       <CardContent className="space-y-4">
         <div>
           <div className="flex justify-between items-center mb-2">
-            <span className="text-sm font-medium text-foreground">
-              Progress
-            </span>
+            <span className="text-sm font-medium text-foreground">Tiến độ</span>
             <span className="text-sm font-semibold text-primary">
               {progress}%
             </span>
@@ -41,14 +34,14 @@ const CourseCard = ({
         </div>
 
         <div className="bg-accent/50 rounded-md p-3">
-          <p className="text-sm text-foreground">{nextDue}</p>
+          <p className="text-sm text-foreground">Bài tập đến hạn: {nextDue}</p>
         </div>
 
         <Button
           onClick={handleEnter}
-          className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-medium"
+          className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-medium text-white"
         >
-          Enter Course
+          Truy cập khóa học
         </Button>
       </CardContent>
     </Card>

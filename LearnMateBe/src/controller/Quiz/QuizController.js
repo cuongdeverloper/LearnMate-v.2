@@ -7,6 +7,7 @@ const Subject = require("../../modal/Subject");
 const Tutor = require("../../modal/Tutor");
 const User = require("../../modal/User");
 const QuizAttempt = require("../../modal/QuizAttempt");
+const Answer = require("../../modal/Answer");
 
 // 🧩 Lấy tất cả quiz (admin hoặc test)
 exports.getAllQuizzes = async (req, res) => {
@@ -289,5 +290,69 @@ exports.getAllQuizzesByLearnerId = async (req, res) => {
       success: false,
       message: "Lỗi khi lấy danh sách quiz theo learner.",
     });
+  }
+};
+
+exports.submitQuiz = async (req, res) => {
+  try {
+    const { quizId } = req.params;
+    const { answers } = req.body;
+    console.log(answers);
+
+    let score = 0;
+    const quiz = await Quiz.findById(quizId);
+
+    if (!quiz) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Không tìm thấy quiz." });
+    }
+
+    const questions = await Question.find({ quizId });
+
+    questions.forEach((question, index) => {
+      const answer = new Answer({
+        questionId: question._id,
+        learnerId: req.user.id,
+        selectedAnswer: Number.parseInt(answers[question._id.toString()]) + 1,
+        isCorrect:
+          Number.parseInt(answers[question._id.toString()]) + 1 ===
+          question.correctAnswer,
+      });
+
+      answer.save();
+
+      if (answer.isCorrect) {
+        score += 1;
+      }
+    });
+
+    console.log("🥪🥪🥪Score:", score);
+
+    const quizAttempt = new QuizAttempt({
+      quizId,
+      learnerId: req.user.id,
+      totalQuestions: questions.length,
+      correctAnswers: score,
+      score: (score / questions.length) * 100,
+      finishedAt: Date.now(),
+    });
+
+    await quizAttempt.save();
+
+    const result = {
+      score: quizAttempt.score,
+      correct: quizAttempt.correctAnswers,
+      totalQuestions: quizAttempt.totalQuestions,
+      timeTaken: quizAttempt.finishedAt - quizAttempt.startedAt,
+      questions,
+      answers,
+      rank: 1,
+    };
+
+    res.status(200).json({ success: true, result });
+  } catch (error) {
+    console.error("Submit Quiz Error:", error);
+    res.status(500).json({ success: false, message: "Lỗi khi nộp bài quiz!" });
   }
 };

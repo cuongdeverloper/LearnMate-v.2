@@ -6,6 +6,8 @@ import { cn } from "../../lib/utils";
 import { Button } from "../../components/ui/Button";
 import { Card } from "../../components/ui/Card";
 import { RadioGroup, RadioGroupItem } from "../../components/ui/RadioGroup";
+import Progress from "../../components/ui/Progress";
+
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,7 +27,11 @@ import {
 
 import { Label } from "../../components/ui/Label";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchQuizDetailsById } from "../../redux/action/quizActions";
+import {
+  fetchQuizDetailsById,
+  submitQuiz,
+} from "../../redux/action/quizActions";
+import { toast } from "react-toastify";
 
 const formatTime = (sec) => {
   const m = String(Math.floor(sec / 60)).padStart(2, "0");
@@ -40,10 +46,7 @@ const StudentQuizTake = () => {
   const {
     selectedQuiz,
     quizDetails,
-    userAnswers,
-    submitting,
     loading: quizLoading,
-    score,
     error: quizError,
   } = useSelector((state) => state.quizzes);
 
@@ -59,8 +62,8 @@ const StudentQuizTake = () => {
   const storageKey = `quiz-${id}-state`;
 
   const [state, setState] = useState(() => {
-    // const saved = localStorage.getItem(storageKey);
-    // if (saved) return JSON.parse(saved);
+    const saved = localStorage.getItem(storageKey);
+    if (saved) return JSON.parse(saved);
     return {
       currentIndex: 0,
       answers: {},
@@ -103,13 +106,14 @@ const StudentQuizTake = () => {
   }, [state.timer]);
 
   const currentQuestion = useMemo(
-    () => quizDetails.questions[state.currentIndex],
+    () => quizDetails?.questions[state.currentIndex],
     [state.currentIndex]
   );
 
   const answeredCount = Object.values(state.answers).filter(Boolean).length;
 
   const selectAnswer = async (qid, value) => {
+    console.log("selectAnswer", qid, value);
     setState((s) => ({ ...s, answers: { ...s.answers, [qid]: value } }));
 
     try {
@@ -118,12 +122,20 @@ const StudentQuizTake = () => {
 
   const handleSubmit = async (fromAuto = false) => {
     if (!fromAuto) {
-      return;
+      setConfirmOpen(true);
+      return; 
+    }
+    try {
+      dispatch(submitQuiz(selectedQuiz._id, state.answers));
+
+      localStorage.removeItem(storageKey);
+      setState((s) => ({ currentIndex: 0, answers: {}, timer: 30 * 60 }));
+      toast.success("Submitted successfully!");
+      navigate(`/user/quiz/${selectedQuiz._id}/result`);
+    } catch (e) {
+      toast.error(e.message);
     }
   };
-
-  console.log(quizDetails.questions[0]);
-  console.log("currentIndex", state.currentIndex);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-secondary/10 py-8 px-4 sm:px-6 lg:px-8">
@@ -132,12 +144,19 @@ const StudentQuizTake = () => {
           <div className="container py-3 flex items-center justify-between gap-4">
             <div className="min-w-0">
               <h2 className="font-semibold text-lg truncate">
-                {quizDetails.title}
+                {quizDetails?.title}
               </h2>
               <div className="flex items-center gap-3 mt-1">
-                <div className="w-40 hidden sm:block"></div>
+                <div className="w-40 hidden sm:block">
+                  <Progress
+                    value={
+                      (answeredCount / quizDetails?.questions?.length) * 100
+                    }
+                    className="h-1"
+                  />
+                </div>
                 <div className="text-xs text-muted-foreground">
-                  {answeredCount}/{quizDetails.questions.length} questions
+                  {answeredCount}/{quizDetails?.questions?.length} questions
                 </div>
               </div>
             </div>
@@ -158,7 +177,12 @@ const StudentQuizTake = () => {
                 <TimerIcon className="h-4 w-4" />
                 <span>{formatTime(state.timer)}</span>
               </div>
-              <Button onClick={() => handleSubmit(false)}>Submit Quiz</Button>
+              <Button
+                className="text-white"
+                onClick={() => handleSubmit(false)}
+              >
+                Submit Quiz
+              </Button>
             </div>
           </div>
         </div>
@@ -169,8 +193,8 @@ const StudentQuizTake = () => {
                 {currentQuestion.text}
               </div>
               <RadioGroup
-                value={state.answers[currentQuestion.id]}
-                onValueChange={(v) => selectAnswer(state.currentIndex, v)}
+                value={state.answers[currentQuestion._id]?.toString() || ""}
+                onValueChange={(v) => selectAnswer(currentQuestion._id, v)}
                 className="space-y-3"
               >
                 {currentQuestion.options.map((opt, id) => (
@@ -178,16 +202,16 @@ const StudentQuizTake = () => {
                     key={id}
                     className={cn(
                       "flex items-center gap-3 rounded-md border p-3",
-                      state.answers[state.currentIndex] === id &&
-                        "border-primary bg-primary/5"
+                      state.answers[currentQuestion._id] === id &&
+                        "border-primary bg-blue-500/5 text-primary"
                     )}
                   >
                     <RadioGroupItem
-                      value={opt}
+                      value={id.toString()}
                       id={`opt-${currentQuestion._id}-${id}`}
                     />
                     <Label
-                      htmlFor={`opt-${currentQuestion._id}-${opt.key}`}
+                      htmlFor={`opt-${currentQuestion._id}-${id}`}
                       className="cursor-pointer"
                     >
                       {opt}
@@ -212,7 +236,7 @@ const StudentQuizTake = () => {
               </Button>
               <Button
                 disabled={
-                  state.currentIndex === quizDetails.questions.length - 1
+                  state?.currentIndex === quizDetails?.questions?.length - 1
                 }
                 onClick={() =>
                   setState((s) => ({
@@ -223,6 +247,7 @@ const StudentQuizTake = () => {
                     ),
                   }))
                 }
+                className="text-white"
               >
                 Next
               </Button>
@@ -233,7 +258,7 @@ const StudentQuizTake = () => {
               <h3 className="font-semibold mb-3 text-xl">Question Navigator</h3>
               <div className="grid grid-cols-5 gap-2">
                 {quizDetails.questions.map((q, idx) => {
-                  const answered = !!state.answers[idx];
+                  const answered = state.answers[q._id] !== undefined;
                   const isCurrent = idx === state.currentIndex;
                   return (
                     <button
@@ -243,7 +268,7 @@ const StudentQuizTake = () => {
                       }
                       className={cn(
                         "relative h-9 rounded-md border text-sm font-medium",
-                        isCurrent && "border-2 border-blue-500",
+                        isCurrent && "border-2 border-yellow-500",
                         answered
                           ? "bg-blue-600 text-white"
                           : "bg-gray-200 hover:bg-gray-300"
@@ -262,7 +287,7 @@ const StudentQuizTake = () => {
           </aside>
         </div>
         <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
-          <AlertDialogContent>
+          <AlertDialogContent className="bg-white">
             <AlertDialogHeader>
               <AlertDialogTitle>Submit Quiz?</AlertDialogTitle>
               <AlertDialogDescription>
@@ -274,7 +299,7 @@ const StudentQuizTake = () => {
             <AlertDialogFooter>
               <AlertDialogCancel>Cancel</AlertDialogCancel>
               <AlertDialogAction
-                className="bg-red-600 hover:bg-red-600"
+                className="bg-red-600 hover:bg-red-600 text-white"
                 onClick={() => handleSubmit(true)}
               >
                 Submit Now
@@ -282,41 +307,6 @@ const StudentQuizTake = () => {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
-
-        <Sheet open={navOpen} onOpenChange={setNavOpen}>
-          <SheetContent side="right" className="w-80">
-            <SheetHeader>
-              <SheetTitle>Questions Navigator</SheetTitle>
-            </SheetHeader>
-            <div className="mt-4 grid grid-cols-5 gap-2">
-              {quizDetails.questions.map((q, idx) => {
-                const answered = !!state.answers[q._id];
-                const isCurrent = idx === state.currentIndex;
-                return (
-                  <button
-                    key={q._id}
-                    onClick={() => {
-                      setState((s) => ({ ...s, currentIndex: idx }));
-                      setNavOpen(false);
-                    }}
-                    className={cn(
-                      "relative h-9 rounded-md border text-sm font-medium",
-                      isCurrent && "border-2 border-blue-500",
-                      answered
-                        ? "bg-blue-600 text-white"
-                        : "bg-gray-200 hover:bg-gray-300"
-                    )}
-                  >
-                    {answered && (
-                      <Check className="absolute -right-1 -top-1 h-4 w-4" />
-                    )}
-                    {idx + 1}
-                  </button>
-                );
-              })}
-            </div>
-          </SheetContent>
-        </Sheet>
       </div>
     </div>
   );
