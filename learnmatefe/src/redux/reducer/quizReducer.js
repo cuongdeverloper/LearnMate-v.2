@@ -5,7 +5,7 @@ const initialState = {
   userAnswers: {},
   submitting: false,
   loading: false,
-  score: null,
+  result: {},
   error: null,
 };
 
@@ -30,16 +30,14 @@ const quizReducer = (state = initialState, action) => {
     case "QUIZ_DETAILS_FAILURE":
       return { ...state, loading: false, error: action.payload };
 
-    // --- Chọn quiz để làm ---
     case "QUIZ_SELECT":
       return {
         ...state,
         selectedQuiz: action.payload,
-        userAnswers: {}, // reset câu trả lời cũ
-        score: null, // reset điểm cũ
+        userAnswers: {},
+        score: null,
       };
 
-    // --- Lưu câu trả lời tạm ---
     case "QUIZ_SAVE_ANSWER":
       return {
         ...state,
@@ -49,21 +47,19 @@ const quizReducer = (state = initialState, action) => {
         },
       };
 
-    // --- Nộp bài quiz ---
     case "QUIZ_SUBMIT_REQUEST":
-      return { ...state, submitting: true, error: null };
+      return { ...state, submitting: true, error: null, result: null };
 
     case "QUIZ_SUBMIT_SUCCESS":
       return {
         ...state,
         submitting: false,
-        score: action.payload.score, // Điểm từ API
+        result: action.payload.result,
       };
 
     case "QUIZ_SUBMIT_FAILURE":
       return { ...state, submitting: false, error: action.payload };
 
-    // --- Reset khi đổi khóa học hoặc logout ---
     case "QUIZ_RESET":
       return initialState;
 

@@ -4,7 +4,7 @@ const QuizSchema = new mongoose.Schema({
   bookingId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Booking",
-    required: true, 
+    required: true,
   },
   subjectId: {
     type: mongoose.Schema.Types.ObjectId,
@@ -22,6 +22,11 @@ const QuizSchema = new mongoose.Schema({
   },
   title: { type: String, required: true },
   description: { type: String, default: "" },
+  duration: {
+    type: Number,
+    required: true,
+    default: 1800,
+  },
   createdAt: { type: Date, default: Date.now },
 });
 
