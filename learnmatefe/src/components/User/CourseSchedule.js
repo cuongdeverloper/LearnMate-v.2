@@ -83,8 +83,8 @@ const CourseSchedule = () => {
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         <div className="lg:col-span-1">
           <Card className="p-4">
-            <h3 className="font-semibold text-foreground mb-4">
-              📅 Upcoming Events
+            <h3 className="font-semibold text-foreground mb-4 text-xl">
+              📅 Sự kiện sắp tới
             </h3>
             <div className="space-y-3">
               {upcomingEvents.length > 0 ? (
@@ -142,7 +142,15 @@ const CourseSchedule = () => {
             </div>
 
             <div className="grid grid-cols-7 gap-2 mb-4">
-              {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
+              {[
+                "Chủ nhật",
+                "Thứ 2",
+                "Thứ 3",
+                "Thứ 4",
+                "Thứ 5",
+                "Thứ 6",
+                "Thứ 7",
+              ].map((day) => (
                 <div
                   key={day}
                   className="text-center text-sm font-semibold text-muted-foreground py-2"

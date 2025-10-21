@@ -58,23 +58,21 @@ const AssignmentsTab = ({ courseTitle }) => {
 
   return (
     <div className="space-y-4">
-      <h3 className="text-lg font-semibold text-foreground">
-        Assignments for {courseTitle}
-      </h3>
-
       <div className="border rounded-lg overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/50">
-              <TableHead className="font-semibold">Title</TableHead>
-              <TableHead className="font-semibold">Due Date</TableHead>
-              <TableHead className="font-semibold">Status</TableHead>
-              <TableHead className="text-center font-semibold">Grade</TableHead>
+              <TableHead className="font-semibold">Tiêu đề</TableHead>
+              <TableHead className="font-semibold">Ngày đến hạn</TableHead>
+              <TableHead className="font-semibold">Trạng thái</TableHead>
               <TableHead className="text-center font-semibold">
-                Feedback
+                Điểm số
               </TableHead>
               <TableHead className="text-center font-semibold">
-                Action
+                Phản hồi
+              </TableHead>
+              <TableHead className="text-center font-semibold">
+                Hành động
               </TableHead>
             </TableRow>
           </TableHeader>
@@ -125,7 +123,7 @@ const AssignmentsTab = ({ courseTitle }) => {
                         size="sm"
                         onClick={() => handleViewFeedback(assignment.id)}
                       >
-                        View Feedback
+                        Xem phản hồi
                       </Button>
                     ) : (
                       <span className="text-muted-foreground">-</span>
@@ -138,11 +136,11 @@ const AssignmentsTab = ({ courseTitle }) => {
                         size="sm"
                         onClick={() => handleSubmit(assignment.id)}
                       >
-                        Submit
+                        Nộp bài
                       </Button>
                     ) : (
                       <Button variant="outline" size="sm" disabled>
-                        Submitted
+                        Đã nộp bài
                       </Button>
                     )}
                   </TableCell>
@@ -155,7 +153,7 @@ const AssignmentsTab = ({ courseTitle }) => {
 
       {assignments.length === 0 && (
         <div className="text-center py-8 text-muted-foreground">
-          <p>No assignments yet.</p>
+          <p>Chưa có bài tập nào.</p>
         </div>
       )}
     </div>

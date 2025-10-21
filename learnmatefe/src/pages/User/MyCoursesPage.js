@@ -1,90 +1,60 @@
 import { BookOpen, Calendar } from "lucide-react";
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchCourses, selectCourse } from "../../redux/action/courseActions";
 
 import CourseListHeader from "../../components/User/CourseListHeader";
 import CourseCard from "../../components/User/CourseCard";
 import AllCoursesSchedule from "./AllCoursesSchedule";
 
-const SAMPLE_COURSES = [
-  {
-    id: "1",
-    title: "English 10A",
-    teacher: "Linh Tran",
-    progress: 75,
-    nextDue: "Assignment due: Oct 20",
-  },
-  {
-    id: "2",
-    title: "Mathematics Advanced",
-    teacher: "Nguyen Minh",
-    progress: 60,
-    nextDue: "Quiz due: Oct 18",
-  },
-  {
-    id: "3",
-    title: "Physics Fundamentals",
-    teacher: "Tran Duc",
-    progress: 45,
-    nextDue: "Project due: Oct 25",
-  },
-  {
-    id: "4",
-    title: "Chemistry Essentials",
-    teacher: "Pham Huong",
-    progress: 85,
-    nextDue: "Lab report due: Oct 22",
-  },
-  {
-    id: "5",
-    title: "History and Culture",
-    teacher: "Hoang Van",
-    progress: 90,
-    nextDue: "Essay due: Oct 30",
-  },
-  {
-    id: "6",
-    title: "Computer Science Basics",
-    teacher: "Le Thao",
-    progress: 55,
-    nextDue: "Code assignment due: Oct 19",
-  },
-];
-
 const MyCoursesPage = () => {
+  const dispatch = useDispatch();
+  const { list, selectedCourse, loading, error } = useSelector(
+    (state) => state.courses
+  );
+
   const [activeTab, setActiveTab] = useState("courses");
   const [searchQuery, setSearchQuery] = useState("");
   const [filter, setFilter] = useState("all");
   const [sort, setSort] = useState("name-asc");
   const [hasCourses, setHasCourses] = useState(true);
 
+  useEffect(() => {
+    dispatch(fetchCourses());
+  }, [dispatch]);
+
   const filteredAndSortedCourses = useMemo(() => {
-    let courses = [...SAMPLE_COURSES];
+    let courses = [...list];
 
-    if (searchQuery) {
-      courses = courses.filter(
-        (course) =>
-          course.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          course.teacher.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-    }
+    // if (searchQuery) {
+    //   courses = courses.filter(
+    //     (course) =>
+    //       course.subjectId.name
+    //         .toLowerCase()
+    //         .includes(searchQuery.toLowerCase()) ||
+    //       course?.tutorId?.user?.username
+    //         .toLowerCase()
+    //         .includes(searchQuery.toLowerCase())
+    //   );
+    // }
 
-    if (filter === "active") {
-      courses = courses.filter((course) => course.progress < 100);
-    } else if (filter === "completed") {
-      courses = courses.filter((course) => course.progress === 100);
-    } else if (filter === "upcoming") {
-      courses = courses.filter((course) => course.progress === 0);
-    }
+    // if (filter === "active") {
+    //   courses = courses.filter((course) => course.progress < 100);
+    // } else if (filter === "completed") {
+    //   courses = courses.filter((course) => course.progress === 100);
+    // } else if (filter === "upcoming") {
+    //   courses = courses.filter((course) => course.progress === 0);
+    // }
 
-    if (sort === "name-asc") {
-      courses.sort((a, b) => a.title.localeCompare(b.title));
-    } else if (sort === "name-desc") {
-      courses.sort((a, b) => b.title.localeCompare(a.title));
-    } else if (sort === "progress-asc") {
-      courses.sort((a, b) => a.progress - b.progress);
-    } else if (sort === "progress-desc") {
-      courses.sort((a, b) => b.progress - a.progress);
-    }
+    // if (sort === "name-asc") {
+    //   courses.sort((a, b) => a.title.localeCompare(b.title));
+    // } else if (sort === "name-desc") {
+    //   courses.sort((a, b) => b.title.localeCompare(a.title));
+    // } else if (sort === "progress-asc") {
+    //   courses.sort((a, b) => a.progress - b.progress);
+    // } else if (sort === "progress-desc") {
+    //   courses.sort((a, b) => b.progress - a.progress);
+    // }
 
     return courses;
   }, [searchQuery, filter, sort]);
@@ -148,7 +118,7 @@ const MyCoursesPage = () => {
                 {hasCourses && filteredAndSortedCourses.length > 0 ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {filteredAndSortedCourses.map((course) => (
-                      <CourseCard key={course.id} {...course} />
+                      <CourseCard key={course._id} course={course} />
                     ))}
                   </div>
                 ) : (
@@ -156,14 +126,16 @@ const MyCoursesPage = () => {
                     <div className="text-center max-w-md">
                       <div className="mb-6"></div>
                       <h3 className="text-lg font-semibold text-foreground mb-2">
-                        No Courses Found
+                        Không tìm thấy khoá học nào
                       </h3>
-                      <p className="text-muted-foreground">
-                        You're not enrolled in any courses yet.
-                      </p>
+                      {!searchQuery && (
+                        <p className="text-muted-foreground">
+                          Bạn chưa đăng ký khóa học nào.
+                        </p>
+                      )}
                       {searchQuery && (
                         <p className="text-sm text-muted-foreground mt-2">
-                          Try adjusting your search or filters.
+                          Hãy thử điều chỉnh tìm kiếm hoặc bộ lọc của bạn.
                         </p>
                       )}
                     </div>

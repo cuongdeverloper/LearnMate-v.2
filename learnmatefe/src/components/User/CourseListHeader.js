@@ -13,7 +13,9 @@ const CourseListHeader = ({
 }) => {
   return (
     <div className="mb-8">
-      <h1 className="text-3xl font-bold text-foreground mb-6">My Courses</h1>
+      <h1 className="text-3xl font-bold text-foreground mb-6">
+        Các khóa học của tôi
+      </h1>
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:gap-4">
         <div className="flex-1">
           <div className="relative">
