@@ -17,4 +17,5 @@ routerPayment.get('/vnpay_return', paymentController.vnpayReturn);
 routerPayment.get('/user/:userId', checkAccessToken, paymentController.getUserInfo);
 routerPayment.get('/user/:userId/payments', checkAccessToken, paymentController.getUserPayments);
 routerPayment.post('/payment/create-vnpay', checkAccessToken, paymentController.createVNPayPayment);
+routerPayment.post("/payMonthly", paymentController.payMonthly);
 module.exports = routerPayment;
