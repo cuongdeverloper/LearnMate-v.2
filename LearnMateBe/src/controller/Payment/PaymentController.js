@@ -4,6 +4,8 @@ const vnpConfig = require('../../config/vnpay');
 const { VNPay, ignoreLogger, ProductCode, VnpLocale, dateFormat } = require('vnpay');
 const Withdrawal = require('../../modal/Withdrawal');
 const Booking = require('../../modal/Booking');
+const Tutor = require("../../modal/Tutor");
+
 exports.createVNPayPayment = async (req, res) => {
     try {
       const userId = req.user.id || req.user._id; 
@@ -311,5 +313,68 @@ exports.getUserFinancialFlow = async (req, res) => {
   } catch (error) {
     console.error('Lỗi khi lấy lịch sử dòng tiền:', error);
     res.status(500).json({ message: 'Lỗi server khi lấy lịch sử dòng tiền' });
+  }
+};
+
+// POST /api/payment/payMonthly
+exports.payMonthly = async (req, res) => {
+  try {
+    const { bookingId } = req.body;
+    if (!bookingId) return res.status(400).json({ success: false, message: "Booking ID required." });
+
+    const booking = await Booking.findById(bookingId)
+      .populate("tutorId")
+      .populate("learnerId");
+
+    if (!booking) return res.status(404).json({ success: false, message: "Booking not found." });
+    if (booking.completed) return res.status(400).json({ success: false, message: "Khóa học đã hoàn tất." });
+
+    const learner = booking.learnerId;
+    const tutor = await User.findById(booking.tutorId.user);
+
+    if (!learner || !tutor) return res.status(404).json({ success: false, message: "Không tìm thấy học viên hoặc gia sư." });
+
+    const nextMonthIndex = booking.paidMonths + 1;
+    if (nextMonthIndex > booking.numberOfMonths)
+      return res.status(400).json({ success: false, message: "Đã thanh toán đủ số tháng." });
+
+    const amountToPay = booking.monthlyPayment || 0;
+    if (learner.balance < amountToPay)
+      return res.status(400).json({ success: false, message: "Số dư học viên không đủ." });
+
+    // Trừ tiền học viên
+    learner.balance -= amountToPay;
+    await learner.save();
+
+    // Cộng tiền gia sư
+    tutor.balance += amountToPay;
+    await tutor.save();
+
+    // Update số tháng đã thanh toán
+    booking.paidMonths = nextMonthIndex;
+    await booking.save();
+
+    // Lưu FinancialHistory cho học viên
+    await FinancialHistory.create({
+      userId: learner._id,
+      amount: amountToPay,
+      balanceChange: -amountToPay,
+      type: "spend",
+      description: `Thanh toán tháng ${nextMonthIndex} cho khóa học ${booking.subjectId}`,
+    });
+
+    // Lưu FinancialHistory cho gia sư
+    await FinancialHistory.create({
+      userId: tutor._id,
+      amount: amountToPay,
+      balanceChange: amountToPay,
+      type: "earning",
+      description: `Nhận thanh toán tháng ${nextMonthIndex} từ học viên ${learner.username}`,
+    });
+
+    return res.json({ success: true, message: "Thanh toán thành công.", booking });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: "Lỗi server khi thanh toán." });
   }
 };
