@@ -1,16 +1,26 @@
 const mongoose = require("mongoose");
 
 const QuizSchema = new mongoose.Schema({
-  title: String,
-  description: String,
-  duration: Number,
-  subjectId: { type: mongoose.Schema.Types.ObjectId, ref: "Subject", required: true },
-  tutorId: { type: mongoose.Schema.Types.ObjectId, ref: "Tutor", required: true },
-  learnerId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
-  bookingId: { type: mongoose.Schema.Types.ObjectId, ref: "Booking", required: true },
-
-  // liên kết quiz mẫu gốc
-  templateId: { type: mongoose.Schema.Types.ObjectId, ref: "QuizTemplate" },
+  tutorId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Tutor",
+    required: true,
+  },
+  subjectId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Subject",
+    required: true,
+  },
+  bookingId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Booking",
+  },
+  quizStorageId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "QuizStorage",
+  },
+  title: { type: String, required: true },
+  description: { type: String },
 }, { timestamps: true });
 
 module.exports = mongoose.model("Quiz", QuizSchema);

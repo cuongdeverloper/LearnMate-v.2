@@ -11,14 +11,9 @@ const AssignmentStorageSchema = new mongoose.Schema({
     ref: "Subject",
     required: true,
   },
-  name: { type: String, required: true },
-  description: String,
-  assignments: [
-    {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "AssignmentTemplate",
-    },
-  ],
+  title: { type: String, required: true },
+  description: { type: String },
+  fileUrl: { type: String }, 
 }, { timestamps: true });
 
 module.exports = mongoose.model("AssignmentStorage", AssignmentStorageSchema);
