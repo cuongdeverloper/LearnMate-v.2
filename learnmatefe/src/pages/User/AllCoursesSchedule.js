@@ -9,7 +9,8 @@ import {
   getMyBookings,
   reportBooking,
   requestChangeSchedule,
-  getMyChangeRequests, // Make sure this is correctly imported
+  getMyChangeRequests,
+  handlePayMonthly, // Make sure this is correctly imported
 } from "../../Service/ApiService/ApiBooking";
 import {
   getMyWeeklySchedules,
@@ -263,6 +264,41 @@ function AllCoursesSchedule() {
   const [loadingChangeRequests, setLoadingChangeRequests] = useState(true);
   const [errorChangeRequests, setErrorChangeRequests] = useState(null);
 
+  // State cho modal xác nhận thanh toán
+
+  const [showPaymentConfirm, setShowPaymentConfirm] = useState(false);
+  const [selectedBooking, setSelectedBooking] = useState(null);
+
+  const handlePayNextMonth = async (bookingId) => {
+    try {
+      const res = await handlePayMonthly(bookingId);
+      console.log("ket qua " + res);
+      if (res.success) {
+        toast.success(res.message || "Thanh toán tháng tiếp theo thành công!");
+        fetchBookings(); // Refresh danh sách bookings để cập nhật paidMonths
+      } else {
+        toast.error(res.message || "Thanh toán thất bại!");
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error("Lỗi khi thanh toán tháng tiếp theo.");
+    }
+  };
+
+  const handleOpenPaymentConfirm = (booking) => {
+    setSelectedBooking(booking);
+    setShowPaymentConfirm(true);
+  };
+
+  const handleClosePaymentConfirm = () => {
+    setShowPaymentConfirm(false);
+    setSelectedBooking(null);
+  };
+  const handleConfirmPayment = async () => {
+    if (!selectedBooking) return;
+    await handlePayNextMonth(selectedBooking._id);
+    handleClosePaymentConfirm();
+  };
   const fetchChangeRequests = async () => {
     setLoadingChangeRequests(true);
     setErrorChangeRequests(null);
@@ -387,12 +423,12 @@ function AllCoursesSchedule() {
     }
 
     const today = new Date();
-    // Giả sử học viên bắt đầu học từ ngày booking.createdAt
-    const startDate = new Date(booking.createdAt);
+    const startDate = new Date(booking.createdAt); // ngày booking
     const dueDate = new Date(startDate);
-    dueDate.setMonth(startDate.getMonth() + currentMonthIndex - 1);
 
-    // Nếu tới hạn thanh toán (hoặc quá hạn)
+    // Payment is due **1 month after booking for the first month**
+    dueDate.setMonth(startDate.getMonth() + currentMonthIndex);
+
     if (today >= dueDate) {
       return {
         showButton: true,
@@ -402,6 +438,7 @@ function AllCoursesSchedule() {
 
     return { showButton: false, message: "" }; // Chưa tới hạn
   };
+
   const fetchAllWeeklySchedules = async () => {
     setLoadingSchedules(true);
     setErrorSchedules(null);
@@ -735,6 +772,13 @@ function AllCoursesSchedule() {
                     <strong>Tiền cọc:</strong>{" "}
                     {booking.deposit?.toLocaleString("vi-VN")} VNĐ
                   </p>
+                  {!booking.completed && (
+                    <p>
+                      <strong>Số tiền cần thanh toán mỗi tháng:</strong>{" "}
+                      {(booking.monthlyPayment || 0).toLocaleString("vi-VN")}{" "}
+                      VNĐ
+                    </p>
+                  )}
                   <p>
                     <strong>Ghi chú:</strong> {booking.note || "Không có"}
                   </p>
@@ -804,7 +848,35 @@ function AllCoursesSchedule() {
                       >
                         Yêu cầu đổi lịch
                       </button>
-                      
+                      {!booking.completed && (
+                        <p>
+                          <strong>Thanh toán tháng tiếp theo:</strong>{" "}
+                          {(() => {
+                            const { showButton, message } =
+                              getNextPaymentStatus(booking);
+                            return (
+                              <>
+                                <button
+                                  className="pay-monthly-button"
+                                  disabled={!showButton}
+                                  onClick={() =>
+                                    handleOpenPaymentConfirm(booking)
+                                  }
+                                >
+                                  Thanh toán
+                                </button>
+
+                                {message && (
+                                  <span className="payment-warning">
+                                    {" "}
+                                    {message}
+                                  </span>
+                                )}
+                              </>
+                            );
+                          })()}
+                        </p>
+                      )}
                     </div>
                   )}
                 </div>
@@ -938,7 +1010,15 @@ function AllCoursesSchedule() {
             )}
           />
         )}
-
+        {showPaymentConfirm && selectedBooking && (
+          <ConfirmationModal
+            title="Xác nhận thanh toán"
+            message={`Bạn có chắc chắn muốn thanh toán tháng tiếp theo cho khóa học này không? 
+    \nSố tiền: ${selectedBooking.monthlyPayment?.toLocaleString("vi-VN")} VND`}
+            onConfirm={handleConfirmPayment}
+            onCancel={handleClosePaymentConfirm}
+          />
+        )}
         <ToastContainer
           position="top-right"
           autoClose={5000}
