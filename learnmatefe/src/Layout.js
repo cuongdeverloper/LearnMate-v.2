@@ -258,7 +258,9 @@ const Layout = () => {
             path="/tutor-application"
             element={
               <ProtectedRoute allowedRoles={["tutor", "student"]}>
-                <TutorApplicationForm />
+                <AppLayout>
+                  <TutorApplicationForm />
+                </AppLayout>
               </ProtectedRoute>
             }
           />

@@ -180,3 +180,21 @@ export const getMyBookings = async () => {
       throw error;
     }
   };
+  export const handlePayMonthly = async (bookingId) => {
+    try {
+      const res = await axios.post("/api/payment/payMonthly", { bookingId });
+      console.log("Kết quả trả về từ API:", res);
+  
+      if (res.success) {
+        getMyBookings();
+      } else {
+        toast.error(res.message);
+      }
+  
+      return res; // ✅ luôn trả về dữ liệu
+    } catch (error) {
+      console.error("Lỗi khi thanh toán:", error);
+      toast.error("Lỗi khi thanh toán.");
+      return { success: false, message: "Lỗi khi thanh toán." }; // ✅ vẫn trả về để không undefined
+    }
+  };

@@ -63,12 +63,12 @@ exports.createBooking = async (req, res) => {
       return res
         .status(404)
         .json({ success: false, message: "Tutor not found" });
-    // if (learnerId === tutorDoc.user.toString()) {
-    //   return res.status(400).json({
-    //     success: false,
-    //     message: "Bạn không thể đặt lịch với chính mình.",
-    //   });
-    // }
+    if (learnerId === tutorDoc.user.toString()) {
+      return res.status(400).json({
+        success: false,
+        message: "Bạn không thể đặt lịch với chính mình.",
+      });
+    }
 
     const user = await User.findById(learnerId);
     if (!user)
