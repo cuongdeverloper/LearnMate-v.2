@@ -11,14 +11,12 @@ const QuizStorageSchema = new mongoose.Schema({
     ref: "Subject",
     required: true,
   },
-  name: { type: String, required: true }, // ví dụ "English Grammar Quizzes"
+  name: { type: String, required: true },
   description: { type: String },
-
-  // danh sách quiz mẫu (quiz template, chưa assign)
-  quizzes: [
+  questions: [
     {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "QuizTemplate",
+      ref: "QuestionStorage",
     },
   ],
 }, { timestamps: true });

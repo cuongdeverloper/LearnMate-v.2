@@ -5,41 +5,26 @@ const { checkAccessToken} = require('../middleware/JWTAction');
 const uploadDocs = require("../config/cloudinaryDocxConfig"); 
 
 const {
-  createAssignment,
   viewAssignment,
   submitAssignment,
   viewSubmission,
   gradeAssignment,
   viewGradeFeedback,
   deleteAssignment,
+  createAssignmentStorage,
+  getAssignmentStorage,
+  deleteAssignmentStorage,
+  assignAssignmentFromStorage,
 } = require("../controller/Assignment/AssignmentController");
 
-/**
- * 🧩 Tutor tạo assignment (upload file Word/PDF)
- * - Middleware checkAccessToken để lấy userId của tutor
- * - uploadDocs.single("file") để upload file
- */
-router.post(
-  "/create",
-  checkAccessToken,
-  uploadDocs.single("file"),
-  async (req, res, next) => {
-    try {
-      if (req.file && req.file.path) {
-        req.body.fileUrl = req.file.path;
-      }
-      next();
-    } catch (err) {
-      console.error("❌ File upload failed:", err);
-      res.status(400).json({ error: "File upload failed", details: err.message });
-    }
-  },
-  createAssignment
-);
 
-/**
- * 🧩 Lấy danh sách tất cả assignment
- */
+router.post("/storage/create", checkAccessToken, uploadDocs.single("file"), createAssignmentStorage);
+router.get("/storage", checkAccessToken, getAssignmentStorage);
+router.delete("/storage/:id", checkAccessToken, deleteAssignmentStorage);
+
+// Assign route
+router.post("/assign", checkAccessToken, assignAssignmentFromStorage);
+
 router.get("/", checkAccessToken, viewAssignment);
 
 /**

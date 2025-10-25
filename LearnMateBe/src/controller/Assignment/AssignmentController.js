@@ -4,73 +4,97 @@ const Subject = require("../../modal/Subject");
 const Tutor = require("../../modal/Tutor");
 const User = require("../../modal/User");
 const Booking = require("../../modal/Booking");
+const AssignmentStorage = require("../../modal/AssignmentStorage");
 
-/**
- * 🧩 Tạo bài tập mới - Tutor tạo
- */
-const createAssignment = async (req, res) => {
+const createAssignmentStorage = async (req, res) => {
   try {
-    const {
-      subjectId,
-      learnerId,
-      bookingId,
-      title,
-      description,
-      fileUrl,
-      deadline,
-    } = req.body;
+    const tutor = await Tutor.findOne({ user: req.user.id });
+    if (!tutor)
+      return res.status(404).json({ success: false, message: "Không tìm thấy tutor" });
 
-    // ✅ Lấy userId từ token (gắn bởi middleware verifyToken)
-    const userId = req.user?.id;
-    if (!userId) {
-      return res.status(401).json({ error: "Unauthorized" });
-    }
+    if (!req.file)
+      return res.status(400).json({ success: false, message: "Không có file được upload" });
 
-    // ✅ Tìm tutor tương ứng với user
-    const tutor = await Tutor.findOne({ user: userId });
-    if (!tutor) {
-      return res.status(404).json({ error: "Tutor not found for this user" });
-    }
+    const { title, description, subjectId } = req.body;
+    if (!title || !subjectId)
+      return res.status(400).json({ success: false, message: "Thiếu thông tin cần thiết" });
 
-    // ✅ Kiểm tra bắt buộc
-    if (!subjectId || !learnerId || !bookingId || !title || !deadline) {
-      return res.status(400).json({ error: "Missing required fields" });
-    }
-
-    // ✅ Kiểm tra các tham chiếu tồn tại
-    const subject = await Subject.findById(subjectId);
-    const learner = await User.findById(learnerId);
-    const booking = await Booking.findById(bookingId);
-
-    if (!subject || !learner || !booking) {
-      return res.status(404).json({
-        error: "Subject, learner, or booking not found",
-      });
-    }
-
-    // ✅ Tạo assignment mới
-    const newAssignment = new Assignment({
-      subjectId,
+    const newStorage = await AssignmentStorage.create({
       tutorId: tutor._id,
-      learnerId,
-      bookingId,
+      subjectId,
       title,
       description,
-      fileUrl,
-      deadline,
+      fileUrl: req.file.path, // URL từ Cloudinary
     });
 
-    await newAssignment.save();
-
-    res.status(201).json({
-      message: "Assignment created successfully",
-      assignment: newAssignment,
-    });
-  } catch (err) {
-    console.error("❌ Lỗi khi tạo assignment:", err);
-    res.status(500).json({ error: err.message });
+    res.status(200).json({ success: true, message: "Tạo Assignment Storage thành công", data: newStorage });
+  } catch (error) {
+    console.error("CreateAssignmentStorage Error:", error);
+    res.status(500).json({ success: false, message: "Lỗi server" });
   }
 };
+
+const getAssignmentStorage = async (req, res) => {
+  try {
+    const tutor = await Tutor.findOne({ user: req.user.id });
+    if (!tutor)
+      return res.status(404).json({ success: false, message: "Không tìm thấy tutor" });
+
+    const storages = await AssignmentStorage.find({ tutorId: tutor._id })
+      .populate("subjectId", "name");
+
+    res.status(200).json({ success: true, data: storages });
+  } catch (error) {
+    console.error("GetAssignmentStorage Error:", error);
+    res.status(500).json({ success: false, message: "Lỗi server" });
+  }
+};
+
+const assignAssignmentFromStorage = async (req, res) => {
+  try {
+    const tutor = await Tutor.findOne({ user: req.user.id });
+    if (!tutor)
+      return res.status(404).json({ success: false, message: "Không tìm thấy tutor" });
+
+    const { assignmentStorageId, bookingId, deadline, title, description } = req.body;
+    if (!assignmentStorageId || !bookingId || !deadline || !title)
+      return res.status(400).json({ success: false, message: "Thiếu dữ liệu assign" });
+
+    const booking = await Booking.findById(bookingId)
+      .populate("learnerId", "_id")
+      .populate("subjectId", "_id");
+
+    if (!booking)
+      return res.status(404).json({ success: false, message: "Không tìm thấy booking" });
+
+    const storage = await AssignmentStorage.findById(assignmentStorageId);
+    if (!storage)
+      return res.status(404).json({ success: false, message: "Không tìm thấy Assignment Storage" });
+
+    const newAssignment = await Assignment.create({
+      assignmentStorageId,
+      tutorId: tutor._id,
+      learnerId: booking.learnerId._id,
+      subjectId: booking.subjectId._id,
+      bookingId,
+      title, // 🆕 sử dụng title do tutor nhập
+      description, // 🆕 sử dụng description do tutor nhập
+      fileUrl: storage.fileUrl, // vẫn reuse file
+      deadline,
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Assign bài tập thành công",
+      data: newAssignment,
+    });
+  } catch (error) {
+    console.error("AssignAssignmentFromStorage Error:", error);
+    res.status(500).json({ success: false, message: "Lỗi server" });
+  }
+};
+
+
 
 /**
  * 🧩 Lấy tất cả assignment
@@ -120,6 +144,17 @@ const submitAssignment = async (req, res) => {
     res.status(201).json(newSubmission);
   } catch (err) {
     res.status(500).json({ error: err.message });
+  }
+};
+
+const deleteAssignmentStorage = async (req, res) => {
+  try {
+    const { id } = req.params;
+    await AssignmentStorage.findByIdAndDelete(id);
+    res.status(200).json({ success: true, message: "Đã xóa Assignment Storage" });
+  } catch (error) {
+    console.error("DeleteAssignmentStorage Error:", error);
+    res.status(500).json({ success: false, message: "Lỗi server" });
   }
 };
 
@@ -197,11 +232,14 @@ const deleteAssignment = async (req, res) => {
 };
 
 module.exports = {
-  createAssignment,
   viewAssignment,
   submitAssignment,
   viewSubmission,
   gradeAssignment,
   viewGradeFeedback,
   deleteAssignment,
+  createAssignmentStorage,
+getAssignmentStorage,assignAssignmentFromStorage,
+deleteAssignmentStorage
+
 };

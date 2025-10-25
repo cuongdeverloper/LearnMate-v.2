@@ -239,18 +239,6 @@ export const createQuiz = async (quizData) => {
   return res;
 };
 
-/**
- * 🧩 Lấy danh sách quiz của tutor hiện tại
- */
-export const getMyQuizzes = async () => {
-  const token = Cookies.get("accessToken");
-  if (!token) throw new Error("Unauthorized");
-
-  const res = await axios.get(`/api/quiz/my-quizzes`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  return res;
-};
 
 /**
  * 🧩 Lấy danh sách quiz theo bookingId
@@ -281,33 +269,12 @@ export const getSubjectsByTutor = async () => {
 /**
  * 🧩 Import câu hỏi từ Excel
  */
-export const importQuestionsFromExcel = async (quizId, bookingId, file) => {
-  try {
-    const token = Cookies.get("accessToken");
-    if (!token) throw new Error("Unauthorized");
-
-    const formData = new FormData();
-    formData.append("file", file);
-
-    const res = await axios.post(`/api/quiz/${quizId}/${bookingId}/import`, formData, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "multipart/form-data",
-      },
-    });
-
-    return res;
-  } catch (error) {
-    console.error("❌ Lỗi import Excel:", error);
-    throw error.response || { message: "Không thể import câu hỏi." };
-  }
-};
 
 
 /**
  * 🧩 Lấy câu hỏi theo quiz
  */
-export const getQuestionsByQuiz = async (quizId) => {
+export const getQuestionsByQuizId = async (quizId) => {
   const token = Cookies.get("accessToken");
   if (!token) throw new Error("Unauthorized");
 
@@ -338,117 +305,6 @@ export const deleteQuestion = async (questionId) => {
     headers: { Authorization: `Bearer ${token}` },
   });
   return res;
-};
-
-export const createAssignment = async (formData) => {
-  try {
-    const token = Cookies.get("accessToken");
-    if (!token) throw new Error("Unauthorized");
-console.log("📦 FormData gửi lên backend:", Object.fromEntries(formData));
-
-    const res = await axios.post(`/api/assignment/create`, formData, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "multipart/form-data",
-      },
-    });
-    return { errorCode: 0, data: res };
-  } catch (error) {
-    console.error("❌ Lỗi khi tạo assignment:", error);
-    const msg = error?.response?.message || "Không thể tạo assignment";
-    return { errorCode: 1, message: msg };
-  }
-};
-
-export const getAssignments = async () => {
-  try {
-    const token = Cookies.get("accessToken");
-    if (!token) throw new Error("Unauthorized");
-
-    const res = await axios.get(`/api/assignment`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-
-    return { errorCode: 0, data: res };
-  } catch (error) {
-    console.error("❌ Lỗi khi lấy assignment:", error);
-    const msg = error?.response?.message || "Không thể lấy danh sách assignment";
-    return { errorCode: 1, message: msg };
-  }
-};
-
-
-export const getSubmissions = async () => {
-  try {
-    const token = Cookies.get("accessToken");
-    if (!token) throw new Error("Unauthorized");
-
-    const res = await axios.get(`/api/assignment/submission`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-
-    return { errorCode: 0, data: res };
-  } catch (error) {
-    console.error("❌ Lỗi khi lấy bài nộp:", error);
-    const msg = error?.response?.message || "Không thể lấy bài nộp";
-    return { errorCode: 1, message: msg };
-  }
-};
-
-
-export const gradeAssignment = async (data) => {
-  try {
-    const token = Cookies.get("accessToken");
-    if (!token) throw new Error("Unauthorized");
-
-    const res = await axios.post(`/api/assignment/grade`, data, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-
-    return { errorCode: 0, data: res };
-  } catch (error) {
-    console.error("❌ Lỗi khi chấm điểm:", error);
-    const msg = error?.response?.message || "Không thể chấm bài";
-    return { errorCode: 1, message: msg };
-  }
-};
-
-/**
- * 🧩 Lấy danh sách bài đã chấm
- */
-export const getGrades = async () => {
-  try {
-    const token = Cookies.get("accessToken");
-    if (!token) throw new Error("Unauthorized");
-
-    const res = await axios.get(`/api/assignment/grades`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-
-    return { errorCode: 0, data: res };
-  } catch (error) {
-    console.error("❌ Lỗi khi lấy điểm:", error);
-    const msg = error?.response?.message || "Không thể lấy điểm";
-    return { errorCode: 1, message: msg };
-  }
-};
-
-
-export const deleteAssignment = async (assignmentId) => {
-  try {
-    const token = Cookies.get("accessToken");
-    if (!token) throw new Error("Unauthorized");
-
-    const res = await axios.delete(`/api/assignment/${assignmentId}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-
-    return { errorCode: 0, data: res };
-  } catch (error) {
-    console.error("❌ Lỗi khi xoá assignment:", error);
-    const msg = error?.respons?.message || "Không thể xoá assignment";
-    return { errorCode: 1, message: msg };
-  }
 };
 
 export const getTutorChangeRequests = async () => {
@@ -496,5 +352,213 @@ export const rejectChangeRequest = async (id) => {
     console.error("❌ Lỗi khi từ chối yêu cầu:", error);
     const msg = error?.response?.message || "Không thể từ chối yêu cầu";
     return { errorCode: 1, message: msg };
+  }
+};
+
+export const importQuestionsToStorage = async (file, subjectId) => {
+  const token = Cookies.get("accessToken");
+  if (!token) throw new Error("Unauthorized");
+
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("subjectId", subjectId);
+
+  const res = await axios.post(`/api/quiz/import-question-storage`, formData, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "multipart/form-data",
+    },
+  });
+  return res;
+};
+
+
+export const getQuestionStorage = async () => {
+  const token = Cookies.get("accessToken");
+  if (!token) throw new Error("Unauthorized");
+
+  const res = await axios.get(`/api/quiz/my-question-storage`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return res;
+};
+
+export const addQuestionsFromStorageToQuiz = async (quizId, questionIds) => {
+  try {
+    const token = Cookies.get("accessToken");
+    if (!token) throw new Error("Unauthorized");
+
+    const res = await axios.post(
+      `/api/quiz/add-questions-to-quiz`,
+      { quizId, questionIds },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    return res;
+  } catch (error) {
+    console.error("❌ Lỗi thêm câu hỏi vào quiz:", error);
+    throw error.response || { message: "Không thể thêm câu hỏi." };
+  }
+};
+
+export const getQuizStorage = async () => {
+  try {
+    const token = Cookies.get("accessToken");
+    if (!token) throw new Error("Unauthorized");
+
+    const res = await axios.get(`/api/quiz/my-quizzes`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    return res;
+  } catch (error) {
+    console.error("❌ Lỗi khi lấy quiz storage:", error);
+    throw error.response || { message: "Không thể lấy danh sách quiz." };
+  }
+};
+
+export const createQuizFromStorage = async (data) => {
+  try {
+    const token = Cookies.get("accessToken");
+    if (!token) throw new Error("Unauthorized");
+
+    const res = await axios.post(`/api/quiz`, data, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    return res;
+  } catch (error) {
+    console.error("❌ Lỗi khi tạo quiz từ storage:", error);
+    throw error.response || { message: "Không thể tạo quiz." };
+  }
+};
+
+export const createQuizStorage = async ({ title, questionIds, subjectId }) => {
+  try {
+    const token = Cookies.get("accessToken");
+    if (!token) throw new Error("Unauthorized");
+
+    const payload = {
+      title,
+      questionIds: Array.isArray(questionIds) ? questionIds : [questionIds],
+      subjectId,
+    };
+
+    const res = await axios.post(`/api/quiz/quiz-storage/create`, payload, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    return res;
+  } catch (error) {
+    console.error("❌ Lỗi tạo QuizStorage:", error);
+    throw error.response || { message: "Không thể tạo QuizStorage." };
+  }
+};
+
+export const createAssignmentStorage = async (formData) => {
+  try {
+    const token = Cookies.get("accessToken");
+    if (!token) throw new Error("Unauthorized");
+
+    const res = await axios.post(`/api/assignment/storage/create`, formData, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "multipart/form-data",
+      },
+    });
+
+    return res;
+  } catch (error) {
+    console.error("❌ Lỗi tạo AssignmentStorage:", error);
+    throw error.response || { message: "Không thể tạo AssignmentStorage." };
+  }
+};
+
+// 📥 Lấy tất cả AssignmentStorage của tutor
+export const getAssignmentStorage = async () => {
+  try {
+    const token = Cookies.get("accessToken");
+    if (!token) throw new Error("Unauthorized");
+
+    const res = await axios.get(`/api/assignment/storage`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    return res;
+  } catch (error) {
+    console.error("❌ Lỗi lấy AssignmentStorage:", error);
+    throw error.response || { message: "Không thể lấy AssignmentStorage." };
+  }
+};
+
+// 🗑️ Xóa AssignmentStorage
+export const deleteAssignmentStorage = async (storageId) => {
+  try {
+    const token = Cookies.get("accessToken");
+    if (!token) throw new Error("Unauthorized");
+
+    const res = await axios.delete(`/api/assignment/storage/${storageId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    return res;
+  } catch (error) {
+    console.error("❌ Lỗi xóa AssignmentStorage:", error);
+    throw error.response || { message: "Không thể xóa AssignmentStorage." };
+  }
+};
+
+
+/* =========================================================
+   🎯 ASSIGNMENT ASSIGN API
+   ========================================================= */
+
+// 📦 Giao bài tập (tạo Assignment từ Storage cho Booking)
+export const createAssignmentFromStorage = async (data) => {
+  try {
+    const token = Cookies.get("accessToken");
+    if (!token) throw new Error("Unauthorized");
+
+    const res = await axios.post(`/api/assignment/assign`, data, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    return res;
+  } catch (error) {
+    console.error("❌ Lỗi giao Assignment:", error);
+    throw error.response || { message: "Không thể giao Assignment." };
+  }
+};
+
+// 📋 Lấy danh sách các Assignment đã assign (nếu cần)
+export const getAssignedAssignments = async () => {
+  try {
+    const token = Cookies.get("accessToken");
+    if (!token) throw new Error("Unauthorized");
+
+    const res = await axios.get(`/api/assignment/assigned`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    return res;
+  } catch (error) {
+    console.error("❌ Lỗi lấy danh sách Assignment:", error);
+    throw error.response || { message: "Không thể lấy danh sách Assignment." };
+  }
+};
+
+// 🗑️ Xóa Assignment đã assign
+export const deleteAssignedAssignment = async (assignmentId) => {
+  try {
+    const token = Cookies.get("accessToken");
+    if (!token) throw new Error("Unauthorized");
+
+    const res = await axios.delete(`/api/assignment/assigned/${assignmentId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    return res;
+  } catch (error) {
+    console.error("❌ Lỗi xóa Assignment:", error);
+    throw error.response || { message: "Không thể xóa Assignment." };
   }
 };
