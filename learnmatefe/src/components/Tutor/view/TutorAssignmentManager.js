@@ -1,212 +1,257 @@
 import React, { useState, useEffect } from "react";
-import {
-  createAssignment,
-  getAssignments,
-  deleteAssignment,
-  getBookingsByTutorId
-} from "../ApiTutor";
+import Select from "react-select";
 import { toast } from "react-toastify";
-import "./TutorAssignmentManager.scss";
 import { useSelector } from "react-redux";
+import {
+  getSubjectsByTutor,
+  getBookingsByTutorId,
+  createAssignmentStorage,
+  getAssignmentStorage,
+  createAssignmentFromStorage,
+} from "../ApiTutor";
+import "./TutorAssignmentManager.scss";
 
 const TutorAssignmentManager = () => {
-  const [bookings, setBookings] = useState([]);
-  const [selectedBooking, setSelectedBooking] = useState("");
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [deadline, setDeadline] = useState("");
-  const [file, setFile] = useState(null);
-  const [assignments, setAssignments] = useState([]);
-  const [loading, setLoading] = useState(false);
   const tutorId = useSelector((state) => state.user.account.id);
 
+  const [subjects, setSubjects] = useState([]);
+  const [bookings, setBookings] = useState([]);
+  const [assignmentStorageList, setAssignmentStorageList] = useState([]);
+  const [filteredStorage, setFilteredStorage] = useState([]);
+  const [selectedSubject, setSelectedSubject] = useState("");
+  const [selectedStorageId, setSelectedStorageId] = useState("");
+  const [selectedBookingId, setSelectedBookingId] = useState("");
+const [assignTitle, setAssignTitle] = useState("");
+const [assignDescription, setAssignDescription] = useState("");
+const [deadline, setDeadline] = useState("");
+
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [file, setFile] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  // --- Fetch subjects + bookings + storage ---
   useEffect(() => {
-    const fetchBookings = async () => {
+    const fetchInitial = async () => {
       try {
-        const res = await getBookingsByTutorId(tutorId);
-        console.log(res)
-        if (res?.bookings) {
-          setBookings(res.bookings);
-        }
-      } catch (err) {
-        console.error(err);
-        toast.error("Không thể lấy danh sách buổi học");
+        const [subRes, bookingRes, storageRes] = await Promise.all([
+          getSubjectsByTutor(),
+          getBookingsByTutorId(tutorId),
+          getAssignmentStorage(),
+        ]);
+        console.log( storageRes)
+        setSubjects(subRes.subjects || []);
+        setBookings(bookingRes.bookings || []);
+        setAssignmentStorageList(storageRes.data || []);
+        setFilteredStorage(storageRes.data || []);
+      } catch {
+        toast.error("❌ Lỗi khi tải dữ liệu ban đầu");
       }
     };
-    fetchBookings();
-  }, []);
+    fetchInitial();
+  }, [tutorId]);
 
-  useEffect(() => {
-    const fetchAssignments = async () => {
-      const res = await getAssignments();
-      if (res.errorCode === 0) setAssignments(res.data);
-    };
-    fetchAssignments();
-  }, []);
-
-  // 🧩 Tạo assignment mới
-  const handleCreate = async (e) => {
-    e.preventDefault();
-    if (!selectedBooking || !title || !deadline || !file) {
-      toast.warning("Vui lòng nhập đầy đủ thông tin");
-      return;
-    }
-
-    const booking = bookings.find((b) => b._id === selectedBooking);
-    if (!booking) {
-      toast.error("Không tìm thấy buổi học");
-      return;
-    }
+  // --- Create Assignment Storage ---
+  const handleCreateStorage = async () => {
+    if (!selectedSubject || !title || !file)
+      return toast.warning("⚠️ Vui lòng nhập tiêu đề, chọn môn học và file!");
 
     const formData = new FormData();
-    formData.append("subjectId", booking.subjectId?._id);
-    formData.append("tutorId", booking.tutorId);
-    formData.append("learnerId", booking.learnerId?._id);
-    formData.append("bookingId", booking._id);
+    formData.append("subjectId", selectedSubject);
     formData.append("title", title);
     formData.append("description", description);
-    formData.append("deadline", deadline);
     formData.append("file", file);
 
     setLoading(true);
-    const res = await createAssignment(formData);
-    // console.log(file)
-    setLoading(false);
-
-    if (res.errorCode === 0) {
-      toast.success("Tạo bài tập thành công 🎉");
-      setAssignments((prev) => [res.data, ...prev]);
+    try {
+      const res = await createAssignmentStorage(formData);
+      toast.success("✅ Tạo Assignment Storage thành công!");
       setTitle("");
       setDescription("");
-      setDeadline("");
       setFile(null);
-      setSelectedBooking("");
-    } else {
-      toast.error(res.message);
+      const updated = await getAssignmentStorage();
+      setAssignmentStorageList(updated.storages || []);
+      setFilteredStorage(updated.storages || []);
+    } catch {
+      toast.error("❌ Lỗi khi tạo Assignment Storage");
+    } finally {
+      setLoading(false);
     }
   };
 
-  // 🧩 Xoá assignment
-  const handleDelete = async (id) => {
-    if (!window.confirm("Xác nhận xoá bài tập này?")) return;
-    const res = await deleteAssignment(id);
-    if (res.errorCode === 0) {
-      toast.success("Đã xoá bài tập");
-      setAssignments((prev) => prev.filter((a) => a._id !== id));
-    } else {
-      toast.error(res.message);
-    }
+  // --- Assign Assignment ---
+  const handleAssign = async () => {
+  if (!selectedStorageId || !selectedBookingId || !assignTitle || !deadline)
+    return toast.warning("⚠️ Nhập tiêu đề, chọn storage, buổi học và deadline!");
+
+  setLoading(true);
+  try {
+    const res = await createAssignmentFromStorage({
+      assignmentStorageId: selectedStorageId,
+      bookingId: selectedBookingId,
+      title: assignTitle,
+      description: assignDescription,
+      deadline,
+    });
+    toast.success("✅ Giao bài tập thành công!");
+    setAssignTitle("");
+    setAssignDescription("");
+    setDeadline("");
+  } catch {
+    toast.error("❌ Lỗi khi giao bài tập");
+  } finally {
+    setLoading(false);
+  }
+};
+
+
+  // --- Filter by subject ---
+  const handleFilterBySubject = (subjectId) => {
+    if (!subjectId) return setFilteredStorage(assignmentStorageList);
+    const filtered = assignmentStorageList.filter(
+      (s) => s.subjectId?._id === subjectId
+    );
+    setFilteredStorage(filtered);
   };
 
+  // --- Options ---
+  const subjectOptions = subjects.map((s) => ({ value: s._id, label: s.name }));
+  const bookingOptions = bookings.map((b) => ({
+    value: b._id,
+    label: `${b.subjectId?.name} - ${b.learnerId?.username}`,
+  }));
+  const storageOptions = filteredStorage.map((a) => ({
+    value: a._id,
+    label: `${a.title} (${a.subjectId?.name || "Chưa rõ"})`,
+  }));
+
+  // --- JSX ---
   return (
-    <div className="tutor-assignment-container">
-      <h2>📚 Quản lý bài tập</h2>
+    <div className="tutor-assignment-manager">
+      <h2 className="text-3xl font-bold text-center text-indigo-700 mb-8">
+        📘 Tutor Assignment Dashboard
+      </h2>
 
-      {/* --- FORM TẠO BÀI TẬP --- */}
-      <form className="assignment-form" onSubmit={handleCreate}>
-        <div className="form-group">
-          <label>Buổi học</label>
-          <select
-            value={selectedBooking}
-            onChange={(e) => setSelectedBooking(e.target.value)}
-          >
-            <option value="">-- Chọn buổi học --</option>
-            {bookings.map((b, index) => (
-              <option key={b._id || index} value={b._id}>
-                {b.learnerId?.username || "Không rõ học viên"} -{" "}
-                {b.subjectId?.name || "Không rõ môn"} (Lớp{" "}
-                {b.subjectId?.classLevel || "?"})
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="form-group">
-          <label>Tiêu đề</label>
+      {/* 1️⃣ Tạo Assignment Storage */}
+      <section className="storage-section">
+        <h3 className="section-title text-indigo-600">📂 Assignment Storage</h3>
+        <div className="flex flex-col md:flex-row gap-4 mb-3">
+          <Select
+            options={subjectOptions}
+            onChange={(sel) => setSelectedSubject(sel?.value || "")}
+            placeholder="📚 Chọn môn học"
+            className="flex-1"
+          />
           <input
             type="text"
-            placeholder="Nhập tiêu đề bài tập"
+            placeholder="✏️ Tiêu đề bài tập"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
+            className="border rounded-md p-2 flex-1"
           />
         </div>
+        <textarea
+          placeholder="🧾 Mô tả bài tập (tùy chọn)"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          className="w-full border rounded-md p-2 mb-3"
+        ></textarea>
 
-        <div className="form-group">
-          <label>Mô tả</label>
-          <textarea
-            placeholder="Mô tả ngắn về bài tập"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-          ></textarea>
-        </div>
-
-        <div className="form-group">
-          <label>Hạn nộp</label>
-          <input
-            type="date"
-            value={deadline}
-            onChange={(e) => setDeadline(e.target.value)}
-          />
-        </div>
-
-        <div className="form-group">
-          <label>File bài tập (PDF hoặc DOCX)</label>
+        <div className="flex flex-col md:flex-row items-center gap-4 mb-4">
           <input
             type="file"
             accept=".pdf,.doc,.docx"
             onChange={(e) => setFile(e.target.files[0])}
+            className="border rounded-md p-2 w-full md:w-1/2"
+          />
+          <button
+            onClick={handleCreateStorage}
+            disabled={loading}
+            className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition"
+          >
+            {loading ? "Đang tạo..." : "💾 Lưu Assignment Storage"}
+          </button>
+        </div>
+
+        <div className="flex items-center gap-3 mb-4">
+          <Select
+            options={[{ value: "", label: "Tất cả môn" }, ...subjectOptions]}
+            onChange={(sel) => handleFilterBySubject(sel?.value || "")}
+            placeholder="📚 Lọc theo môn học"
+            className="w-1/2"
           />
         </div>
 
-        <button type="submit" disabled={loading}>
-          {loading ? "Đang tải lên..." : "Tạo bài tập"}
-        </button>
-      </form>
+        <ul className="divide-y divide-gray-200">
+          {filteredStorage.length > 0 ? (
+            filteredStorage.map((a) => (
+              <li
+                key={a._id}
+                className="py-2 flex justify-between items-center"
+              >
+                <span className="text-gray-800 font-medium">{a.title}</span>
+                <span className="text-sm text-gray-500">
+                  {a.subjectId?.name || "Không rõ môn"}
+                </span>
+              </li>
+            ))
+          ) : (
+            <p className="text-gray-500 italic text-center py-3">
+              Không có Assignment Storage nào
+            </p>
+          )}
+        </ul>
+      </section>
 
-      {/* --- DANH SÁCH ASSIGNMENT --- */}
-      <div className="assignment-list">
-        <h3>📖 Danh sách bài tập</h3>
-        {assignments.length === 0 ? (
-          <p>Chưa có bài tập nào.</p>
-        ) : (
-          <table>
-            <thead>
-              <tr>
-                <th>Tiêu đề</th>
-                <th>Học viên</th>
-                <th>Môn</th>
-                <th>Deadline</th>
-                <th>File</th>
-                <th>Hành động</th>
-              </tr>
-            </thead>
-            <tbody>
-              {assignments.map((a, index) => (
-                <tr key={a._id || index}>
-                  <td>{a.title}</td>
-                  <td>{a.learnerId?.email  || "?"} ({a.learnerId?.username || "?"})</td>
-                  <td>{a.subjectId?.name || "?"}</td>
-                  <td>{new Date(a.deadline).toLocaleDateString()}</td>
-                  <td>
-                    {a.fileUrl ? (
-                      <a href={a.fileUrl} target="_blank" rel="noopener noreferrer">
-                        📄 Xem file
-                      </a>
-                    ) : (
-                      "—"
-                    )}
-                  </td>
-                  <td>
-                    <button className="delete-btn" onClick={() => handleDelete(a._id)}>
-                      🗑️ Xoá
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </div>
+      {/* 2️⃣ Assign Assignment */}
+      <section className="assign-section">
+        <h3 className="section-title text-green-600">
+          🎯 Giao Assignment cho Buổi Học
+        </h3>
+
+        <div className="flex flex-col md:flex-row gap-4 items-center mb-3">
+          <Select
+            options={storageOptions}
+            onChange={(sel) => setSelectedStorageId(sel?.value || "")}
+            placeholder="📦 Chọn Assignment Storage"
+            className="flex-1"
+          />
+          <Select
+            options={bookingOptions}
+            onChange={(sel) => setSelectedBookingId(sel?.value || "")}
+            placeholder="📅 Chọn buổi học"
+            className="flex-1"
+          />
+        </div>
+<input
+  type="text"
+  placeholder="✏️ Tiêu đề bài tập khi giao"
+  value={assignTitle}
+  onChange={(e) => setAssignTitle(e.target.value)}
+  className="border rounded-md p-2 w-full mb-2"
+/>
+
+<textarea
+  placeholder="🧾 Mô tả bài tập khi giao (tùy chọn)"
+  value={assignDescription}
+  onChange={(e) => setAssignDescription(e.target.value)}
+  className="border rounded-md p-2 w-full mb-2"
+/>
+
+<input
+  type="date"
+  value={deadline}
+  onChange={(e) => setDeadline(e.target.value)}
+  className="border rounded-md p-2 w-full mb-3"
+/>
+        <button
+          onClick={handleAssign}
+          disabled={loading}
+          className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition"
+        >
+          {loading ? "Đang giao..." : "📝 Giao Assignment"}
+        </button>
+      </section>
     </div>
   );
 };
