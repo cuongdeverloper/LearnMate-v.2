@@ -9,18 +9,9 @@ import {
 import Swal from "sweetalert2";
 
 const TutorManageAvailability = () => {
-  const [weekStart, setWeekStart] = useState(() => {
-    const today = new Date();
-    const day = today.getDay();
-    const diff = today.getDate() - day + (day === 0 ? -6 : 1);
-    const monday = new Date(today.setDate(diff));
-    monday.setHours(0, 0, 0, 0);
-    return monday;
-  });
-
-  const [availabilities, setAvailabilities] = useState([]); 
-  const [selectedSlots, setSelectedSlots] = useState([]); 
-  const [isAllBusy, setIsAllBusy] = useState(false); 
+  const [availabilities, setAvailabilities] = useState([]);
+  const [selectedSlots, setSelectedSlots] = useState([]);
+  const [isAllBusy, setIsAllBusy] = useState(false);
 
   const token = useSelector((state) => state.user.account.access_token);
   const tutorId = useSelector((state) => state.user.account.id);
@@ -34,23 +25,13 @@ const TutorManageAvailability = () => {
     "19:30 - 21:30",
   ];
 
-  const getWeekDays = () => {
-    const days = [];
-    for (let i = 0; i < 7; i++) {
-      const d = new Date(weekStart);
-      d.setDate(weekStart.getDate() + i);
-      days.push(d);
-    }
-    return days;
-  };
+  const weekDays = [0, 1, 2, 3, 4, 5, 6]; // Sunday = 0, Monday = 1 ...
 
   const fetchAvailabilities = async () => {
-    const res = await getTutorAvailability(
-      weekStart.toISOString().split("T")[0]
-    );
+    const res = await getTutorAvailability();
+    console.log(res)
     if (res.errorCode === 0) {
       const data = res.data?.data || [];
-      
       setAvailabilities(data);
       setIsAllBusy(data.length === 0);
     } else {
@@ -60,27 +41,14 @@ const TutorManageAvailability = () => {
 
   useEffect(() => {
     fetchAvailabilities();
-  }, [weekStart]);
+  }, []);
 
-  const handlePrevWeek = () => {
-    const prev = new Date(weekStart);
-    prev.setDate(prev.getDate() - 7);
-    setWeekStart(prev);
-  };
-
-  const handleNextWeek = () => {
-    const next = new Date(weekStart);
-    next.setDate(next.getDate() + 7);
-    setWeekStart(next);
-  };
-
-  const toggleSlot = (day, slotStr) => {
+  const toggleSlot = (dayOfWeek, slotStr) => {
     const [startTime, endTime] = slotStr.split(" - ");
-    const dateStr = day.toISOString().split("T")[0];
 
     const existing = availabilities.find(
       (a) =>
-        new Date(a.date).toISOString().split("T")[0] === dateStr &&
+        a.dayOfWeek === dayOfWeek &&
         a.startTime === startTime &&
         a.endTime === endTime
     );
@@ -91,199 +59,186 @@ const TutorManageAvailability = () => {
     }
 
     const found = selectedSlots.find(
-      (s) => s.date === dateStr && s.startTime === startTime && s.endTime === endTime
+      (s) =>
+        s.dayOfWeek === dayOfWeek &&
+        s.startTime === startTime &&
+        s.endTime === endTime
     );
+
     if (found) {
       setSelectedSlots(selectedSlots.filter((s) => s !== found));
     } else {
-      setSelectedSlots([...selectedSlots, { date: dateStr, startTime, endTime }]);
+      setSelectedSlots([...selectedSlots, { dayOfWeek, startTime, endTime }]);
     }
 
     if (isAllBusy) setIsAllBusy(false);
   };
 
   const handleSave = async () => {
-  if (!selectedSlots.length) {
-    toast.warn("Chưa chọn slot nào!");
-    return;
-  }
+    if (!selectedSlots.length) {
+      toast.warn("Chưa chọn slot nào!");
+      return;
+    }
 
-  const confirm = await Swal.fire({
-    title: "Xác nhận lưu lịch trống?",
-    text: `Bạn có chắc muốn lưu ${selectedSlots.length} khung giờ mới không?`,
-    icon: "question",
-    showCancelButton: true,
-    confirmButtonText: "Lưu",
-    cancelButtonText: "Huỷ",
-    confirmButtonColor: "#3085d6",
-    cancelButtonColor: "#d33",
-  });
-
-  if (!confirm.isConfirmed) return;
-
-  Swal.fire({
-    title: "Đang lưu...",
-    allowOutsideClick: false,
-    didOpen: () => Swal.showLoading(),
-  });
-
-  const res = await createTutorAvailability(selectedSlots);
-  Swal.close();
-
-  if (res.errorCode === 0) {
-    Swal.fire({
-      icon: "success",
-      title: "Đã lưu thành công!",
-      text: "Các khung giờ trống đã được thêm.",
-      timer: 2000,
-      showConfirmButton: false,
+    const confirm = await Swal.fire({
+      title: "Xác nhận lưu lịch trống?",
+      text: `Bạn có chắc muốn lưu ${selectedSlots.length} khung giờ mới không?`,
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonText: "Lưu",
+      cancelButtonText: "Huỷ",
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
     });
-    setSelectedSlots([]);
-    fetchAvailabilities();
-  } else {
+
+    if (!confirm.isConfirmed) return;
+
     Swal.fire({
-      icon: "error",
-      title: "Lỗi khi lưu!",
-      text: res.message || "Không thể lưu lịch trống.",
+      title: "Đang lưu...",
+      allowOutsideClick: false,
+      didOpen: () => Swal.showLoading(),
     });
-  }
-};
 
-const handleDelete = async (availabilityId) => {
-  const confirm = await Swal.fire({
-    title: "Xác nhận xoá?",
-    text: "Bạn có chắc muốn xoá khung giờ này?",
-    icon: "warning",
-    showCancelButton: true,
-    confirmButtonText: "Xoá",
-    cancelButtonText: "Huỷ",
-    confirmButtonColor: "#e74c3c",
-    cancelButtonColor: "#95a5a6",
-  });
+    const res = await createTutorAvailability(selectedSlots);
+    Swal.close();
 
-  if (!confirm.isConfirmed) return;
+    if (res.errorCode === 0) {
+      Swal.fire({
+        icon: "success",
+        title: "Đã lưu thành công!",
+        text: "Các khung giờ trống đã được thêm.",
+        timer: 2000,
+        showConfirmButton: false,
+      });
+      setSelectedSlots([]);
+      fetchAvailabilities();
+    } else {
+      Swal.fire({
+        icon: "error",
+        title: "Lỗi khi lưu!",
+        text: res.message || "Không thể lưu lịch trống.",
+      });
+    }
+  };
 
-  Swal.fire({
-    title: "Đang xoá...",
-    allowOutsideClick: false,
-    didOpen: () => Swal.showLoading(),
-  });
+  const handleDelete = async (availabilityId) => {
+    const confirm = await Swal.fire({
+      title: "Xác nhận xoá?",
+      text: "Bạn có chắc muốn xoá khung giờ này?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Xoá",
+      cancelButtonText: "Huỷ",
+      confirmButtonColor: "#e74c3c",
+      cancelButtonColor: "#95a5a6",
+    });
 
-  const res = await deleteTutorAvailability(availabilityId);
-  Swal.close();
+    if (!confirm.isConfirmed) return;
 
-  if (res.errorCode === 0) {
     Swal.fire({
-      icon: "success",
-      title: "Đã xoá thành công!",
-      text: "Khung giờ trống đã được xoá.",
-      timer: 2000,
-      showConfirmButton: false,
+      title: "Đang xoá...",
+      allowOutsideClick: false,
+      didOpen: () => Swal.showLoading(),
     });
-    fetchAvailabilities();
-  } else {
-    Swal.fire({
-      icon: "error",
-      title: "Lỗi khi xoá!",
-      text: res.message || "Không thể xoá khung giờ.",
-    });
-  }
-};
+
+    const res = await deleteTutorAvailability(availabilityId);
+    Swal.close();
+
+    if (res.errorCode === 0) {
+      Swal.fire({
+        icon: "success",
+        title: "Đã xoá thành công!",
+        text: "Khung giờ trống đã được xoá.",
+        timer: 2000,
+        showConfirmButton: false,
+      });
+      fetchAvailabilities();
+    } else {
+      Swal.fire({
+        icon: "error",
+        title: "Lỗi khi xoá!",
+        text: res.message || "Không thể xoá khung giờ.",
+      });
+    }
+  };
+
+  const getDayLabel = (dayOfWeek) => {
+    const labels = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"];
+    return labels[dayOfWeek];
+  };
 
   return (
-    <>
-      <div className="availability-wrapper">
-        <h2>Quản lý lịch trống</h2>
+    <div className="availability-wrapper">
+      <h2>Quản lý lịch trống</h2>
 
-        <div className="week-controls">
-          <button onClick={handlePrevWeek}>← Tuần trước</button>
-          <span>Tuần bắt đầu: {weekStart.toLocaleDateString("vi-VN")}</span>
-          <button onClick={handleNextWeek}>Tuần sau →</button>
+      <div className="weekly-schedule-grid">
+        <div className="grid-header">
+          {weekDays.map((day) => (
+            <div key={day} className="grid-header-day">
+              {getDayLabel(day)}
+            </div>
+          ))}
         </div>
 
-        {isAllBusy && (
-          <p style={{ color: "gray", marginTop: 8 }}>
-            Tuần này bạn <strong>bận toàn bộ</strong>.  
-            Hãy click vào ô trống để mở lịch.
-          </p>
-        )}
+        <div className="grid-body">
+          {weekDays.map((day) => (
+            <div key={day} className="grid-day-column">
+              {timeSlots.map((slot) => {
+                const [startTime, endTime] = slot.split(" - ");
+                const existing = availabilities.find(
+                  (a) =>
+                    a.dayOfWeek === day &&
+                    a.startTime === startTime &&
+                    a.endTime === endTime
+                );
+                const selected = selectedSlots.find(
+                  (s) =>
+                    s.dayOfWeek === day &&
+                    s.startTime === startTime &&
+                    s.endTime === endTime
+                );
 
-        <div className="weekly-schedule-grid">
-          <div className="grid-header">
-            {getWeekDays().map((day, idx) => (
-              <div key={idx} className="grid-header-day">
-                {day.toLocaleDateString("vi-VN", {
-                  weekday: "short",
-                  day: "numeric",
-                  month: "numeric",
-                })}
-              </div>
-            ))}
-          </div>
+                const cls = existing
+                  ? "available"
+                  : selected
+                  ? "selected"
+                  : isAllBusy
+                  ? "busy"
+                  : "empty";
 
-          <div className="grid-body">
-            {getWeekDays().map((day, idx) => {
-              const dateStr = day.toISOString().split("T")[0];
-              return (
-                <div key={idx} className="grid-day-column">
-                  {timeSlots.map((slot) => {
-                    const [startTime, endTime] = slot.split(" - ");
-                    const existing = availabilities.find(
-                      (a) =>
-                        new Date(a.date).toISOString().split("T")[0] === dateStr &&
-                        a.startTime === startTime &&
-                        a.endTime === endTime
-                    );
-                    const selected = selectedSlots.find(
-                      (s) =>
-                        s.date === dateStr &&
-                        s.startTime === startTime &&
-                        s.endTime === endTime
-                    );
-
-                    const cls = existing
-                      ? "available"
-                      : selected
-                      ? "selected"
-                      : isAllBusy
-                      ? "busy"
-                      : "empty";
-
-                    return (
-                      <div
-                        key={`${dateStr}-${slot}`}
-                        className={`schedule-slot ${cls}`}
-                        onClick={() => toggleSlot(day, slot)}
-                      >
-                        <div className="slot-time">{slot}</div>
-                        <div className="slot-status">
-                          {existing
-                            ? "Đã mở (bấm để xoá)"
-                            : selected
-                            ? "Sẽ thêm"
-                            : isAllBusy
-                            ? "Bận"
-                            : "Trống"}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              );
-            })}
-          </div>
+                return (
+                  <div
+                    key={`${day}-${slot}`}
+                    className={`schedule-slot ${cls}`}
+                    onClick={() => toggleSlot(day, slot)}
+                  >
+                    <div className="slot-time">{slot}</div>
+                    <div className="slot-status">
+                      {existing
+                        ? "Đã mở (bấm để xoá)"
+                        : selected
+                        ? "Sẽ thêm"
+                        : isAllBusy
+                        ? "Bận"
+                        : "Trống"}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ))}
         </div>
-
-        {selectedSlots.length > 0 && (
-          <div style={{ marginTop: 16 }}>
-            <strong>Đã chọn {selectedSlots.length} khung giờ.</strong>
-            <button onClick={handleSave} className="btn btn-primary btn-save">
-              Lưu lịch trống
-            </button>
-          </div>
-        )}
       </div>
-    </>
+
+      {selectedSlots.length > 0 && (
+        <div style={{ marginTop: 16 }}>
+          <strong>Đã chọn {selectedSlots.length} khung giờ.</strong>
+          <button onClick={handleSave} className="btn btn-primary btn-save">
+            Lưu lịch trống
+          </button>
+        </div>
+      )}
+    </div>
   );
 };
 

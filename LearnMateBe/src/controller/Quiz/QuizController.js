@@ -240,7 +240,7 @@ exports.updateQuestion = async (req, res) => {
 exports.deleteQuestion = async (req, res) => {
   try {
     const { questionId } = req.params;
-    const deleted = await Question.findByIdAndDelete(questionId);
+    const deleted = await QuestionStorage.findByIdAndDelete(questionId);
     if (!deleted)
       return res
         .status(404)
@@ -410,4 +410,53 @@ exports.createQuizStorage = async (req, res) => {
   }
 };
 
+exports.deleteQuizStorage = async (req, res) => {
+  try {
+    const { quizStorageId } = req.params;
+    const deleted = await QuizStorage.findByIdAndDelete(quizStorageId);
+    if (!deleted)
+      return res
+        .status(404)
+        .json({ success: false, message: "Không tìm thấy Quiz Storage." });
+    res
+      .status(200)
+      .json({ success: true, message: "Đã xoá Quiz Storage thành công." });
+  } catch (error) {
+    console.error("Delete Quiz Storage Error:", error);
+    res.status(500).json({ success: false, message: "Lỗi khi xoá Quiz Storage." });
+  }
+};
 
+exports.updateQuizStorage = async (req, res) => {
+  try {
+    const { quizStorageId } = req.params;
+    const { questionIds, name } = req.body; 
+
+    const tutor = await Tutor.findOne({ user: req.user.id });
+    if (!tutor)
+      return res.status(404).json({ success: false, message: "Không tìm thấy tutor." });
+
+    const quizStorage = await QuizStorage.findOne({ _id: quizStorageId, tutorId: tutor._id });
+    if (!quizStorage)
+      return res.status(404).json({ success: false, message: "Không tìm thấy QuizStorage." });
+
+    if (name) quizStorage.name = name;
+
+    if (Array.isArray(questionIds)) {
+      quizStorage.questions = questionIds;
+    }
+
+    await quizStorage.save();
+
+    await quizStorage.populate("questions", "text topic options correctAnswer");
+
+    res.status(200).json({
+      success: true,
+      message: "✅ Cập nhật QuizStorage thành công.",
+      quizStorage,
+    });
+  } catch (error) {
+    console.error("UpdateQuizStorage Error:", error);
+    res.status(500).json({ success: false, message: "Lỗi khi cập nhật QuizStorage." });
+  }
+};

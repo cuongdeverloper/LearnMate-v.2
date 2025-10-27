@@ -7,152 +7,96 @@ const Tutor = require("../../modal/Tutor");
 const User = require("../../modal/User");
 
 const respondBooking = async (req, res) => {
-  const { bookingId, action, learnerId } = req.body;
-  if (!["approve", "rejected", "cancelled"].includes(action))
-    return res.status(400).json({ message: "Invalid action" });
-
-  const booking = await Booking.findById(bookingId);
-  if (!booking) return res.status(404).json({ message: "Booking not found" });
-
   try {
     const { bookingId, action, learnerId } = req.body;
-
-    // Validate action
     const validActions = ["approve", "rejected", "cancelled"];
-    if (!validActions.includes(action)) {
+    if (!validActions.includes(action))
       return res.status(400).json({ message: "Invalid action" });
-    }
 
-    // Find booking
     const booking = await Booking.findById(bookingId);
-    if (!booking) {
-      return res.status(404).json({ message: "Booking not found" });
-    }
+    if (!booking) return res.status(404).json({ message: "Booking not found" });
 
-    // Update learnerId if provided
-    if (learnerId !== undefined) {
-      booking.learnerId = learnerId;
-    }
+    // Update learnerId nếu có
+    if (learnerId) booking.learnerId = learnerId;
 
-    // Update status
+    // Update trạng thái
     booking.status = action;
     await booking.save();
 
-    // Custom message
-    let responseMessage = "";
+    let msg = "";
     switch (action) {
       case "approve":
-        responseMessage = "Booking has been approved successfully ✅";
+        msg = "Booking has been approved ✅";
         break;
       case "rejected":
-        responseMessage = "Booking has been rejected ❌";
+        msg = "Booking has been rejected ❌";
         break;
       case "cancelled":
-        responseMessage = "Booking has been cancelled 🛑";
+        msg = "Booking has been cancelled 🛑";
         break;
     }
 
-    return res.status(200).json({ message: responseMessage, booking });
+    return res.status(200).json({ message: msg, booking });
   } catch (error) {
-    console.error("Error responding booking:", error);
-    return res
-      .status(500)
-      .json({ message: "Server error", error: error.message });
+    console.error("respondBooking Error:", error);
+    return res.status(500).json({ message: "Server error", error: error.message });
   }
 };
 
+// 👌 Cancel Booking by learner
 const cancelBooking = async (req, res) => {
-  const { bookingId, reason } = req.body;
-  const booking = await Booking.findById(bookingId);
-  if (!booking) return res.status(404).json({ message: "Booking not found" });
-
-  if (new Date(booking.startTime) < Date.now()) {
-    return res.status(400).json({ message: "Too late to cancel" });
-  }
-
-  // Ensure learnerId exists before saving
-  if (!booking.learnerId) {
-    return res
-      .status(400)
-      .json({ message: "learnerId is required to cancel booking" });
-  }
-
-  booking.status = "cancelled";
-  booking.cancellationReason = reason;
-  await booking.save();
-
-  res.status(200).json({ message: "Booking cancelled" });
-
   try {
     const { bookingId, reason } = req.body;
-
-    // Validate request
-    if (!bookingId) {
-      return res.status(400).json({ message: "bookingId is required" });
-    }
-    if (!reason || reason.trim() === "") {
-      return res
-        .status(400)
-        .json({ message: "Cancellation reason is required" });
+    if (!bookingId || !reason) {
+      return res.status(400).json({ message: "bookingId and reason are required" });
     }
 
     const booking = await Booking.findById(bookingId);
-    if (!booking) {
-      return res.status(404).json({ message: "Booking not found" });
+    if (!booking) return res.status(404).json({ message: "Booking not found" });
+
+    // Kiểm tra nếu chưa có scheduleIds thì không cho hủy
+    if (!booking.scheduleIds || booking.scheduleIds.length === 0) {
+      return res.status(400).json({ message: "Cannot cancel booking without schedules" });
     }
 
-    // Prevent cancelling past bookings
-    if (new Date(booking.startTime) < Date.now()) {
-      return res
-        .status(400)
-        .json({ message: "Too late to cancel this booking" });
-    }
-
-    // Must have learner assigned
-    if (!booking.learnerId) {
-      return res
-        .status(400)
-        .json({ message: "LearnerId is required to cancel booking" });
-    }
-
-    // Update booking
     booking.status = "cancelled";
     booking.cancellationReason = reason;
     await booking.save();
 
     return res.status(200).json({
-      message: `Booking has been cancelled 🛑`,
+      message: "Booking has been cancelled 🛑",
       booking,
     });
   } catch (error) {
-    console.error("Error cancelling booking:", error);
-    return res
-      .status(500)
-      .json({ message: "Server error", error: error.message });
+    console.error("cancelBooking Error:", error);
+    return res.status(500).json({ message: "Server error", error: error.message });
   }
 };
 
+// 👌 Get pending bookings for a tutor
 const getPendingBookings = async (req, res) => {
   try {
     const tutorUserId = req.params.tutorId;
-    // const tutor = await Tutor.findOne({ user: tutorUserId });
-    // console.log(tutor)
-
-    // if (!tutor) {
-    //   return res.status(404).json({ message: 'Tutor not found' });
-    // }
     const user = await User.findById(tutorUserId);
-    const tutor = await Tutor.findOne({ user: user._id });
-    const IdTutor = tutor._id;
-    const bookings = await Booking.find({
-      tutorId: IdTutor,
-      status: "pending",
-    }).populate("learnerId", "username email");
+    if (!user) return res.status(404).json({ message: "User not found" });
 
-    res.status(200).json(bookings);
-  } catch (err) {
-    console.error("Error fetching pending bookings:", err);
-    res.status(500).json({ error: err.message });
+    const tutor = await Tutor.findOne({ user: user._id });
+    if (!tutor) return res.status(404).json({ message: "Tutor not found" });
+
+    const bookings = await Booking.find({
+      tutorId: tutor._id,
+      status: "pending",
+    }).populate("learnerId", "username email")
+      .populate("subjectId","name classLevel")
+      .populate({
+    path: "scheduleIds",
+    select: "date startTime endTime attended",
+    options: { sort: { date: 1, startTime: 1 } } 
+  });
+    return res.status(200).json({ success: true, bookings });
+  } catch (error) {
+    console.error("getPendingBookings Error:", error);
+    return res.status(500).json({ message: "Server error", error: error.message });
   }
 };
 
@@ -328,7 +272,7 @@ const getMaterials = async (req, res) => {
 const createAvailability = async (req, res) => {
   try {
     const userId = req.user.id;
-    const { slots } = req.body;
+    const { slots } = req.body; // slots = [{ dayOfWeek: 0, startTime: "10:00", endTime: "11:00" }, ...]
 
     const tutor = await Tutor.findOne({ user: userId });
     if (!tutor) {
@@ -347,49 +291,60 @@ const createAvailability = async (req, res) => {
       });
     }
 
-    const formattedSlots = slots.map((s) => ({
-      tutorId,
-      date: new Date(`${s.date}T00:00:00.000Z`),
-      startTime: s.startTime,
-      endTime: s.endTime,
-    }));
+    // Kiểm tra trùng lặp
+    for (const slot of slots) {
+      const exists = await TutorAvailability.findOne({
+        tutorId,
+        dayOfWeek: slot.dayOfWeek,
+        startTime: slot.startTime,
+        endTime: slot.endTime,
+      });
 
-    const dates = formattedSlots.map((s) => s.date);
-
-    const existing = await TutorAvailability.find({
-      tutorId,
-      date: { $in: dates },
-    });
-
-    for (const slot of formattedSlots) {
-      const duplicate = existing.find(
-        (e) =>
-          e.startTime === slot.startTime &&
-          e.endTime === slot.endTime &&
-          e.date.toISOString().split("T")[0] ===
-            slot.date.toISOString().split("T")[0]
-      );
-
-      if (duplicate) {
+      if (exists) {
         return res.status(400).json({
           success: false,
-          message: `Đã có khung giờ ${slot.startTime} - ${
-            slot.endTime
-          } ngày ${slot.date.toLocaleDateString("vi-VN")}`,
+          message: `Đã có khung giờ ${slot.startTime} - ${slot.endTime} cho ngày thứ ${slot.dayOfWeek}`,
         });
       }
     }
 
-    // Không trùng → thêm mới
-    const created = await TutorAvailability.insertMany(formattedSlots);
+    // Thêm mới
+    const created = await TutorAvailability.insertMany(
+      slots.map((s) => ({
+        tutorId,
+        dayOfWeek: s.dayOfWeek,
+        startTime: s.startTime,
+        endTime: s.endTime,
+      }))
+    );
 
-    res.json({
+    res.status(201).json({
       success: true,
       message: "Tạo lịch trống thành công.",
       data: created,
     });
   } catch (err) {
     console.error("Error creating availability:", err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// Lấy danh sách khung giờ trống của tutor
+const getTutorAvailability = async (req, res) => {
+  try {
+    const { tutorId } = req.params;
+
+    const availabilities = await TutorAvailability.find({
+      tutorId,
+      isBooked: false,
+    }).sort({ dayOfWeek: 1, startTime: 1 });
+
+    res.status(200).json({
+      success: true,
+      data: availabilities,
+    });
+  } catch (err) {
+    console.error("Error fetching availability:", err);
     res.status(500).json({ success: false, message: err.message });
   }
 };
@@ -442,19 +397,7 @@ const deleteAvailability = async (req, res) => {
   }
 };
 
-const getTutorAvailability = async (req, res) => {
-  try {
-    const { tutorId } = req.params;
-    const availabilities = await TutorAvailability.find({
-      tutorId,
-      isBooked: false,
-    });
-    res.json({ success: true, data: availabilities });
-  } catch (err) {
-    console.error("Error fetching availability:", err);
-    res.status(500).json({ success: false, message: err.message });
-  }
-};
+
 const getActiveStatus = async (req, res) => {
   try {
     const tutor = await Tutor.findOne({ user: req.user.id });

@@ -20,6 +20,8 @@ const {
   getQuestionStorage,
   addQuestionsFromStorageToQuiz,
   createQuizStorage,
+  deleteQuizStorage,
+  updateQuizStorage,
 } = require("../controller/Quiz/QuizController");
 
 // =========================
@@ -47,6 +49,7 @@ router.get("/question/quiz/:quizId", checkAccessToken, getQuestionsByQuizId);
 router.get("/my-question-storage", checkAccessToken, getQuestionStorage);
 router.put("/question/:questionId", checkAccessToken, updateQuestion);
 router.delete("/question/:questionId", checkAccessToken, deleteQuestion);
+router.delete("/quizstorage/:quizStorageId", checkAccessToken, deleteQuizStorage);
 router.post("/:quizId/submit", checkAccessToken, submitQuiz);
 router.post(
   "/add-questions-to-quiz",
@@ -54,4 +57,10 @@ router.post(
   addQuestionsFromStorageToQuiz
 );
 router.post("/quiz-storage/create", checkAccessToken, createQuizStorage);
+router.put(
+  "/quiz-storage/:quizStorageId",
+  checkAccessToken,
+  updateQuizStorage
+);
+
 module.exports = router;

@@ -10,6 +10,9 @@ import {
   getQuizStorage,
   createQuizFromStorage,
   importQuestionsToStorage,
+  deleteQuestion,
+  deleteQuizStorage,
+  updateQuizStorage,
 } from "../ApiTutor";
 
 const TutorQuizManager = () => {
@@ -32,7 +35,7 @@ const TutorQuizManager = () => {
   const [selectedQuizStorageId, setSelectedQuizStorageId] = useState("");
   const [selectedBookingId, setSelectedBookingId] = useState("");
   const [loading, setLoading] = useState(false);
-
+  const [quizStorageQuestions, setQuizStorageQuestions] = useState([]);
   // --- Load subjects & bookings ---
   useEffect(() => {
     const fetchInitial = async () => {
@@ -63,6 +66,48 @@ const TutorQuizManager = () => {
       toast.error("❌ Lỗi khi tải QuestionStorage");
     }
   };
+
+  const handleUpdateQuizStorage = async () => {
+    if (!selectedQuizStorageId) return toast.warning("⚠️ Chọn QuizStorage để cập nhật");
+    setLoading(true);
+    try {
+      await updateQuizStorage(selectedQuizStorageId, {
+        questionIds: quizStorageQuestions.map((q) => q._id),
+      });
+      toast.success("✅ Cập nhật QuizStorage thành công");
+      fetchQuizStorage();
+    } catch {
+      toast.error("❌ Lỗi khi cập nhật QuizStorage");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+const handleAddQuestionToQuizStorage = (question) => {
+    if (!selectedQuizStorageId) return toast.warning("⚠️ Chọn QuizStorage trước");
+    if (quizStorageQuestions.some((q) => q._id === question._id)) return;
+
+    setQuizStorageQuestions([...quizStorageQuestions, question]);
+    setSelectedQuestionIds([...selectedQuestionIds, question._id]);
+  };
+
+  const handleRemoveQuestionFromQuizStorage = (questionId) => {
+    setQuizStorageQuestions(quizStorageQuestions.filter((q) => q._id !== questionId));
+    setSelectedQuestionIds(selectedQuestionIds.filter((id) => id !== questionId));
+  };
+
+
+  useEffect(() => {
+    if (!selectedQuizStorageId) {
+      setQuizStorageQuestions([]);
+      return;
+    }
+
+    const selectedQuiz = quizStorageList.find(qs => qs._id === selectedQuizStorageId);
+    if (selectedQuiz) {
+      setQuizStorageQuestions(selectedQuiz.questions || []);
+    }
+  }, [selectedQuizStorageId, quizStorageList]);
 
   // --- Import Questions ---
   const handleImportQuestions = async () => {
@@ -112,27 +157,27 @@ const TutorQuizManager = () => {
     }
   };
 
-const handleAssignQuiz = async () => {
-  if (!selectedQuizStorageId || !selectedBookingId)
-    return toast.warning("⚠️ Chọn QuizStorage và buổi học");
-  if (!quizTitle.trim()) 
-    return toast.warning("⚠️ Nhập tên quiz trước khi assign");
+  const handleAssignQuiz = async () => {
+    if (!selectedQuizStorageId || !selectedBookingId)
+      return toast.warning("⚠️ Chọn QuizStorage và buổi học");
+    if (!quizTitle.trim())
+      return toast.warning("⚠️ Nhập tên quiz trước khi assign");
 
-  setLoading(true);
-  try {
-    let res = await createQuizFromStorage({
-      quizStorageId: selectedQuizStorageId,
-      bookingId: selectedBookingId,
-      title: quizTitle, 
-    });
-    toast.success("✅ Quiz đã được assign cho buổi học");
-    setQuizTitle("");
-  } catch {
-    toast.error("❌ Lỗi khi assign Quiz");
-  } finally {
-    setLoading(false);
-  }
-};
+    setLoading(true);
+    try {
+      let res = await createQuizFromStorage({
+        quizStorageId: selectedQuizStorageId,
+        bookingId: selectedBookingId,
+        title: quizTitle,
+      });
+      toast.success("✅ Quiz đã được assign cho buổi học");
+      setQuizTitle("");
+    } catch {
+      toast.error("❌ Lỗi khi assign Quiz");
+    } finally {
+      setLoading(false);
+    }
+  };
 
 
   // --- Options ---
@@ -142,10 +187,37 @@ const handleAssignQuiz = async () => {
     label: `${b.subjectId?.name || "Không rõ môn"} - ${b.learnerId?.username || "Học viên"}`,
   }));
   const quizStorageOptions = filteredQuizStorage.map((qs) => ({
-  value: qs._id,
-  label: `${qs.name} (${qs.subjectId?.name || "Chưa rõ"})`,
-}));
+    value: qs._id,
+    label: `${qs.name} (${qs.subjectId?.name || "Chưa rõ"})`,
+  }));
 
+  const handleDeleteQuestion = async (questionId) => {
+    if (!window.confirm("❌ Bạn có chắc muốn xóa câu hỏi này?")) return;
+    setLoading(true);
+    try {
+      let res = await deleteQuestion(questionId);
+      toast.success("✅ Xóa câu hỏi thành công");
+      fetchQuestionStorage(selectedSubject);
+    } catch {
+      toast.error("❌ Lỗi khi xóa câu hỏi");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteQuizStorage = async (quizStorageId) => {
+    if (!window.confirm("❌ Bạn có chắc muốn xóa QuizStorage này?")) return;
+    setLoading(true);
+    try {
+      await deleteQuizStorage(quizStorageId);
+      toast.success("✅ Xóa QuizStorage thành công");
+      fetchQuizStorage();
+    } catch {
+      toast.error("❌ Lỗi khi xóa QuizStorage");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // --- Search Question ---
   useEffect(() => {
@@ -153,8 +225,8 @@ const handleAssignQuiz = async () => {
       searchTerm.trim() === ""
         ? questionStorage
         : questionStorage.filter((q) =>
-            q.text.toLowerCase().includes(searchTerm.toLowerCase())
-          );
+          q.text.toLowerCase().includes(searchTerm.toLowerCase())
+        );
     setFilteredQuestions(filtered);
   }, [searchTerm, questionStorage]);
 
@@ -211,12 +283,9 @@ const handleAssignQuiz = async () => {
             className="w-full border rounded-md p-2 mb-3"
           />
           <div className="max-h-60 overflow-y-auto border rounded-md p-3 bg-gray-50">
-            {filteredQuestions.length > 0 ? (
-              filteredQuestions.map((q) => (
-                <label
-                  key={q._id}
-                  className="flex items-center space-x-2 mb-1 cursor-pointer hover:bg-gray-100 p-1 rounded"
-                >
+            {filteredQuestions.map((q) => (
+              <div key={q._id} className="flex justify-between items-center mb-1 p-1 rounded hover:bg-gray-100">
+                <label className="flex items-center space-x-2">
                   <input
                     type="checkbox"
                     value={q._id}
@@ -225,19 +294,20 @@ const handleAssignQuiz = async () => {
                       if (e.target.checked)
                         setSelectedQuestionIds([...selectedQuestionIds, q._id]);
                       else
-                        setSelectedQuestionIds(
-                          selectedQuestionIds.filter((id) => id !== q._id)
-                        );
+                        setSelectedQuestionIds(selectedQuestionIds.filter((id) => id !== q._id));
                     }}
                   />
                   <span className="text-gray-700">{q.text}</span>
                 </label>
-              ))
-            ) : (
-              <p className="text-gray-500 text-center italic">
-                Không có câu hỏi nào
-              </p>
-            )}
+                <button
+                  onClick={() => handleDeleteQuestion(q._id)}
+                  className="text-red-500 hover:text-red-700 px-2"
+                >
+                  🗑️
+                </button>
+              </div>
+            ))}
+
           </div>
         </div>
       </section>
@@ -278,7 +348,60 @@ const handleAssignQuiz = async () => {
           </button>
         </div>
 
-        <ul className="divide-y divide-gray-200">
+        <Select
+          options={quizStorageOptions}
+          onChange={(sel) => setSelectedQuizStorageId(sel?.value || "")}
+          placeholder="📦 Chọn Quiz Storage để chỉnh sửa"
+        />
+
+        {selectedQuizStorageId && (
+          <div className="mt-4">
+            <h4 className="text-lg font-medium mb-2">📝 Câu hỏi trong QuizStorage</h4>
+            <div className="max-h-60 overflow-y-auto border rounded-md p-3 bg-gray-50">
+              {quizStorageQuestions.map((q) => (
+                <div
+                  key={q._id}
+                  className="flex justify-between items-center mb-1 p-1 rounded hover:bg-gray-100"
+                >
+                  <span>{q.text}</span>
+                  <button
+                    onClick={() => handleRemoveQuestionFromQuizStorage(q._id)}
+                    className="text-red-500 hover:text-red-700 px-2"
+                  >
+                    🗑️
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            <h4 className="text-lg font-medium mt-4 mb-2">➕ Thêm câu hỏi từ QuestionStorage</h4>
+            <div className="max-h-60 overflow-y-auto border rounded-md p-3 bg-gray-50">
+              {questionStorage.map((q) => (
+                <div
+                  key={q._id}
+                  className="flex justify-between items-center mb-1 p-1 rounded hover:bg-gray-100"
+                >
+                  <span>{q.text}</span>
+                  <button
+                    onClick={() => handleAddQuestionToQuizStorage(q)}
+                    className="text-green-500 hover:text-green-700 px-2"
+                  >
+                    ➕
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            <button
+              onClick={handleUpdateQuizStorage}
+              className="mt-3 bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600"
+            >
+              ✏️ Lưu thay đổi QuizStorage
+            </button>
+          </div>
+        )}
+
+        <ul className="divide-y divide-gray-200 mt-4">
           {filteredQuizStorage.length > 0 ? (
             filteredQuizStorage.map((qs) => (
               <li key={qs._id} className="py-2 flex justify-between items-center">
@@ -286,6 +409,12 @@ const handleAssignQuiz = async () => {
                 <span className="text-sm text-gray-500">
                   {qs.subjectId?.name || "Không rõ môn"}
                 </span>
+                <button
+                  onClick={() => handleDeleteQuizStorage(qs._id)}
+                  className="text-red-500 hover:text-red-700 ml-2"
+                >
+                  🗑️
+                </button>
               </li>
             ))
           ) : (
@@ -297,7 +426,7 @@ const handleAssignQuiz = async () => {
       </section>
 
       {/* 3️⃣ Assign Quiz */}
-       <section className="bg-white shadow-lg rounded-2xl p-6 border border-gray-100">
+      <section className="bg-white shadow-lg rounded-2xl p-6 border border-gray-100">
         <h3 className="text-xl font-semibold mb-4 text-blue-600">
           🎯 Assign Quiz cho Buổi Học
         </h3>

@@ -6,7 +6,6 @@
   color: #1e293b;
 }
 
-/* ⚡ Header */
 .booking-header {
   text-align: center;
   margin-bottom: 32px;
@@ -24,7 +23,6 @@
   }
 }
 
-/* ⚡ Container */
 .booking-container {
   max-width: 900px;
   margin: 0 auto;
@@ -32,7 +30,6 @@
   gap: 20px;
 }
 
-/* ⚡ Card Style */
 .booking-card-tutor {
   background: #fff;
   border-radius: 14px;
@@ -48,9 +45,23 @@
     transform: translateY(-3px);
     box-shadow: 0 8px 24px rgba(37, 99, 235, 0.15);
   }
+
+  button {
+    background: #2563eb;
+    color: #fff;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.25s ease;
+
+    &:hover {
+      background: #1e40af;
+    }
+  }
 }
 
-/* ⚡ Info */
 .booking-info {
   display: flex;
   flex-direction: column;
@@ -89,14 +100,61 @@
   }
 }
 
-/* ⚡ Buttons */
+
+
+.booking-modal {
+  background: #fff;
+  border-radius: 12px;
+  max-width: 800px;
+  width: 90%;
+  padding: 24px;
+  outline: none;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+}
+
+.booking-modal h2 {
+  margin-top: 0;
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #2563eb;
+}
+
+.booking-modal .close-btn {
+  background: transparent;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  float: right;
+}
+
+.booking-modal table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 12px;
+
+  th, td {
+    border: 1px solid #ddd;
+    padding: 8px;
+  }
+
+  th {
+    background: #f3f4f6;
+    text-align: left;
+  }
+
+  tr:hover {
+    background: #f9fafb;
+  }
+}
+
 .booking-actions {
   display: flex;
   gap: 10px;
+  margin-top: 16px;
 
   button {
-    border: none;
-    padding: 8px 16px;
+    flex: 1;
+    padding: 8px 0;
     border-radius: 8px;
     font-weight: 500;
     cursor: pointer;
@@ -105,27 +163,34 @@
   }
 
   .btn-accept {
-    background: #2563eb;
+    background: #16a34a;
     color: #fff;
 
     &:hover {
-      background: #1e40af;
-      box-shadow: 0 0 8px rgba(37, 99, 235, 0.3);
+      background: #15803d;
     }
   }
 
   .btn-reject {
-    background: #ef4444;
+    background: #dc2626;
     color: #fff;
 
     &:hover {
-      background: #dc2626;
-      box-shadow: 0 0 8px rgba(239, 68, 68, 0.3);
+      background: #b91c1c;
+    }
+  }
+
+  .btn-close {
+    background: #e5e7eb;
+    color: #1f2937;
+
+    &:hover {
+      background: #d1d5db;
     }
   }
 }
 
-/* ⚡ Empty state */
+/* Empty state */
 .empty-state {
   text-align: center;
   color: #64748b;
@@ -143,7 +208,7 @@
   }
 }
 
-/* ⚡ Responsive */
+/* Responsive */
 @media (max-width: 700px) {
   .booking-card-tutor {
     flex-direction: column;
@@ -155,4 +220,34 @@
     width: 100%;
     justify-content: flex-end;
   }
+
+  .booking-modal {
+    padding: 16px;
+  }
+}
+.booking-modal-overlay {
+  position: fixed; /* luôn full màn hình */
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%; /* đảm bảo full màn hình */
+  background-color: rgba(124, 123, 123, 0.85); /* overlay tối hẳn */
+  display: flex;
+  justify-content: center;
+  align-items: flex-start; /* modal xuất hiện từ top */
+  padding: 20px;
+  overflow-y: auto; /* scroll nếu modal cao hơn viewport */
+  z-index: 1000;
+}
+
+.booking-modal {
+  background: #fff;
+  border-radius: 16px;
+  max-width: 800px;
+  width: 100%;
+  max-height: 90vh; /* giới hạn chiều cao modal */
+  overflow-y: auto; /* scroll cho nội dung dài */
+  padding: 24px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+  outline: none;
 }
