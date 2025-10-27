@@ -881,3 +881,22 @@
   font-size: 0.9rem;
   font-weight: 500;
 }
+
+.status-label {
+  margin-top: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 6px;
+  display: inline-block;
+
+  &.pending {
+    background-color: #fff3cd;
+    color: #856404;
+  }
+
+  &.approved {
+    background-color: #d4edda;
+    color: #155724;
+  }
+}
