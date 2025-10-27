@@ -17,54 +17,38 @@ exports.requestChangeSchedule = async (req, res) => {
     const { bookingId } = req.params;
     const { scheduleId, newDate, newStartTime, newEndTime, reason } = req.body;
 
+    console.log("📩 Request change schedule:", { bookingId, scheduleId, newDate, newStartTime, newEndTime, reason });
+
     const booking = await Booking.findById(bookingId).populate("tutorId learnerId");
     if (!booking) {
       return res.status(404).json({ success: false, message: "Không tìm thấy booking." });
     }
-    // ✅ Kiểm tra dữ liệu đầu vào
+
     if (!scheduleId || !newDate || !newStartTime || !newEndTime || !reason) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Missing required fields." });
+      return res.status(400).json({ success: false, message: "Thiếu thông tin yêu cầu đổi lịch." });
     }
 
-    // ✅ Tìm lịch học gốc
     const schedule = await Schedule.findById(scheduleId);
     if (!schedule) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Schedule not found." });
+      return res.status(404).json({ success: false, message: "Không tìm thấy lịch học." });
     }
 
-    // ✅ Kiểm tra quyền của học viên
     if (
       schedule.learnerId.toString() !== req.user._id &&
       schedule.learnerId.toString() !== req.user.id
     ) {
-      return res
-        .status(403)
-        .json({ success: false, message: "Unauthorized action." });
+      return res.status(403).json({ success: false, message: "Không có quyền đổi lịch này." });
     }
 
-    // ✅ Kiểm tra đã có yêu cầu pending chưa
-    const existingRequest = await ChangeRequest.findOne({
-      scheduleId,
-      learnerId: req.user._id || req.user.id,
-      status: "pending",
-    });
+    const existingRequest = await ChangeRequest.findOne({ scheduleId, status: "pending" });
     if (existingRequest) {
-      return res.status(400).json({
-        success: false,
-        message: "A change request for this schedule is already pending.",
-      });
+      return res.status(400).json({ success: false, message: "Đã có yêu cầu đổi lịch đang chờ duyệt." });
     }
 
-    // ✅ Validate tutor availability
     const tutorId = schedule.tutorId;
     const targetDate = new Date(newDate);
-    const dayOfWeek = targetDate.getDay(); // 0 = Sunday, 1 = Monday ...
+    const dayOfWeek = targetDate.getDay();
 
-    // 🔍 Tìm xem tutor có lịch rảnh trong ngày đó không
     const availability = await TutorAvailability.findOne({
       tutorId,
       dayOfWeek,
@@ -74,13 +58,9 @@ exports.requestChangeSchedule = async (req, res) => {
     });
 
     if (!availability) {
-      return res.status(400).json({
-        success: false,
-        message: "Tutor is not available at the selected time.",
-      });
+      return res.status(400).json({ success: false, message: "Gia sư không rảnh vào thời gian này." });
     }
 
-    // ✅ Tạo yêu cầu đổi lịch
     const changeRequest = new ChangeRequest({
       scheduleId,
       learnerId: req.user._id || req.user.id,
@@ -91,21 +71,23 @@ exports.requestChangeSchedule = async (req, res) => {
     });
 
     await changeRequest.save();
+    console.log("✅ Change request saved:", changeRequest._id);
 
     return res.status(201).json({
       success: true,
-      message: "Change schedule request created successfully.",
+      message: "Yêu cầu đổi lịch đã được gửi thành công.",
       data: changeRequest,
     });
   } catch (error) {
-    console.error("Error in requestChangeSchedule:", error);
+    console.error("❌ Error in requestChangeSchedule:", error);
     return res.status(500).json({
       success: false,
-      message: "Server error when requesting schedule change.",
+      message: "Lỗi server khi gửi yêu cầu đổi lịch.",
       error: error.message,
     });
   }
 };
+
 exports.getMyChangeRequests = async (req, res) => {
   try {
     const learnerId = req.user._id || req.user.id;
@@ -228,47 +210,36 @@ exports.getLearnerWeeklySchedules = async (req, res) => {
         .status(401)
         .json({ message: "Unauthorized: User not logged in." });
     }
+
     const learnerId = req.user.id || req.user._id;
-    const { weekStart } = req.query;
-
-    if (!weekStart) {
-      return res.status(400).json({ message: "Missing weekStart parameter" });
-    }
-
-    const startDate = new Date(weekStart);
-    startDate.setUTCHours(0, 0, 0, 0);
-
-    const endDate = addDays(startDate, 7); // lấy đến đúng Chủ nhật
-    endDate.setUTCHours(23, 59, 59, 999); // bao toàn bộ ngày Chủ nhật
 
     const schedules = await Schedule.find({
       learnerId: learnerId,
-      date: { $gte: startDate, $lte: endDate }, // CHỈNH SỬA Ở ĐÂY
     })
-    .populate({
-      path: "bookingId",
-      select: "tutorId subjectId",
-      populate: [
-        {
-          path: "tutorId",
-          select: "user",
-          populate: {
-            path: "user",
-            select: "username",
+      .populate({
+        path: "bookingId",
+        select: "tutorId subjectId",
+        populate: [
+          {
+            path: "tutorId",
+            select: "user",
+            populate: {
+              path: "user",
+              select: "username",
+            },
           },
-        },
-        {
-          path: "subjectId",
-          select: "name classLevel",
-        },
-      ],
-    })
-    .select("date startTime endTime bookingId attended");
-      
+          {
+            path: "subjectId",
+            select: "name classLevel",
+          },
+        ],
+      })
+      .select("date startTime endTime bookingId attended status")
+      .sort({ date: 1 }); // sắp xếp theo ngày tăng dần
 
     res.json(schedules);
   } catch (error) {
-    console.error("Error fetching learner's weekly schedules:", error);
+    console.error("Error fetching learner's schedules:", error);
     res.status(500).json({ message: "Server error fetching schedules" });
   }
 };

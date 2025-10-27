@@ -145,11 +145,7 @@ exports.createBooking = async (req, res) => {
       numberOfSession: totalSessions,
     });
 
-    // Mark slots as booked
-    await TutorAvailability.updateMany(
-      { _id: { $in: availabilityIds } },
-      { $set: { isBooked: true } }
-    );
+
 
     // Tạo lịch Schedule dựa trên dayOfWeek
     const schedulesData = [];
@@ -184,6 +180,7 @@ exports.createBooking = async (req, res) => {
           date: scheduleDate,
           startTime: slot.startTime,
           endTime: slot.endTime,
+          status: "pending"
         });
       }
     }
