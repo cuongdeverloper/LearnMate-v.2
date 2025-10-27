@@ -44,7 +44,7 @@ const ChangeScheduleModal = ({ isOpen, onClose, onSubmit, schedules }) => {
   const [selectedScheduleId, setSelectedScheduleId] = useState("");
   const [newDate, setNewDate] = useState("");
   const [newTimeSlot, setNewTimeSlot] = useState("");
-  const [reason, setReason] = useState("");
+  const [reasonChange, setReasonChange] = useState("");
 
   const timeSlots = [
     "07:00 - 09:00",
@@ -56,7 +56,7 @@ const ChangeScheduleModal = ({ isOpen, onClose, onSubmit, schedules }) => {
   ];
 
   const handleSubmit = () => {
-    if (!selectedScheduleId || !newDate || !newTimeSlot || !reason.trim()) {
+    if (!selectedScheduleId || !newDate || !newTimeSlot || !reasonChange.trim()) {
       toast.error("Vui lòng chọn đầy đủ thông tin.");
       return;
     }
@@ -68,7 +68,7 @@ const ChangeScheduleModal = ({ isOpen, onClose, onSubmit, schedules }) => {
       newDate,
       newStartTime,
       newEndTime,
-      reason,
+      reason: reasonChange,
     });
     onClose();
   };
@@ -117,8 +117,8 @@ const ChangeScheduleModal = ({ isOpen, onClose, onSubmit, schedules }) => {
         <label>Lý do đổi lịch:</label>
         <textarea
           placeholder="Nhập lý do..."
-          value={reason}
-          onChange={(e) => setReason(e.target.value)}
+          value={reasonChange}
+          onChange={(e) => setReasonChange(e.target.value)}
         />
 
         <div className="modal-actions">
@@ -329,7 +329,7 @@ function AllCoursesSchedule() {
     setChangingBookingId(null);
   };
 
-  const handleSubmitChangeSchedule = async ({
+  const handleSubmitChangeSchedule =  async ({
     bookingId,
     scheduleId,
     newDate,
@@ -345,6 +345,7 @@ function AllCoursesSchedule() {
         newEndTime,
         reason,
       });
+      console.log("res" + res);
       if (res.success) {
         toast.success("Yêu cầu đổi lịch đã được gửi.");
       } else {
@@ -1003,7 +1004,7 @@ function AllCoursesSchedule() {
           <ChangeScheduleModal
             isOpen={showChangeScheduleModal}
             onClose={handleCloseChangeModal}
-            onSubmit={handleSubmitChangeSchedule}
+            onSubmit={(data) => handleSubmitChangeSchedule({ bookingId: changingBookingId, ...data })}
             bookingId={changingBookingId}
             schedules={allWeeklySchedules.filter(
               (s) => s.bookingId?._id === changingBookingId

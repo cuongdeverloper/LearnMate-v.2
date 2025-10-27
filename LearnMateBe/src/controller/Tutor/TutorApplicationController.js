@@ -45,13 +45,13 @@ const { createTutorApplicationNotification } = require('../Notification/Notifica
         });
       }
       // --- KIỂM TRA NẾU ĐÃ LÀ TUTOR ---
-      const existingTutor = await Tutor.findOne({ user: tutorId });
-      if (existingTutor) {
-        return res.status(400).json({
-          errorCode: 4,
-          message: 'Bạn đã là gia sư, không thể nộp đơn đăng ký mới.'
-        });
-      }
+      // const existingTutor = await Tutor.findOne({ user: tutorId });
+      // if (existingTutor) {
+      //   return res.status(400).json({
+      //     errorCode: 4,
+      //     message: 'Bạn đã là gia sư, không thể nộp đơn đăng ký mới.'
+      //   });
+      // }
 
       // --- PARSE FIELDS ---
       let parsedSubjects = subjects;
