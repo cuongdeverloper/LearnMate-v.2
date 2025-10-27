@@ -6,7 +6,10 @@ const {
     blockUser, 
     unblockUser, 
     deleteUser,
-    getUserByUserId 
+    getUserByUserId,
+    getAllTutorApplications,
+    approveTutorApplication,
+    rejectTutorApplication
 } = require('../controller/User/UserController');
 
 const RouterAdmin = express.Router();
@@ -29,5 +32,10 @@ RouterAdmin.patch('/users/:userId/unblock', unblockUser);
 
 // Delete user
 RouterAdmin.delete('/users/:userId', deleteUser);
+
+// Tutor management routes
+RouterAdmin.get('/tutor-applications', getAllTutorApplications);
+RouterAdmin.patch('/tutor-applications/:applicationId/approve', approveTutorApplication);
+RouterAdmin.patch('/tutor-applications/:applicationId/reject', rejectTutorApplication);
 
 module.exports = RouterAdmin;

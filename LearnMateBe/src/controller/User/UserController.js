@@ -1,6 +1,8 @@
 const uploadCloud = require("../../config/cloudinaryConfig");
 const { sendMail } = require("../../config/mailSendConfig");
 const User = require("../../modal/User");
+const TutorApplication = require("../../modal/TutorApplication");
+const Tutor = require("../../modal/Tutor");
 // test branch moi ngay 29/5/2025
 const addUser = async (req, res) => {
   uploadCloud.single('image')(req, res, async (err) => {
@@ -225,9 +227,182 @@ const deleteUser = async (req, res) => {
   }
 };
 
+// Admin functions for tutor management
+const getAllTutorApplications = async (req, res) => {
+  try {
+    const applications = await TutorApplication.find({})
+      .populate('tutorId', 'username email phoneNumber image')
+      .populate('tutorProfile')
+      .populate('reviewedBy', 'username')
+      .sort({ createdAt: -1 });
+
+    return res.status(200).json({
+      errorCode: 0,
+      message: 'Get all tutor applications successfully',
+      data: applications
+    });
+  } catch (error) {
+    console.error('Error getting tutor applications:', error);
+    return res.status(500).json({
+      errorCode: 1,
+      message: 'Internal server error'
+    });
+  }
+};
+
+const approveTutorApplication = async (req, res) => {
+  try {
+    const { applicationId } = req.params;
+    const adminId = req.user.id;
+
+    // Find application
+    const application = await TutorApplication.findById(applicationId).populate('tutorId');
+    if (!application) {
+      return res.status(404).json({
+        errorCode: 1,
+        message: 'Application not found'
+      });
+    }
+
+    if (application.status !== 'pending') {
+      return res.status(400).json({
+        errorCode: 2,
+        message: 'Application already processed'
+      });
+    }
+
+    // Update user role to tutor
+    if (application.tutorId && application.tutorId._id) {
+      await User.findByIdAndUpdate(application.tutorId._id, { role: 'tutor' });
+    } else {
+      console.log('Warning: tutorId is null, cannot update user role');
+    }
+
+    // Create tutor profile if not exists
+    if (!application.tutorProfile) {
+      // For now, we'll create the tutor without subjects since they're stored as strings in application
+      // but Tutor model expects ObjectId references. We can handle this later or modify the schema.
+      const newTutor = new Tutor({
+        user: application.tutorId._id,
+        subjects: [], // Empty for now - can be populated later when subjects are properly referenced
+        experience: application.experience,
+        education: application.education,
+        bio: application.bio,
+        pricePerHour: application.pricePerHour,
+        location: application.location,
+        languages: application.languages,
+        certifications: [], // Empty for now - certificates are stored as strings in application but Tutor expects objects
+        active: true
+      });
+      
+      const savedTutor = await newTutor.save();
+      application.tutorProfile = savedTutor._id;
+    }
+
+    // Update application status
+    application.status = 'approved';
+    application.reviewedBy = adminId;
+    application.reviewedAt = new Date();
+    await application.save();
+
+    // Send approval email
+    if (application.tutorId && application.tutorId.email) {
+      const subject = 'Đơn đăng ký gia sư đã được duyệt';
+      const msg = `<p>Xin chào <b>${application.tutorId.username}</b>,</p>
+        <p>Chúc mừng! Đơn đăng ký gia sư của bạn đã được duyệt.</p>
+        <p>Bạn hiện có thể bắt đầu nhận học viên và giảng dạy trên nền tảng của chúng tôi.</p>
+        <p>Chúc bạn thành công!</p>`;
+      sendMail(application.tutorId.email, subject, msg);
+    } else {
+      console.log('Cannot send email: tutorId is null or email not found');
+    }
+
+    return res.status(200).json({
+      errorCode: 0,
+      message: 'Application approved successfully'
+    });
+  } catch (error) {
+    console.error('Error approving application:', error);
+    return res.status(500).json({
+      errorCode: 3,
+      message: 'Internal server error'
+    });
+  }
+};
+
+const rejectTutorApplication = async (req, res) => {
+  try {
+    console.log('Reject application request received');
+    console.log('Application ID:', req.params.applicationId);
+    console.log('Reason:', req.body.reason);
+    console.log('Admin user:', req.user);
+    
+    const { applicationId } = req.params;
+    const { reason } = req.body;
+    const adminId = req.user.id;
+
+    // Validate inputs
+    if (!reason || reason.trim().length === 0) {
+      return res.status(400).json({
+        errorCode: 1,
+        message: 'Rejection reason is required'
+      });
+    }
+
+    // Find application
+    const application = await TutorApplication.findById(applicationId).populate('tutorId');
+    if (!application) {
+      return res.status(404).json({
+        errorCode: 1,
+        message: 'Application not found'
+      });
+    }
+
+    if (application.status !== 'pending') {
+      return res.status(400).json({
+        errorCode: 2,
+        message: 'Application already processed'
+      });
+    }
+
+    // Update application status
+    application.status = 'rejected';
+    application.reviewedBy = adminId;
+    application.reviewedAt = new Date();
+    application.rejectionReason = reason;
+    await application.save();
+
+    // Send rejection email
+    if (application.tutorId && application.tutorId.email) {
+      const subject = 'Đơn đăng ký gia sư bị từ chối';
+      const msg = `<p>Xin chào <b>${application.tutorId.username}</b>,</p>
+        <p>Rất tiếc, đơn đăng ký gia sư của bạn đã bị từ chối.</p>
+        <p><b>Lý do:</b> ${reason || 'Không đáp ứng yêu cầu'}</p>
+        <p>Bạn có thể nộp lại đơn đăng ký sau khi hoàn thiện hồ sơ.</p>`;
+      sendMail(application.tutorId.email, subject, msg);
+    } else {
+      console.log('Cannot send email: tutorId is null or email not found');
+    }
+
+    return res.status(200).json({
+      errorCode: 0,
+      message: 'Application rejected successfully'
+    });
+  } catch (error) {
+    console.error('Error rejecting application:', error);
+    return res.status(500).json({
+      errorCode: 3,
+      message: 'Internal server error'
+    });
+  }
+};
+
 module.exports = {
   addUser, getUserByUserId, getAllStudents, getAllUsers,
   blockUser,
   unblockUser,
-  deleteUser
+  deleteUser,
+  getAllTutorApplications,
+  approveTutorApplication,
+  rejectTutorApplication
 };

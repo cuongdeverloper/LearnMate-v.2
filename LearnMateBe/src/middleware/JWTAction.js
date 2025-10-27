@@ -54,19 +54,17 @@ const verifyAccessToken = (token) => verifyToken(token, process.env.JWT_SECRET);
 const verifyRefreshToken = (token) => verifyToken(token, process.env.REFRESH_TOKEN_SECRET);
 
 const checkAccessToken = (req, res, next) => {
-    // const nonSecurePaths = ["/", "/login"];
-    // if (nonSecurePaths.includes(req.path)) {
-    //     return next();
-    // }
-
+    console.log("=== CHECK ACCESS TOKEN ===");
+    console.log("Headers:", req.headers);
+    
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
-
-    // Rename the variable to avoid conflict with the function name
-    // let decodedToken = decodeToken(token);
-    // console.log('Decoded Token:', decodedToken);
+    
+    console.log("Auth header:", authHeader);
+    console.log("Token:", token ? token.substring(0, 20) + '...' : 'No token');
     
     if (!token) {
+        console.log("No token found");
         return res.status(401).json({
             EC: -1,
             data: '',
@@ -75,11 +73,15 @@ const checkAccessToken = (req, res, next) => {
     }
 
     const verifiedToken = verifyAccessToken(token);
+    console.log("Verified token:", verifiedToken);
+    
     if (!verifiedToken) {
+        console.log("Token verification failed");
         return res.status(401).json({ message: 'Invalid or expired access token' });
     }
 
     req.user = verifiedToken;
+    console.log("Token verified successfully, user:", req.user);
     next();
 };
 const createJWTVerifyEmail = (payload) => {
