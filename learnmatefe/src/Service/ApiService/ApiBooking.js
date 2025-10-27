@@ -119,7 +119,8 @@ export const getMyBookings = async () => {
       console.error("Error fetching bookings by tutorId:", error);
       return null;
     }
-  };export const requestChangeSchedule = async (bookingId, payload) => {
+  };
+  export const requestChangeSchedule = async (bookingId, payload) => {
     try {
       const token = Cookies.get("accessToken");
       if (!token) {
@@ -136,16 +137,15 @@ export const getMyBookings = async () => {
       );
   
       // ✅ Thành công thì trả luôn response data
-      return res;
+      return res.data;
   
-    } catch (err) {
+    } catch (error) {
       // ✅ Bắt lỗi từ backend và chuẩn hóa response để frontend xử lý thống nhất
-      return {
+      return error.response?.data || {
         success: false,
-        message:
-          err.response?.message ||
-          "Server error occurred while requesting schedule change.",
+        message: "Không thể gửi yêu cầu đổi lịch.",
       };
+  
     }
   };
   export const getMyChangeRequests = async () => {

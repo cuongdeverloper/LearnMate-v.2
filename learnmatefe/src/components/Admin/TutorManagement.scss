@@ -1,4 +1,4 @@
-.admin-dashboard {
+.tutor-management {
     .page-header {
         margin-bottom: 24px;
         text-align: center;
@@ -35,7 +35,7 @@
         }
     }
 
-    .users-table-card {
+    .applications-table-card {
         border-radius: 8px;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 
@@ -63,8 +63,8 @@
         }
     }
 
-    .user-detail {
-        .user-avatar-section {
+    .application-detail {
+        .applicant-info {
             display: flex;
             align-items: center;
             margin-bottom: 24px;
@@ -75,10 +75,15 @@
                 margin-right: 16px;
             }
 
-            .user-basic-info {
+            .basic-info {
                 h3 {
                     margin: 0 0 8px 0;
                     color: #333;
+                }
+
+                p {
+                    margin: 0 0 8px 0;
+                    color: #666;
                 }
 
                 .ant-tag {
@@ -87,18 +92,24 @@
             }
         }
 
-        .user-details-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 16px;
+        .subjects-section,
+        .certificates-section,
+        .cv-section {
+            margin-top: 16px;
 
-            .detail-item {
+            h4 {
+                color: #333;
+                margin-bottom: 8px;
+            }
+
+            .ant-tag {
+                margin-bottom: 4px;
+            }
+        }
+
+        .certificates-section {
+            .ant-list-item {
                 padding: 8px 0;
-
-                strong {
-                    color: #666;
-                    margin-right: 8px;
-                }
             }
         }
     }
@@ -119,8 +130,14 @@
             gap: 16px;
         }
 
-        .user-details-grid {
-            grid-template-columns: 1fr;
+        .applicant-info {
+            flex-direction: column;
+            text-align: center;
+
+            .ant-avatar {
+                margin-right: 0;
+                margin-bottom: 16px;
+            }
         }
     }
 
@@ -160,6 +177,12 @@
             border-color: #91d5ff;
             color: #0958d9;
         }
+
+        &.ant-tag-orange {
+            background-color: #fff7e6;
+            border-color: #ffd591;
+            color: #d46b08;
+        }
     }
 
     // Modal styling
@@ -176,5 +199,19 @@
     // Loading state
     .ant-spin-container {
         min-height: 400px;
+    }
+
+    // Descriptions styling
+    .ant-descriptions {
+        margin: 16px 0;
+
+        .ant-descriptions-item-label {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .ant-descriptions-item-content {
+            color: #666;
+        }
     }
 }

@@ -30,6 +30,8 @@ import PaymentResult from "./pages/User/paymentResult";
 import TutorApplicationForm from "./pages/Profile/TutorApplicationForm";
 import ReviewCoursePage from "./pages/Review/ReviewCoursePage";
 
+import AdminLayout from "./components/Admin/AdminLayout";
+import AdminOverview from "./components/Admin/AdminOverview";
 import AdminDashboard from "./components/Admin/AdminDashboard";
 import MyCoursesPage from "./pages/User/MyCoursesPage";
 import CourseDetails from "./pages/User/CourseDetails";
@@ -38,6 +40,7 @@ import StudentQuizResult from "./pages/User/StudentQuizResult";
 import StudentQuizOverview from "./pages/User/StudentQuizOverview";
 import SubmitAssignment from "./pages/User/SubmitAssignment";
 import ViewAssignmentFeedback from "./pages/User/ViewAssignmentFeedback";
+import TutorManagement from "./components/Admin/TutorManagement";
 
 const AppLayout = ({ children }) => {
   const location = useLocation();
@@ -102,7 +105,29 @@ const Layout = () => {
             path="/admin/dashboard"
             element={
               <ProtectedRoute allowedRoles={["admin"]}>
-                <AdminDashboard />
+                <AdminLayout>
+                  <AdminOverview />
+                </AdminLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/user-management"
+            element={
+              <ProtectedRoute allowedRoles={["admin"]}>
+                <AdminLayout>
+                  <AdminDashboard />
+                </AdminLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/tutor-management"
+            element={
+              <ProtectedRoute allowedRoles={["admin"]}>
+                <AdminLayout>
+                  <TutorManagement />
+                </AdminLayout>
               </ProtectedRoute>
             }
           />
