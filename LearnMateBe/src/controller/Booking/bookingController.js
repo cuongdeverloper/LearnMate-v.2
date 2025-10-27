@@ -305,23 +305,6 @@ exports.cancelBooking = async (req, res) => {
     });
 
     // Reset TutorAvailability slots
-    const schedules = await Schedule.find({ bookingId: booking._id });
-    const dayTimePairs = schedules.map((s) => ({
-      dayOfWeek: s.date.getDay(),
-      startTime: s.startTime,
-      endTime: s.endTime,
-    }));
-    for (const pair of dayTimePairs) {
-      await TutorAvailability.updateMany(
-        {
-          tutorId: booking.tutorId,
-          dayOfWeek: pair.dayOfWeek,
-          startTime: pair.startTime,
-          endTime: pair.endTime,
-        },
-        { $set: { isBooked: false } }
-      );
-    }
     await Schedule.deleteMany({ bookingId: booking._id });
     res.status(200).json({
       success: true,
