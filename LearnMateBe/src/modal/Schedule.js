@@ -7,7 +7,12 @@ const scheduleSchema = new mongoose.Schema({
   date: { type: Date, required: true },
   startTime: { type: String, required: true },  // "10:00"
   endTime: { type: String, required: true },    // "11:00"
-  attended: { type: Boolean, default: false } // NEW: Field to track attendance
+  attended: { type: Boolean, default: false }, // NEW: Field to track attendance
+  status: {
+    type: String,
+    enum: ['pending', 'approved'],
+    default: 'pending', // mặc định khi mới tạo
+  },
 }, { timestamps: true });
 
 module.exports = mongoose.model('Schedule', scheduleSchema);
