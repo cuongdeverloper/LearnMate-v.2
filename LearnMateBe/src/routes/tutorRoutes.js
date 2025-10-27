@@ -45,7 +45,7 @@ RouterTutor.get("/material/:bookingId", checkAccessToken,checkTutorRole,tutorCtr
 RouterTutor.post(
   "/application",
   checkAccessToken,
-  uploadCloud.single("cvFile"),checkTutorRole,
+  uploadDocs.single("cvFile"),
   TutorApplication.submitApplication
 );
 
