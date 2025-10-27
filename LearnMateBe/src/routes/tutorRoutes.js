@@ -46,9 +46,9 @@ RouterTutor.post(
 RouterTutor.get("/material/:bookingId", checkAccessToken,checkTutorRole,tutorCtrl.getMaterials);
 
 RouterTutor.post(
-  "/tutor/application",
+  "/application",
   checkAccessToken,
-  uploadCloud.single("cvFile"),checkTutorRole,
+  uploadDocs.single("cvFile"),
   TutorApplication.submitApplication
 );
 
@@ -76,12 +76,14 @@ RouterTutor.put(
   checkAccessToken,checkTutorRole,
   tutorCtrl.updateActiveStatus
 );
+
 RouterTutor.post(
   "/application",
   checkAccessToken,checkTutorRole,
   uploadCloud.single("cvFile"), 
   submitApplication
 );
+
 
 RouterTutor.get("/me", checkAccessToken, getMyTutor);
 RouterTutor.put("/:id", checkAccessToken, updateTutor);

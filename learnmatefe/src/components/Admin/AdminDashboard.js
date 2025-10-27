@@ -24,8 +24,10 @@ import {
     TeamOutlined,
     UserAddOutlined,
     UserDeleteOutlined,
-    ExclamationCircleOutlined
+    ExclamationCircleOutlined,
+    FileTextOutlined
 } from '@ant-design/icons';
+import { useNavigate } from 'react-router-dom';
 import AdminService from '../../Service/ApiService/AdminService';
 import { useSelector } from 'react-redux'; // Add this import
 import moment from 'moment';
@@ -34,6 +36,7 @@ import './AdminDashboard.scss';
 const { TextArea } = Input;
 
 const AdminDashboard = () => {
+    const navigate = useNavigate();
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(false);
     const [selectedUser, setSelectedUser] = useState(null);
@@ -317,8 +320,8 @@ const AdminDashboard = () => {
     return (
         <div className="admin-dashboard">
             <div className="dashboard-header">
-                <h1>Admin Dashboard</h1>
-                <p>User Management</p>
+                <h1>Bảng điều khiển Admin</h1>
+                <p>Quản lý người dùng và hệ thống</p>
             </div>
 
             {/* Statistics Cards */}

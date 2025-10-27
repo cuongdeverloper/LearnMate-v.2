@@ -62,7 +62,6 @@ app.use(
 configViewEngine(app);
 
 app.use("/api/learner", learnerRouter);
-
 app.use("/", RouteAuth);
 app.use("/api/tutor", RouterTutor);
 app.use("/api/booking", RouteBooking);
@@ -71,12 +70,14 @@ app.use("/api/quiz", RouteQuiz);
 app.use("/api/assignment", RouteAssignment);
 app.use("/api/payment", RoutePayment);
 
+
 app.use("/api/learner", learnerRouter);
 
 app.use("/", RouteAuth);
 app.use("/api/tutor", RouterTutor);
 app.use("/api/booking", RouteBooking);
 app.use("/api/admin", RouterAdmin);
+
 app.get("/", (req, res) => {
   res.json("Hello");
 });

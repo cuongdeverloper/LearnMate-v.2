@@ -64,7 +64,7 @@ const getReviewsByTutor = async (tutorId) => {
       Object.entries(formData).forEach(([key, value]) => {
         if (Array.isArray(value)) {
           value.forEach((v) => data.append(key, v));
-        } else {
+        } else if (value !== null && value !== undefined) {
           data.append(key, value);
         }
       });

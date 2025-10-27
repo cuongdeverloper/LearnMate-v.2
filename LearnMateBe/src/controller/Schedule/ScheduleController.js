@@ -4,6 +4,7 @@ const ChangeRequest = require("../../modal/ChangeRequest");
 const User = require("../../modal/User");
 const Tutor = require("../../modal/Tutor");
 const FinancialHistory = require("../../modal/FinancialHistory");
+const TutorAvailability = require("../../modal/TutorAvailability")
 
 
 function addDays(date, days) {
@@ -13,8 +14,13 @@ function addDays(date, days) {
 }
 exports.requestChangeSchedule = async (req, res) => {
   try {
+    const { bookingId } = req.params;
     const { scheduleId, newDate, newStartTime, newEndTime, reason } = req.body;
 
+    const booking = await Booking.findById(bookingId).populate("tutorId learnerId");
+    if (!booking) {
+      return res.status(404).json({ success: false, message: "Không tìm thấy booking." });
+    }
     // ✅ Kiểm tra dữ liệu đầu vào
     if (!scheduleId || !newDate || !newStartTime || !newEndTime || !reason) {
       return res
@@ -22,26 +28,15 @@ exports.requestChangeSchedule = async (req, res) => {
         .json({ success: false, message: "Missing required fields." });
     }
 
-    // ✅ Tìm lịch học
+    // ✅ Tìm lịch học gốc
     const schedule = await Schedule.findById(scheduleId);
     if (!schedule) {
       return res
         .status(404)
         .json({ success: false, message: "Schedule not found." });
     }
-    const existingRequest = await ChangeRequest.findOne({
-      scheduleId,
-      learnerId: req.user._id || req.user.id,
-      status: "pending", //
-    });
-    if (existingRequest) {
-      return res.status(400).json({
-        success: false,
-        message: "A change request for this schedule is already pending.",
-      });
-    }
-    // ✅ Kiểm tra quyền của học viên (chỉ học viên của buổi học mới được đổi
 
+    // ✅ Kiểm tra quyền của học viên
     if (
       schedule.learnerId.toString() !== req.user._id &&
       schedule.learnerId.toString() !== req.user.id
@@ -49,6 +44,40 @@ exports.requestChangeSchedule = async (req, res) => {
       return res
         .status(403)
         .json({ success: false, message: "Unauthorized action." });
+    }
+
+    // ✅ Kiểm tra đã có yêu cầu pending chưa
+    const existingRequest = await ChangeRequest.findOne({
+      scheduleId,
+      learnerId: req.user._id || req.user.id,
+      status: "pending",
+    });
+    if (existingRequest) {
+      return res.status(400).json({
+        success: false,
+        message: "A change request for this schedule is already pending.",
+      });
+    }
+
+    // ✅ Validate tutor availability
+    const tutorId = schedule.tutorId;
+    const targetDate = new Date(newDate);
+    const dayOfWeek = targetDate.getDay(); // 0 = Sunday, 1 = Monday ...
+
+    // 🔍 Tìm xem tutor có lịch rảnh trong ngày đó không
+    const availability = await TutorAvailability.findOne({
+      tutorId,
+      dayOfWeek,
+      startTime: { $lte: newStartTime },
+      endTime: { $gte: newEndTime },
+      isBooked: false,
+    });
+
+    if (!availability) {
+      return res.status(400).json({
+        success: false,
+        message: "Tutor is not available at the selected time.",
+      });
     }
 
     // ✅ Tạo yêu cầu đổi lịch

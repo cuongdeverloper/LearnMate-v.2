@@ -6,6 +6,11 @@ const { createTutorApplicationNotification } = require('../Notification/Notifica
 
   const submitApplication = async (req, res) => {
     try {
+      console.log('=== TUTOR APPLICATION SUBMISSION ===');
+      console.log('Request body:', req.body);
+      console.log('Request file:', req.file);
+      console.log('User ID:', req.user?.id);
+      
       const {
         experience,
         education,
@@ -19,6 +24,19 @@ const { createTutorApplicationNotification } = require('../Notification/Notifica
 
       const tutorId = req.user?.id; // Đây là userId
       const cvFile = req.file?.path;
+      
+      console.log('Parsed data:', {
+        tutorId,
+        cvFile,
+        experience,
+        education,
+        subjects,
+        bio,
+        pricePerHour,
+        location,
+        languages,
+        certificates
+      });
 
       if (!tutorId) {
         return res.status(401).json({
@@ -27,13 +45,13 @@ const { createTutorApplicationNotification } = require('../Notification/Notifica
         });
       }
       // --- KIỂM TRA NẾU ĐÃ LÀ TUTOR ---
-      const existingTutor = await Tutor.findOne({ user: tutorId });
-      if (existingTutor) {
-        return res.status(400).json({
-          errorCode: 4,
-          message: 'Bạn đã là gia sư, không thể nộp đơn đăng ký mới.'
-        });
-      }
+      // const existingTutor = await Tutor.findOne({ user: tutorId });
+      // if (existingTutor) {
+      //   return res.status(400).json({
+      //     errorCode: 4,
+      //     message: 'Bạn đã là gia sư, không thể nộp đơn đăng ký mới.'
+      //   });
+      // }
 
       // --- PARSE FIELDS ---
       let parsedSubjects = subjects;
@@ -108,8 +126,16 @@ const { createTutorApplicationNotification } = require('../Notification/Notifica
       await newApplication.save();
 
       // --- GỬI THÔNG BÁO CHO ADMIN ---
-      if (typeof createTutorApplicationNotification === 'function') {
-        await createTutorApplicationNotification(newApplication);
+      try {
+        if (typeof createTutorApplicationNotification === 'function') {
+          await createTutorApplicationNotification(newApplication);
+          console.log('Notification sent successfully');
+        } else {
+          console.log('createTutorApplicationNotification function not available');
+        }
+      } catch (notificationError) {
+        console.error('Notification error (non-critical):', notificationError);
+        // Don't fail the application submission if notification fails
       }
 
       return res.status(201).json({
@@ -120,9 +146,15 @@ const { createTutorApplicationNotification } = require('../Notification/Notifica
 
     } catch (error) {
       console.error(' Lỗi khi submit application:', error);
+      console.error('Error details:', {
+        message: error.message,
+        stack: error.stack,
+        name: error.name
+      });
       return res.status(500).json({
         errorCode: 500,
-        message: error.message
+        message: 'Lỗi server khi xử lý đơn đăng ký',
+        details: error.message
       });
     }
   };
