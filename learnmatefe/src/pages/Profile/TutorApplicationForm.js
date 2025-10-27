@@ -92,7 +92,7 @@ const TutorApplicationForm = () => {
         ...formData,
         location: fullLocation,
       });
-
+      console.log('123',res)
       if (res?.errorCode === 0) {
         toast.success(res.message || "Đăng ký thành công!");
         setFormData({
