@@ -21,9 +21,12 @@ const {
 } = require("../controller/Tutor/TutorApplicationController");
 const { acceptChangeRequest, rejectChangeRequest, getChangeRequestsByTutor } = require("../controller/Schedule/ScheduleController");
 const { checkTutorRole } = require("../middleware/tutorMiddleware");
-RouterTutor.post("/bookings/respond", tutorCtrl.respondBooking);
-RouterTutor.post("/bookings/cancel", tutorCtrl.cancelBooking);
-RouterTutor.get("/bookings/pending/:tutorId", tutorCtrl.getPendingBookings);
+
+RouterTutor.post("/bookings/respond", checkAccessToken, tutorCtrl.respondBooking);
+
+RouterTutor.post("/bookings/cancel", checkAccessToken, tutorCtrl.cancelBooking);
+
+RouterTutor.get("/bookings/pending/:tutorId", checkAccessToken, tutorCtrl.getPendingBookings);
 
 RouterTutor.post("/schedule",checkAccessToken, checkTutorRole,tutorCtrl.createSchedule);
 RouterTutor.get("/schedule/:tutorId",checkAccessToken,checkTutorRole, tutorCtrl.getSchedule);

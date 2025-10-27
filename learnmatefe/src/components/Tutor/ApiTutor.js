@@ -117,38 +117,53 @@ export const fetchStudentsApi = async () => {
   }
 };
 
-export const fetchPendingBookings = (tutorId) => {
-  return axios.get(`/api/tutor/bookings/pending/${tutorId}`);
+export const fetchPendingBookings = async (tutorId) => {
+  try {
+    const token = localStorage.getItem("accessToken");
+    const res = await axios.get(`/api/tutor/bookings/pending/${tutorId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return res
+  } catch (error) {
+    console.error("Error fetching pending bookings:", error);
+    const msg = error.response?.message || "Cannot fetch pending bookings";
+    throw new Error(msg);
+  }
 };
+
+// ✅ Respond to a booking (approve/reject/cancel)
 export const respondBooking = async (bookingId, action, learnerId) => {
   try {
-    const res = await axios.post(`/api/tutor/bookings/respond`, {
-      bookingId,
-      action,
-      learnerId,
-    });
-    return res; 
+    const token = localStorage.getItem("accessToken");
+    const res = await axios.post(
+      `/api/tutor/bookings/respond`,
+      { bookingId, action, learnerId },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    return res
   } catch (error) {
-    console.error('Error responding booking:', error);
-    const msg = error.response?.message || 'Error responding to booking';
+    console.error("Error responding booking:", error);
+    const msg = error.response?.message || "Error responding to booking";
     throw new Error(msg);
   }
 };
 
+// ✅ Cancel a booking
 export const cancelBooking = async (bookingId, reason) => {
   try {
-    const res = await axios.post(`/api/tutor/bookings/cancel`, {
-      bookingId,
-      reason,
-    });
+    const token = localStorage.getItem("accessToken");
+    const res = await axios.post(
+      `/api/tutor/bookings/cancel`,
+      { bookingId, reason },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
     return res;
   } catch (error) {
-    console.error('Error cancelling booking:', error);
-    const msg = error.response?.data?.message || 'Error cancelling booking';
+    console.error("Error cancelling booking:", error);
+    const msg = error.response?.message || "Error cancelling booking";
     throw new Error(msg);
   }
 };
-
 export const getTutorAvailability = async (weekStart) => {
   try {
     const token = Cookies.get("accessToken");
@@ -305,6 +320,34 @@ export const deleteQuestion = async (questionId) => {
     headers: { Authorization: `Bearer ${token}` },
   });
   return res;
+};
+
+export const deleteQuizStorage = async (quizstorageId) => {
+  const token = Cookies.get("accessToken");
+  if (!token) throw new Error("Unauthorized");
+
+  const res = await axios.delete(`/api/quiz/quizstorage/${quizstorageId}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return res;
+};
+
+export const updateQuizStorage = async (quizStorageId, data) => {
+  const token = Cookies.get("accessToken");
+  if (!token) throw new Error("Unauthorized");
+
+  try {
+    const res = await axios.put(`/api/quiz/quiz-storage/${quizStorageId}`, data, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return res;
+  } catch (error) {
+    console.error("❌ Lỗi khi cập nhật QuizStorage:", error);
+    const msg = error?.response?.data?.message || "Không thể cập nhật QuizStorage";
+    return { success: false, message: msg };
+  }
 };
 
 export const getTutorChangeRequests = async () => {
