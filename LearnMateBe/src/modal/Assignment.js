@@ -1,18 +1,23 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
-const assignmentSchema = new mongoose.Schema({
-  subjectId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Subject',
-    required: true
+const AssignmentSchema = new mongoose.Schema(
+  {
+    assignmentStorageId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "AssignmentStorage",
+      required: true,
+    },
+    tutorId: { type: mongoose.Schema.Types.ObjectId, ref: "Tutor", required: true },
+    learnerId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+    subjectId: { type: mongoose.Schema.Types.ObjectId, ref: "Subject", required: true },
+    bookingId: { type: mongoose.Schema.Types.ObjectId, ref: "Booking", required: true },
+
+    title: { type: String, required: true },
+    description: { type: String },
+    fileUrl: { type: String, required: true },
+    deadline: { type: Date, required: true },
   },
-  tutorId: { type: mongoose.Schema.Types.ObjectId, ref: 'Tutor', required: true },
-  learnerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-  bookingId: { type: mongoose.Schema.Types.ObjectId, ref: 'Booking', required: true },
-  title: { type: String, required: true },
-  description: String,
-  fileUrl: String,
-  deadline: Date,
-}, { timestamps: true });
+  { timestamps: true }
+);
 
-module.exports = mongoose.model('Assignment', assignmentSchema);
+module.exports = mongoose.model("Assignment", AssignmentSchema);

@@ -1,5 +1,6 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useRef, useState } from "react";
 import Message from "../components/message/Message";
+import EmojiPicker from "emoji-picker-react";
 import { ApiMarkMessagesAsSeen } from "../../Service/ApiService/ApiMessage";
 
 const ChatBox = ({
@@ -14,6 +15,7 @@ const ChatBox = ({
   socket,
 }) => {
   const chatTopRef = useRef();
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
   const handleScroll = async () => {
     if (!chatTopRef.current) return;
@@ -23,7 +25,7 @@ const ChatBox = ({
     if (isAtBottom) {
       try {
         const senderId = currentChat.members.find((m) => m !== user.account.id);
-        await ApiMarkMessagesAsSeen(currentChat._id); // Mark as seen in DB
+        await ApiMarkMessagesAsSeen(currentChat._id);
         socket.current.emit("seenMessage", {
           senderId,
           conversationId: currentChat._id,
@@ -34,11 +36,16 @@ const ChatBox = ({
     }
   };
 
+  const handleEmojiClick = (emojiData) => {
+    setNewMessage((prev) => prev + emojiData.emoji);
+  };
+
   return (
     <div className="chatBox">
       <div className="chatBoxWrapper">
         {currentChat ? (
           <>
+            {/* Header */}
             <div className="chatHeader">
               <div className="chatHeaderLeft">
                 <img
@@ -48,10 +55,6 @@ const ChatBox = ({
                 />
                 <div>
                   <div className="chatHeaderName">{receiver?.username}</div>
-                  {/* <div className="chatHeaderStatus">
-        <span className="onlineDot"></span>
-        Đang hoạt động
-      </div> */}
                 </div>
               </div>
               <div className="chatHeaderRight">
@@ -61,7 +64,13 @@ const ChatBox = ({
               </div>
             </div>
 
-            <div className="chatBoxTop" ref={chatTopRef} onScroll={handleScroll} style={{ overflowY: "auto", maxHeight: "500px" }}>
+            {/* Messages */}
+            <div
+              className="chatBoxTop"
+              ref={chatTopRef}
+              onScroll={handleScroll}
+              style={{ overflowY: "auto", maxHeight: "500px" }}
+            >
               {messages.length === 0 ? (
                 <div className="noMessageYet">No messages yet. Say hi!</div>
               ) : (
@@ -69,9 +78,21 @@ const ChatBox = ({
                   const isLastMessage = index === messages.length - 1;
                   const isOwnMessage = m.sender._id === user.account.id;
 
+                  const prevMsg = messages[index - 1];
+                  const showTime =
+                    !prevMsg ||
+                    m.sender._id !== prevMsg.sender._id ||
+                    new Date(m.createdAt) - new Date(prevMsg.createdAt) >
+                      5 * 60 * 1000;
+
                   return (
                     <div key={m._id || index} ref={isLastMessage ? scrollRef : null}>
-                      <Message message={m} own={isOwnMessage} sender={m.sender} />
+                      <Message
+                        message={m}
+                        own={isOwnMessage}
+                        sender={m.sender}
+                        showTime={showTime}
+                      />
                       {isLastMessage && isOwnMessage && (
                         <div className="not-seen-text">
                           {m.seen === false ? "Not seen yet" : "Seen"}
@@ -83,20 +104,41 @@ const ChatBox = ({
               )}
             </div>
 
+            {/* Input area */}
             <div className="chatBoxBottom">
-              <textarea
-                className="chatMessageInput"
-                placeholder="write something..."
-                onChange={(e) => setNewMessage(e.target.value)}
-                value={newMessage}
-              ></textarea>
-              <button className="chatSubmitButton" onClick={handleSubmit}>
-                Send
-              </button>
+              <div className="chatInputContainer">
+                <button
+                  type="button"
+                  className="iconButton"
+                  onClick={() => setShowEmojiPicker((prev) => !prev)}
+                >
+                  😄
+                </button>
+
+                <textarea
+                  className="chatMessageInput"
+                  placeholder="Write something..."
+                  onChange={(e) => setNewMessage(e.target.value)}
+                  value={newMessage}
+                ></textarea>
+
+                <button className="chatSubmitButton" onClick={handleSubmit}>
+                  Send
+                </button>
+              </div>
+
+              {/* Emoji picker popup */}
+              {showEmojiPicker && (
+                <div className="emojiPicker">
+                  <EmojiPicker onEmojiClick={handleEmojiClick} />
+                </div>
+              )}
             </div>
           </>
         ) : (
-          <span className="noConversationText">Open a conversation to start a chat.</span>
+          <span className="noConversationText">
+            Open a conversation to start a chat.
+          </span>
         )}
       </div>
     </div>
