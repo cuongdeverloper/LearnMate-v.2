@@ -3,16 +3,12 @@ import axios from "../../Service/AxiosCustomize";
 import { useSelector } from "react-redux";
 import "../../scss/BookingHistory.scss";
 import { FaCheckCircle, FaTimesCircle, FaClock, FaTrashAlt } from "react-icons/fa";
-import { ToastContainer, toast } from 'react-toastify'; // Import ToastContainer và toast
-import 'react-toastify/dist/ReactToastify.css'; // Import CSS của react-toastify
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import Header from "../../components/Layout/Header/Header";
 
-// Component Modal đơn giản (có thể thay thế bằng thư viện UI khác)
 const ConfirmModal = ({ show, onClose, onConfirm, message }) => {
-    if (!show) {
-        return null;
-    }
-
+    if (!show) return null;
     return (
         <div className="modal-overlay">
             <div className="modal-content">
@@ -25,7 +21,6 @@ const ConfirmModal = ({ show, onClose, onConfirm, message }) => {
         </div>
     );
 };
-
 
 const BookingHistoryPage = () => {
     const userId = useSelector((state) => state.user.account.id);
@@ -58,23 +53,19 @@ const BookingHistoryPage = () => {
         }
     };
 
-    // Hàm mở modal xác nhận
     const confirmCancel = (bookingId) => {
         setSelectedBookingId(bookingId);
         setShowCancelModal(true);
     };
 
-    // Hàm đóng modal
     const handleCloseModal = () => {
         setShowCancelModal(false);
         setSelectedBookingId(null);
     };
 
-    // Hàm xử lý hủy booking sau khi xác nhận trong modal
     const handleConfirmCancel = async () => {
         setShowCancelModal(false);
         if (!selectedBookingId) return;
-
         try {
             await axios.patch(`/api/booking/bookings/${selectedBookingId}/cancel`, {}, {
                 headers: { Authorization: `Bearer ${token}` },
@@ -99,18 +90,17 @@ const BookingHistoryPage = () => {
                 return <span className="status approve"><FaCheckCircle /> Đã duyệt</span>;
             case "cancelled":
                 return <span className="status cancelled"><FaTimesCircle /> Đã hủy</span>;
+            case "completed":
+                return <span className="status completed"><FaCheckCircle /> Hoàn thành</span>;
+            case "rejected":
+                return <span className="status rejected"><FaTimesCircle /> Bị từ chối</span>;
             default:
                 return <span className="status pending"><FaClock /> Chờ duyệt</span>;
         }
     };
 
-    if (loading) {
-        return <div className="booking-history-container"><p>Đang tải lịch sử đặt lịch...</p></div>;
-    }
-
-    if (error) {
-        return <div className="booking-history-container"></div>;
-    }
+    if (loading) return <div className="booking-history-container"><p>Đang tải lịch sử đặt lịch...</p></div>;
+    if (error) return <div className="booking-history-container"><p>{error}</p></div>;
 
     return (
         <>
@@ -125,9 +115,14 @@ const BookingHistoryPage = () => {
                             <thead>
                                 <tr>
                                     <th>Gia sư</th>
+                                    <th>Môn học</th>
+                                    <th>Số tháng</th>
                                     <th>Số buổi</th>
                                     <th>Tổng tiền</th>
                                     <th>Tiền cọc</th>
+                                    <th>Tiền hàng tháng</th>
+                                    <th>Địa chỉ</th>
+                                    <th>Ghi chú</th>
                                     <th>Trạng thái</th>
                                     <th>Thời gian đặt</th>
                                     <th>Hành động</th>
@@ -138,16 +133,18 @@ const BookingHistoryPage = () => {
                                     <tr key={b._id}>
                                         <td>
                                             <div className="tutor-info">
-                                                <img
-                                                    src={b.tutorId?.user.image || "/default-avatar.png"}
-                                                    alt="avatar"
-                                                />
-                                                <span>{b.tutorId?.user.username || "Không rõ"}</span>
+                                                <img src={b.tutorId?.user?.image || "/default-avatar.png"} alt="avatar" />
+                                                <span>{b.tutorId?.user?.username || "Không rõ"}</span>
                                             </div>
                                         </td>
-                                        <td>{b.numberOfSessions}</td>
+                                        <td>{b.subjectId?.name || "Không rõ"}</td>
+                                        <td>{b.numberOfMonths}</td>
+                                        <td>{b.numberOfSession}</td>
                                         <td>{b.amount.toLocaleString()} VND</td>
                                         <td>{b.deposit.toLocaleString()} VND</td>
+                                        <td>{b.monthlyPayment.toLocaleString()} VND</td>
+                                        <td>{b.address || "-"}</td>
+                                        <td>{b.note || "-"}</td>
                                         <td>{renderStatus(b.status)}</td>
                                         <td>{new Date(b.createdAt).toLocaleString()}</td>
                                         <td>
@@ -167,7 +164,6 @@ const BookingHistoryPage = () => {
                         </table>
                     </div>
                 )}
-
                 <ToastContainer
                     position="top-right"
                     autoClose={5000}
@@ -179,7 +175,6 @@ const BookingHistoryPage = () => {
                     draggable
                     pauseOnHover
                 />
-
                 <ConfirmModal
                     show={showCancelModal}
                     onClose={handleCloseModal}

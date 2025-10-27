@@ -22,7 +22,7 @@ export const ApiMarkMessagesAsSeen = async (conversationId) => {
   }
 };
 
-export const ApiSendMessage = async (receiverId, text) => {
+export const ApiSendMessage = async (receiverId, text, conversationId = null) => {
   try {
     const token = Cookies.get("accessToken");
 
@@ -33,7 +33,7 @@ export const ApiSendMessage = async (receiverId, text) => {
 
     const response = await axios.post(
       "/api/message/message",
-      { receiverId, text },
+      { receiverId, text, conversationId },
       {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -42,12 +42,13 @@ export const ApiSendMessage = async (receiverId, text) => {
       }
     );
 
-    return response;
+    return response
   } catch (error) {
     console.error("Error sending message:", error);
     return null;
   }
 };
+
 
 export const getConversationApi = async () => {
   try {

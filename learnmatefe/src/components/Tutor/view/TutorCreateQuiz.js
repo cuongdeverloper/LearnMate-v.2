@@ -1,310 +1,340 @@
 import React, { useState, useEffect } from "react";
-import "./TutorCreateQuiz.scss";
+import Select from "react-select";
+import { toast } from "react-toastify";
+import { useSelector } from "react-redux";
 import {
   getSubjectsByTutor,
   getBookingsByTutorId,
-  getQuizzesByBooking,
-  createQuiz,
-  getQuestionsByQuiz,
-  importQuestionsFromExcel,
-  updateQuestion,
-  deleteQuestion,
+  getQuestionStorage,
+  createQuizStorage,
+  getQuizStorage,
+  createQuizFromStorage,
+  importQuestionsToStorage,
 } from "../ApiTutor";
-import { useSelector } from "react-redux";
-import { toast } from "react-toastify";
 
-const TutorCreateQuiz = () => {
+const TutorQuizManager = () => {
   const tutorId = useSelector((state) => state.user.account.id);
 
+  // --- State ---
   const [subjects, setSubjects] = useState([]);
   const [bookings, setBookings] = useState([]);
-  const [quizzes, setQuizzes] = useState([]);
-  const [questions, setQuestions] = useState([]);
-  const [selectedBooking, setSelectedBooking] = useState("");
+  const [questionStorage, setQuestionStorage] = useState([]);
+  const [filteredQuestions, setFilteredQuestions] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
   const [selectedSubject, setSelectedSubject] = useState("");
-  const [selectedQuiz, setSelectedQuiz] = useState("");
-  const [quizTitle, setQuizTitle] = useState("");
-  const [quizId, setQuizId] = useState("");
   const [file, setFile] = useState(null);
+  const [quizTitle, setQuizTitle] = useState("");
+  // QuizStorage
+  const [quizStorageList, setQuizStorageList] = useState([]);
+  const [filteredQuizStorage, setFilteredQuizStorage] = useState([]);
+  const [quizStorageTitle, setQuizStorageTitle] = useState("");
+  const [selectedQuestionIds, setSelectedQuestionIds] = useState([]);
+  const [selectedQuizStorageId, setSelectedQuizStorageId] = useState("");
+  const [selectedBookingId, setSelectedBookingId] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // ✅ Load dữ liệu ban đầu: môn học + buổi học
+  // --- Load subjects & bookings ---
   useEffect(() => {
     const fetchInitial = async () => {
       try {
-        const [subjectRes, bookingRes] = await Promise.all([
+        const [subRes, bookingRes] = await Promise.all([
           getSubjectsByTutor(),
           getBookingsByTutorId(tutorId),
         ]);
-        setSubjects(subjectRes.subjects || []);
+        setSubjects(subRes.subjects || []);
         setBookings(bookingRes.bookings || []);
-      } catch (err) {
-        console.error(err);
-        toast.error("❌ Lỗi khi tải dữ liệu ban đầu.");
+      } catch {
+        toast.error("❌ Lỗi khi tải dữ liệu ban đầu");
       }
     };
     fetchInitial();
+    fetchQuizStorage()
   }, [tutorId]);
 
-  // ✅ Lấy quiz theo buổi học
-  const fetchQuizByBooking = async (bookingId) => {
+  // --- QuestionStorage ---
+  const fetchQuestionStorage = async (subjectId) => {
+    if (!subjectId) return;
     try {
-      const res = await getQuizzesByBooking(bookingId);
-      setQuizzes(res.quizzes || []);
-    } catch (err) {
-      console.error(err);
-      toast.error("❌ Lỗi khi tải quiz.");
-    }
-  };
-
-  const handleSelectBooking = async (e) => {
-    const id = e.target.value;
-    setSelectedBooking(id);
-    setSelectedQuiz("");
-    setQuizTitle("");
-    setQuestions([]);
-    if (id) await fetchQuizByBooking(id);
-  };
-
-  // ✅ Tạo quiz mới
-  const handleCreateQuiz = async () => {
-    if (!selectedBooking || !selectedSubject || !quizTitle)
-      return toast.warning("⚠️ Vui lòng chọn buổi học, môn học và nhập tiêu đề quiz.");
-
-    setLoading(true);
-    try {
-      const res = await createQuiz({
-        bookingId: selectedBooking,
-        subjectId: selectedSubject,
-        title: quizTitle,
-      });
-      const newQuizId = res.quiz?._id;
-      setQuizId(newQuizId);
-      setSelectedQuiz(newQuizId);
-      toast.success(`✅ Quiz "${quizTitle}" đã được tạo!`);
-      await fetchQuizByBooking(selectedBooking);
-    } catch (err) {
-      console.error(err);
-      toast.error("❌ Lỗi khi tạo quiz.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // ✅ Chọn quiz có sẵn để xem câu hỏi
-  const handleSelectExistingQuiz = async (e) => {
-    const id = e.target.value;
-    setSelectedQuiz(id);
-    setQuizId(id);
-    if (!id) return setQuestions([]);
-
-    try {
-      const res = await getQuestionsByQuiz(id);
-      setQuestions(res.questions || []);
-      const quiz = quizzes.find((q) => q._id === id);
-      setQuizTitle(quiz?.title || "");
-      toast.info("📘 Đã chọn quiz để chỉnh sửa hoặc import.");
-    } catch (err) {
-      toast.error("❌ Lỗi khi tải câu hỏi.");
-    }
-  };
-
-  // ✅ Import câu hỏi từ Excel
-  const handleImportQuestions = async () => {
-    if (!quizId) return toast.warning("⚠️ Vui lòng chọn quiz!");
-    if (!selectedBooking) return toast.warning("⚠️ Vui lòng chọn buổi học!");
-    if (!file) return toast.warning("⚠️ Chọn file Excel!");
-
-    setLoading(true);
-    try {
-      const res = await importQuestionsFromExcel(quizId, selectedBooking, file);
-      toast.success(res.message || "✅ Import câu hỏi thành công!");
-      const updated = await getQuestionsByQuiz(quizId);
-      setQuestions(updated.questions || []);
-    } catch (err) {
-      toast.error("❌ Lỗi khi import câu hỏi.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // ✅ Xoá câu hỏi
-  const handleDeleteQuestion = async (id) => {
-    if (!window.confirm("Bạn có chắc muốn xoá câu hỏi này không?")) return;
-    try {
-      await deleteQuestion(id);
-      setQuestions((prev) => prev.filter((q) => q._id !== id));
-      toast.success("🗑️ Đã xoá câu hỏi.");
-    } catch (err) {
-      toast.error("❌ Lỗi khi xoá câu hỏi.");
-    }
-  };
-
-  // ✅ Cập nhật câu hỏi (inline edit)
-  const handleEditQuestion = async (id, field, value) => {
-    const updatedQuestions = questions.map((q) =>
-      q._id === id ? { ...q, [field]: value } : q
-    );
-    setQuestions(updatedQuestions);
-
-    try {
-      await updateQuestion(id, { [field]: value });
-    } catch (err) {
-      toast.error("❌ Lỗi khi cập nhật câu hỏi.");
-    }
-  };
-
-  // ✅ Cập nhật đáp án đúng
-  const handleCorrectAnswerChange = async (qId, idx) => {
-    const updated = questions.map((q) =>
-      q._id === qId ? { ...q, correctAnswer: idx } : q
-    );
-    setQuestions(updated);
-    try {
-      await updateQuestion(qId, { correctAnswer: idx });
-      toast.info("✅ Đã cập nhật đáp án đúng.");
+      const res = await getQuestionStorage();
+      const filtered = res.questions.filter((q) => q.subjectId._id === subjectId);
+      setQuestionStorage(filtered);
+      setFilteredQuestions(filtered);
     } catch {
-      toast.error("❌ Lỗi khi cập nhật đáp án đúng.");
+      toast.error("❌ Lỗi khi tải QuestionStorage");
     }
   };
 
+  // --- Import Questions ---
+  const handleImportQuestions = async () => {
+    if (!selectedSubject || !file) return toast.warning("⚠️ Chọn môn học và file Excel");
+    setLoading(true);
+    try {
+      const res = await importQuestionsToStorage(file, selectedSubject);
+      toast.success(res.message || "✅ Import câu hỏi thành công");
+      fetchQuestionStorage(selectedSubject);
+      setFile(null);
+    } catch {
+      toast.error("❌ Lỗi khi import câu hỏi");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // --- QuizStorage ---
+  const fetchQuizStorage = async () => {
+    try {
+      const res = await getQuizStorage();
+      setQuizStorageList(res.quizzes || []);
+      setFilteredQuizStorage(res.quizzes || []);
+    } catch {
+      toast.error("❌ Lỗi khi tải QuizStorage");
+    }
+  };
+
+  const handleCreateQuizStorage = async () => {
+    if (!quizStorageTitle || selectedQuestionIds.length === 0 || !selectedSubject)
+      return toast.warning("⚠️ Chọn tên quiz, môn học và câu hỏi");
+    setLoading(true);
+    try {
+      await createQuizStorage({
+        title: quizStorageTitle,
+        questionIds: selectedQuestionIds,
+        subjectId: selectedSubject,
+      });
+      toast.success("✅ Tạo QuizStorage thành công");
+      setQuizStorageTitle("");
+      setSelectedQuestionIds([]);
+      fetchQuizStorage();
+    } catch {
+      toast.error("❌ Lỗi khi tạo QuizStorage");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+const handleAssignQuiz = async () => {
+  if (!selectedQuizStorageId || !selectedBookingId)
+    return toast.warning("⚠️ Chọn QuizStorage và buổi học");
+  if (!quizTitle.trim()) 
+    return toast.warning("⚠️ Nhập tên quiz trước khi assign");
+
+  setLoading(true);
+  try {
+    let res = await createQuizFromStorage({
+      quizStorageId: selectedQuizStorageId,
+      bookingId: selectedBookingId,
+      title: quizTitle, 
+    });
+    toast.success("✅ Quiz đã được assign cho buổi học");
+    setQuizTitle("");
+  } catch {
+    toast.error("❌ Lỗi khi assign Quiz");
+  } finally {
+    setLoading(false);
+  }
+};
+
+
+  // --- Options ---
+  const subjectOptions = subjects.map((s) => ({ value: s._id, label: s.name }));
+  const bookingOptions = bookings.map((b) => ({
+    value: b._id,
+    label: `${b.subjectId?.name || "Không rõ môn"} - ${b.learnerId?.username || "Học viên"}`,
+  }));
+  const quizStorageOptions = filteredQuizStorage.map((qs) => ({
+  value: qs._id,
+  label: `${qs.name} (${qs.subjectId?.name || "Chưa rõ"})`,
+}));
+
+
+  // --- Search Question ---
+  useEffect(() => {
+    const filtered =
+      searchTerm.trim() === ""
+        ? questionStorage
+        : questionStorage.filter((q) =>
+            q.text.toLowerCase().includes(searchTerm.toLowerCase())
+          );
+    setFilteredQuestions(filtered);
+  }, [searchTerm, questionStorage]);
+
+  // --- Filter QuizStorage by Subject ---
+  const handleFilterQuizBySubject = (subjectId) => {
+    if (!subjectId) return setFilteredQuizStorage(quizStorageList);
+    const filtered = quizStorageList.filter((qs) => qs.subjectId?._id === subjectId);
+    setFilteredQuizStorage(filtered);
+  };
+
+  // --- JSX ---
   return (
-    <div className="tutor-create-quiz">
-      <h2>🧩 Quản lý Quiz theo buổi học</h2>
+    <div className="max-w-6xl mx-auto p-6 space-y-10 bg-gradient-to-b from-indigo-50 to-white min-h-screen">
+      <h2 className="text-3xl font-bold text-center text-indigo-700 mb-8">
+        🧩 Tutor Quiz Management Dashboard
+      </h2>
 
-      {/* --- CHỌN BUỔI HỌC --- */}
-      <div className="form-group">
-        <label>📅 Chọn buổi học:</label>
-        <select value={selectedBooking} onChange={handleSelectBooking}>
-          <option value="">-- Chọn buổi học --</option>
-          {bookings.map((b) => (
-            <option key={b._id} value={b._id}>
-              {b.learnerId?.username || "Không rõ học viên"} -{" "}
-              {b.subjectId?.name || "Không rõ môn"} (Lớp{" "}
-              {b.subjectId?.classLevel || "?"})
-            </option>
-          ))}
-        </select>
-      </div>
-
-      {/* --- CHỌN QUIZ --- */}
-      {selectedBooking && (
-        <>
-          <div className="form-group">
-            <label>🎓 Chọn quiz:</label>
-            <select value={selectedQuiz} onChange={handleSelectExistingQuiz}>
-              <option value="">-- Chưa chọn quiz --</option>
-              {quizzes.map((q) => (
-                <option key={q._id} value={q._id}>
-                  {q.title} ({q.subjectId?.name})
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {!selectedQuiz && (
-            <div className="quiz-form">
-              <h4>🆕 Tạo quiz mới</h4>
-              <div className="form-group">
-                <label>Môn học:</label>
-                <select
-                  value={selectedSubject}
-                  onChange={(e) => setSelectedSubject(e.target.value)}
-                >
-                  <option value="">-- Chọn môn học --</option>
-                  {subjects.map((s) => (
-                    <option key={s._id} value={s._id}>
-                      {s.name} - Lớp {s.classLevel}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="form-group">
-                <label>Tiêu đề quiz:</label>
-                <input
-                  type="text"
-                  value={quizTitle}
-                  onChange={(e) => setQuizTitle(e.target.value)}
-                  placeholder="VD: Kiểm tra giữa kỳ Toán 6"
-                />
-              </div>
-
-              <button onClick={handleCreateQuiz} disabled={loading}>
-                {loading ? "Đang tạo..." : "📝 Tạo Quiz Mới"}
-              </button>
-            </div>
-          )}
-        </>
-      )}
-
-      {/* --- IMPORT FILE --- */}
-      {selectedQuiz && (
-        <div className="import-section">
-          <h3>📥 Import câu hỏi từ Excel</h3>
+      {/* 1️⃣ Import QuestionStorage */}
+      <section className="bg-white shadow-lg rounded-2xl p-6 border border-gray-100">
+        <h3 className="text-xl font-semibold mb-4 text-indigo-600">
+          📥 Import Question Storage
+        </h3>
+        <div className="flex flex-col md:flex-row items-center gap-4 mb-4">
+          <Select
+            options={subjectOptions}
+            onChange={(sel) => {
+              setSelectedSubject(sel?.value || "");
+              fetchQuestionStorage(sel?.value || "");
+            }}
+            placeholder="📚 Chọn môn học"
+            className="flex-1"
+          />
           <input
             type="file"
             accept=".xlsx,.xls"
             onChange={(e) => setFile(e.target.files[0])}
+            className="border rounded-md p-2 w-full md:w-1/3"
           />
-          <button onClick={handleImportQuestions} disabled={loading}>
-            {loading ? "Đang import..." : "📤 Import File Excel"}
+          <button
+            onClick={handleImportQuestions}
+            disabled={loading}
+            className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition"
+          >
+            {loading ? "Đang import..." : "📤 Import Excel"}
           </button>
         </div>
-      )}
 
-      {/* --- DANH SÁCH CÂU HỎI --- */}
-      {questions.length > 0 && (
-        <div className="question-list">
-          <h3>📋 Danh sách câu hỏi ({questions.length})</h3>
-          {questions.map((q, i) => (
-            <div key={q._id} className="question-item">
-              <div className="question-header">
-                <strong>
-                  {i + 1}.{" "}
-                  <input
-                    type="text"
-                    value={q.text}
-                    onChange={(e) =>
-                      handleEditQuestion(q._id, "text", e.target.value)
-                    }
-                  />
-                </strong>
-                <button
-                  className="delete-btn"
-                  onClick={() => handleDeleteQuestion(q._id)}
+        <div className="mt-4">
+          <input
+            type="text"
+            placeholder="🔍 Tìm kiếm câu hỏi..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full border rounded-md p-2 mb-3"
+          />
+          <div className="max-h-60 overflow-y-auto border rounded-md p-3 bg-gray-50">
+            {filteredQuestions.length > 0 ? (
+              filteredQuestions.map((q) => (
+                <label
+                  key={q._id}
+                  className="flex items-center space-x-2 mb-1 cursor-pointer hover:bg-gray-100 p-1 rounded"
                 >
-                  🗑️ Xoá
-                </button>
-              </div>
-
-              <ul>
-                {q.options.map((opt, idx) => (
-                  <li key={idx}>
-                    <input
-                      type="text"
-                      value={opt}
-                      onChange={(e) => {
-                        const updated = [...q.options];
-                        updated[idx] = e.target.value;
-                        handleEditQuestion(q._id, "options", updated);
-                      }}
-                    />
-                    <input
-                      type="radio"
-                      name={`correct-${q._id}`}
-                      checked={q.correctAnswer === idx}
-                      onChange={() => handleCorrectAnswerChange(q._id, idx)}
-                    />{" "}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
+                  <input
+                    type="checkbox"
+                    value={q._id}
+                    checked={selectedQuestionIds.includes(q._id)}
+                    onChange={(e) => {
+                      if (e.target.checked)
+                        setSelectedQuestionIds([...selectedQuestionIds, q._id]);
+                      else
+                        setSelectedQuestionIds(
+                          selectedQuestionIds.filter((id) => id !== q._id)
+                        );
+                    }}
+                  />
+                  <span className="text-gray-700">{q.text}</span>
+                </label>
+              ))
+            ) : (
+              <p className="text-gray-500 text-center italic">
+                Không có câu hỏi nào
+              </p>
+            )}
+          </div>
         </div>
-      )}
+      </section>
+
+      {/* 2️⃣ Quiz Storage */}
+      <section className="bg-white shadow-lg rounded-2xl p-6 border border-gray-100">
+        <h3 className="text-xl font-semibold mb-4 text-green-600">📝 Quiz Storage</h3>
+
+        <div className="flex flex-col md:flex-row gap-3 mb-3">
+          <input
+            type="text"
+            placeholder="✏️ Tên Quiz Storage"
+            value={quizStorageTitle}
+            onChange={(e) => setQuizStorageTitle(e.target.value)}
+            className="border rounded-md p-2 flex-1"
+          />
+          <button
+            onClick={handleCreateQuizStorage}
+            disabled={loading}
+            className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition"
+          >
+            {loading ? "Đang tạo..." : "✅ Tạo Quiz Storage"}
+          </button>
+        </div>
+
+        <div className="flex items-center gap-3 mb-4">
+          <Select
+            options={[{ value: "", label: "Tất cả môn" }, ...subjectOptions]}
+            onChange={(sel) => handleFilterQuizBySubject(sel?.value || "")}
+            placeholder="📚 Lọc theo môn học"
+            className="w-1/2"
+          />
+          <button
+            onClick={fetchQuizStorage}
+            className="bg-gray-200 hover:bg-gray-300 px-3 py-2 rounded-md"
+          >
+            🔄 Refresh
+          </button>
+        </div>
+
+        <ul className="divide-y divide-gray-200">
+          {filteredQuizStorage.length > 0 ? (
+            filteredQuizStorage.map((qs) => (
+              <li key={qs._id} className="py-2 flex justify-between items-center">
+                <span className="text-gray-800 font-medium">{qs.name}</span>
+                <span className="text-sm text-gray-500">
+                  {qs.subjectId?.name || "Không rõ môn"}
+                </span>
+              </li>
+            ))
+          ) : (
+            <p className="text-gray-500 italic text-center py-3">
+              Không có Quiz Storage nào
+            </p>
+          )}
+        </ul>
+      </section>
+
+      {/* 3️⃣ Assign Quiz */}
+       <section className="bg-white shadow-lg rounded-2xl p-6 border border-gray-100">
+        <h3 className="text-xl font-semibold mb-4 text-blue-600">
+          🎯 Assign Quiz cho Buổi Học
+        </h3>
+        <div className="flex flex-col md:flex-row gap-4 items-center mb-3">
+          <Select
+            options={quizStorageOptions}
+            onChange={(sel) => setSelectedQuizStorageId(sel?.value || "")}
+            placeholder="📦 Chọn Quiz Storage"
+            className="flex-1"
+          />
+          <Select
+            options={bookingOptions}
+            onChange={(sel) => setSelectedBookingId(sel?.value || "")}
+            placeholder="📅 Chọn buổi học"
+            className="flex-1"
+          />
+        </div>
+
+        <div className="flex flex-col md:flex-row gap-4 items-center">
+          <input
+            type="text"
+            placeholder="✏️ Nhập tên quiz"
+            value={quizTitle}
+            onChange={(e) => setQuizTitle(e.target.value)}
+            className="border rounded-md p-2 flex-1"
+          />
+          <button
+            onClick={handleAssignQuiz}
+            disabled={loading}
+            className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition"
+          >
+            {loading ? "Đang assign..." : "📝 Assign Quiz"}
+          </button>
+        </div>
+      </section>
     </div>
   );
 };
 
-export default TutorCreateQuiz;
+export default TutorQuizManager;

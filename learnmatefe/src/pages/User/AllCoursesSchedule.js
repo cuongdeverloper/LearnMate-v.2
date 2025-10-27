@@ -8,7 +8,9 @@ import {
   getMaterialsByBookingId,
   getMyBookings,
   reportBooking,
-  requestChangeSchedule,getMyChangeRequests // Make sure this is correctly imported
+  requestChangeSchedule,
+  getMyChangeRequests,
+  handlePayMonthly, // Make sure this is correctly imported
 } from "../../Service/ApiService/ApiBooking";
 import {
   getMyWeeklySchedules,
@@ -218,7 +220,7 @@ const ReportModal = ({ isOpen, onClose, onSubmit, bookingId }) => {
   );
 };
 
-function MyCourses() {
+function AllCoursesSchedule() {
   const navigate = useNavigate();
   const getWeekStart = () => {
     const today = new Date();
@@ -262,6 +264,41 @@ function MyCourses() {
   const [loadingChangeRequests, setLoadingChangeRequests] = useState(true);
   const [errorChangeRequests, setErrorChangeRequests] = useState(null);
 
+  // State cho modal xác nhận thanh toán
+
+  const [showPaymentConfirm, setShowPaymentConfirm] = useState(false);
+  const [selectedBooking, setSelectedBooking] = useState(null);
+
+  const handlePayNextMonth = async (bookingId) => {
+    try {
+      const res = await handlePayMonthly(bookingId);
+      console.log("ket qua " + res);
+      if (res.success) {
+        toast.success(res.message || "Thanh toán tháng tiếp theo thành công!");
+        fetchBookings(); // Refresh danh sách bookings để cập nhật paidMonths
+      } else {
+        toast.error(res.message || "Thanh toán thất bại!");
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error("Lỗi khi thanh toán tháng tiếp theo.");
+    }
+  };
+
+  const handleOpenPaymentConfirm = (booking) => {
+    setSelectedBooking(booking);
+    setShowPaymentConfirm(true);
+  };
+
+  const handleClosePaymentConfirm = () => {
+    setShowPaymentConfirm(false);
+    setSelectedBooking(null);
+  };
+  const handleConfirmPayment = async () => {
+    if (!selectedBooking) return;
+    await handlePayNextMonth(selectedBooking._id);
+    handleClosePaymentConfirm();
+  };
   const fetchChangeRequests = async () => {
     setLoadingChangeRequests(true);
     setErrorChangeRequests(null);
@@ -376,6 +413,30 @@ function MyCourses() {
     } else {
       toast.error(result.message || "Lỗi hoàn tất khóa học.");
     }
+  };
+  const getNextPaymentStatus = (booking) => {
+    if (booking.completed) return { showButton: false, message: "" };
+
+    const currentMonthIndex = booking.paidMonths + 1; // Tháng tiếp theo
+    if (currentMonthIndex > booking.numberOfMonths) {
+      return { showButton: false, message: "Đã thanh toán đủ." };
+    }
+
+    const today = new Date();
+    const startDate = new Date(booking.createdAt); // ngày booking
+    const dueDate = new Date(startDate);
+
+    // Payment is due **1 month after booking for the first month**
+    dueDate.setMonth(startDate.getMonth() + currentMonthIndex);
+
+    if (today >= dueDate) {
+      return {
+        showButton: true,
+        message: `Tháng ${currentMonthIndex} cần thanh toán`,
+      };
+    }
+
+    return { showButton: false, message: "" }; // Chưa tới hạn
   };
 
   const fetchAllWeeklySchedules = async () => {
@@ -587,10 +648,18 @@ function MyCourses() {
                         {slot.bookingId &&
                           slot.bookingId.tutorId &&
                           slot.bookingId.tutorId.user && (
-                            <span className="tutor-name">
-                              Gia sư: {slot.bookingId.tutorId.user.username}
-                            </span>
+                            <div className="tutor-name">
+                              <strong>Gia sư:</strong>{" "}
+                              {slot.bookingId.tutorId.user.username}
+                            </div>
                           )}
+                        {slot.bookingId && slot.bookingId.subjectId && (
+                          <div className="subject-name">
+                            <strong>Môn học:</strong>{" "}
+                            {slot.bookingId.subjectId.name} -{" "}
+                            {slot.bookingId.subjectId.classLevel}
+                          </div>
+                        )}
                         {shouldShowAttendanceButton && (
                           <button
                             className={`attendance-button ${
@@ -663,117 +732,157 @@ function MyCourses() {
           </button>
         </div>
         {(activeTab === "inProgress" || activeTab === "finished") && (
-        <div className="bookings-list">
-          {filteredBookings.length === 0 ? (
-            <p className="no-bookings">
-              {activeTab === "inProgress"
-                ? "Bạn không có khóa học nào đang diễn ra."
-                : "Bạn không có khóa học nào đã hoàn thành."}
-            </p>
-          ) : (
-            filteredBookings.map((booking) => (
-              <div
-                key={booking._id}
-                className={`booking-card ${
-                  booking.completed ? "completed" : ""
-                } ${booking.reported ? "reported" : ""}`}
-              >
-                <p>
-                  <strong>Môn học:</strong>{" "}
-                  {booking.subjectId?.name || "Chưa có tên môn"}
-                </p>
-                <p>
-                  <strong>Gia sư:</strong>{" "}
-                  {booking.tutorId?.user?.username || "N/A"}
-                </p>
-                <p>
-                  <strong>Số buổi học:</strong> {booking.numberOfSessions}
-                </p>
-                <p>
-                  <strong>Chi phí mỗi buổi:</strong>{" "}
-                  {booking.sessionCost?.toLocaleString("vi-VN")} VNĐ
-                </p>
-                <p>
-                  <strong>Tổng tiền:</strong>{" "}
-                  {booking.amount?.toLocaleString("vi-VN")} VNĐ
-                </p>
-                <p>
-                  <strong>Tiền cọc:</strong>{" "}
-                  {booking.deposit?.toLocaleString("vi-VN")} VNĐ
-                </p>
-                <p>
-                  <strong>Ghi chú:</strong> {booking.note || "Không có"}
-                </p>
-
-                {booking.completed && (
-                  <>
-                    <p className="completed-message">Khóa học đã hoàn tất 🎉</p>
-                    <button
-                      className="review-button"
-                      onClick={() =>
-                        navigate(`/review/${booking._id}`, {
-                          state: {
-                            tutorId: booking.tutorId?._id || booking.tutorId,
-                          },
-                        })
-                      }
-                    >
-                      Viết đánh giá
-                    </button>
-                  </>
-                )}
-
-                <button
-                  className="view-materials-button"
-                  onClick={() =>
-                    handleViewMaterialsClick(
-                      booking._id,
-                      `Khóa học với ${
-                        booking.tutorId?.user?.username || "Gia sư"
-                      }`
-                    )
-                  }
+          <div className="bookings-list">
+            {filteredBookings.length === 0 ? (
+              <p className="no-bookings">
+                {activeTab === "inProgress"
+                  ? "Bạn không có khóa học nào đang diễn ra."
+                  : "Bạn không có khóa học nào đã hoàn thành."}
+              </p>
+            ) : (
+              filteredBookings.map((booking) => (
+                <div
+                  key={booking._id}
+                  className={`booking-card ${
+                    booking.completed ? "completed" : ""
+                  } ${booking.reported ? "reported" : ""}`}
                 >
-                  Xem tài liệu
-                </button>
+                  <p>
+                    <strong>Môn học:</strong>{" "}
+                    {booking.subjectId?.name +
+                      " Lớp " +
+                      booking.subjectId?.classLevel || "Chưa có tên môn"}
+                  </p>
+                  <p>
+                    <strong>Gia sư:</strong>{" "}
+                    {booking.tutorId?.user?.username || "N/A"}
+                  </p>
+                  <p>
+                    <strong>Số buổi học:</strong> {booking.numberOfSessions}
+                  </p>
+                  <p>
+                    <strong>Chi phí mỗi buổi:</strong>{" "}
+                    {booking.sessionCost?.toLocaleString("vi-VN")} VNĐ
+                  </p>
+                  <p>
+                    <strong>Tổng tiền:</strong>{" "}
+                    {booking.amount?.toLocaleString("vi-VN")} VNĐ
+                  </p>
+                  <p>
+                    <strong>Tiền cọc:</strong>{" "}
+                    {booking.deposit?.toLocaleString("vi-VN")} VNĐ
+                  </p>
+                  {!booking.completed && (
+                    <p>
+                      <strong>Số tiền cần thanh toán mỗi tháng:</strong>{" "}
+                      {(booking.monthlyPayment || 0).toLocaleString("vi-VN")}{" "}
+                      VNĐ
+                    </p>
+                  )}
+                  <p>
+                    <strong>Ghi chú:</strong> {booking.note || "Không có"}
+                  </p>
 
-                {/* Report and Finish Booking Buttons */}
-                {!booking.completed && (
-                  <div className="booking-actions">
-                    <button
-                      className="finish-course-button"
-                      onClick={() => handleFinishBooking(booking._id)}
-                    >
-                      Hoàn tất khóa học
-                    </button>
-
-                    {booking.reported ? ( // Assuming `booking.reported` is a boolean from your API
-                      <button className="report-button reported" disabled>
-                        Đã báo cáo
-                      </button>
-                    ) : (
+                  {booking.completed && (
+                    <>
+                      <p className="completed-message">
+                        Khóa học đã hoàn tất 🎉
+                      </p>
                       <button
-                        className="report-button"
-                        onClick={() => handleOpenReportModal(booking._id)} // Open modal
+                        className="review-button"
+                        onClick={() =>
+                          navigate(`/review/${booking._id}`, {
+                            state: {
+                              tutorId: booking.tutorId?._id || booking.tutorId,
+                            },
+                          })
+                        }
                       >
-                        Báo cáo
+                        Viết đánh giá
                       </button>
-                    )}
-                    <button
-                      className="change-schedule-button"
-                      onClick={() => {
-                        setChangingBookingId(booking._id);
-                        setShowChangeScheduleModal(true);
-                      }}
-                    >
-                      Yêu cầu đổi lịch
-                    </button>
-                  </div>
-                )}
-              </div>
-            ))
-          )}
-        </div>
+                    </>
+                  )}
+
+                  <button
+                    className="view-materials-button"
+                    onClick={() =>
+                      handleViewMaterialsClick(
+                        booking._id,
+                        `Khóa học với ${
+                          booking.tutorId?.user?.username || "Gia sư"
+                        }`
+                      )
+                    }
+                  >
+                    Xem tài liệu
+                  </button>
+
+                  {/* Report and Finish Booking Buttons */}
+                  {!booking.completed && (
+                    <div className="booking-actions">
+                      <button
+                        className="finish-course-button"
+                        onClick={() => handleFinishBooking(booking._id)}
+                      >
+                        Hoàn tất khóa học
+                      </button>
+
+                      {booking.reported ? ( // Assuming `booking.reported` is a boolean from your API
+                        <button className="report-button reported" disabled>
+                          Đã báo cáo
+                        </button>
+                      ) : (
+                        <button
+                          className="report-button"
+                          onClick={() => handleOpenReportModal(booking._id)} // Open modal
+                        >
+                          Báo cáo
+                        </button>
+                      )}
+                      <button
+                        className="change-schedule-button"
+                        onClick={() => {
+                          setChangingBookingId(booking._id);
+                          setShowChangeScheduleModal(true);
+                        }}
+                      >
+                        Yêu cầu đổi lịch
+                      </button>
+                      {!booking.completed && (
+                        <p>
+                          <strong>Thanh toán tháng tiếp theo:</strong>{" "}
+                          {(() => {
+                            const { showButton, message } =
+                              getNextPaymentStatus(booking);
+                            return (
+                              <>
+                                <button
+                                  className="pay-monthly-button"
+                                  disabled={!showButton}
+                                  onClick={() =>
+                                    handleOpenPaymentConfirm(booking)
+                                  }
+                                >
+                                  Thanh toán
+                                </button>
+
+                                {message && (
+                                  <span className="payment-warning">
+                                    {" "}
+                                    {message}
+                                  </span>
+                                )}
+                              </>
+                            );
+                          })()}
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              ))
+            )}
+          </div>
         )}
         {activeTab === "changeRequests" && (
           <div className="change-requests-section">
@@ -901,7 +1010,15 @@ function MyCourses() {
             )}
           />
         )}
-
+        {showPaymentConfirm && selectedBooking && (
+          <ConfirmationModal
+            title="Xác nhận thanh toán"
+            message={`Bạn có chắc chắn muốn thanh toán tháng tiếp theo cho khóa học này không? 
+    \nSố tiền: ${selectedBooking.monthlyPayment?.toLocaleString("vi-VN")} VND`}
+            onConfirm={handleConfirmPayment}
+            onCancel={handleClosePaymentConfirm}
+          />
+        )}
         <ToastContainer
           position="top-right"
           autoClose={5000}
@@ -918,4 +1035,4 @@ function MyCourses() {
   );
 }
 
-export default MyCourses;
+export default AllCoursesSchedule;

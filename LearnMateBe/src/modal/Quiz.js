@@ -1,28 +1,26 @@
 const mongoose = require("mongoose");
 
 const QuizSchema = new mongoose.Schema({
-  bookingId: {
+  tutorId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "Booking",
-    required: true, 
+    ref: "Tutor",
+    required: true,
   },
   subjectId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Subject",
     required: true,
   },
-  tutorId: {
+  bookingId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "Tutor",
-    required: true,
+    ref: "Booking",
   },
-  learnerId: {
+  quizStorageId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "User",
+    ref: "QuizStorage",
   },
   title: { type: String, required: true },
-  description: { type: String, default: "" },
-  createdAt: { type: Date, default: Date.now },
-});
+  description: { type: String },
+}, { timestamps: true });
 
 module.exports = mongoose.model("Quiz", QuizSchema);
