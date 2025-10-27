@@ -40,7 +40,7 @@ RouterTutor.post(
 RouterTutor.get("/material/:bookingId", tutorCtrl.getMaterials);
 
 RouterTutor.post(
-  "/tutor/application",
+  "/application",
   checkAccessToken,
   uploadCloud.single("cvFile"),
   TutorApplication.submitApplication
@@ -69,12 +69,6 @@ RouterTutor.put(
   "/active-status",
   checkAccessToken,
   tutorCtrl.updateActiveStatus
-);
-RouterTutor.post(
-  "/application",
-  checkAccessToken,
-  uploadCloud.single("cvFile"), 
-  submitApplication
 );
 
 RouterTutor.get("/me", checkAccessToken, getMyTutor);

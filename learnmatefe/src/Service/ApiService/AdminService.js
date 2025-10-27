@@ -52,7 +52,7 @@ class AdminService {
                 },
             });
 
-            return response;
+            return response.data;
         } catch (error) {
             console.error('Error fetching user:', error);
             return null;
@@ -78,7 +78,7 @@ class AdminService {
                     },
                 }
             );
-            return response;
+            return response.data;
         } catch (error) {
             console.error('Error blocking user:', error);
             return null;
@@ -104,7 +104,7 @@ class AdminService {
                     },
                 }
             );
-            return response;
+            return response.data;
         } catch (error) {
             console.error('Error unblocking user:', error);
             return null;
@@ -130,10 +130,98 @@ class AdminService {
                     },
                 }
             );
-            return response;
+            return response.data;
         } catch (error) {
             console.error('Error deleting user:', error);
             return null;
+        }
+    }
+
+    // ========== TUTOR MANAGEMENT FUNCTIONS ==========
+    
+    // Get all tutor applications
+    static async getAllTutorApplications() {
+        try {
+            const token = Cookies.get("accessToken");
+
+            if (!token) {
+                console.error('No access token found');
+                window.open("/signin", "_blank");
+                return null;
+            }
+
+            console.log('Making API call to /api/admin/tutor-applications');
+
+            const response = await axios.get('/api/admin/tutor-applications', {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+
+            console.log('Tutor applications response:', response);
+            // Axios interceptor đã extract response.data, nên response đã là data trực tiếp
+            return response;
+        } catch (error) {
+            console.error('Error fetching tutor applications - Full error:', error);
+            console.error('Error response:', error.response);
+            console.error('Error status:', error.response?.status);
+            console.error('Error data:', error.response?.data);
+            return null;
+        }
+    }
+
+    // Approve tutor application
+    static async approveTutorApplication(applicationId) {
+        try {
+            const token = Cookies.get("accessToken");
+
+            if (!token) {
+                window.open("/signin", "_blank");
+                return null;
+            }
+
+            const response = await axios.patch(
+                `/api/admin/tutor-applications/${applicationId}/approve`,
+                {},
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
+            // Return response data để component có thể kiểm tra success
+            return response;
+        } catch (error) {
+            console.error('Error approving tutor application:', error);
+            throw error; // Let component handle the error
+        }
+    }
+
+    // Reject tutor application
+    static async rejectTutorApplication(applicationId, reason) {
+        try {
+            const token = Cookies.get("accessToken");
+
+            if (!token) {
+                window.open("/signin", "_blank");
+                return null;
+            }
+
+            console.log('Rejecting application:', applicationId, 'with reason:', reason);
+            
+            const response = await axios.patch(
+                `/api/admin/tutor-applications/${applicationId}/reject`,
+                { reason },
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
+            // Return response data để component có thể kiểm tra success
+            return response;
+        } catch (error) {
+            throw error;
         }
     }
 }
