@@ -2,28 +2,27 @@ import { toast } from 'react-toastify';
 import axios from '../AxiosCustomize';
 import Cookies from 'js-cookie';
 export const getMyWeeklySchedules = async (weekStartDate) => {
-    try {
-      const token = Cookies.get("accessToken");
-  
-      if (!token) {
-        return { success: false, message: "Bạn chưa đăng nhập." };
-      }
-  
-      const isoDate = new Date(weekStartDate).toISOString().split('T')[0];
-  
-      const response = await axios.get(`/api/booking/schedule/my-weekly-schedules?weekStart=${encodeURIComponent(isoDate)}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-  
-      return { success: true, data: response };
-    } catch (error) {
-      console.error("Lỗi khi tải lịch học:", error);
-      const message = error.response?.message || "Không thể tải lịch học";
-      return { success: false, message };
+  try {
+    const token = Cookies.get("accessToken");
+
+    if (!token) {
+      return { success: false, message: "Bạn chưa đăng nhập." };
     }
+
+    const response = await axios.get(`/api/booking/schedule/my-weekly-schedules`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    return { success: true, data: response };
+  } catch (error) {
+    console.error("Lỗi khi tải toàn bộ lịch học:", error);
+    const message = error.response?.message || "Không thể tải lịch học";
+    return { success: false, message };
+  }
   };
+
   export const markScheduleAttendance = async (scheduleId, attended) => {
     try {
       const token = Cookies.get("accessToken");
