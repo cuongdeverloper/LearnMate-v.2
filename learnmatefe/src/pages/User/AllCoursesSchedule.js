@@ -56,7 +56,12 @@ const ChangeScheduleModal = ({ isOpen, onClose, onSubmit, schedules }) => {
   ];
 
   const handleSubmit = () => {
-    if (!selectedScheduleId || !newDate || !newTimeSlot || !reasonChange.trim()) {
+    if (
+      !selectedScheduleId ||
+      !newDate ||
+      !newTimeSlot ||
+      !reasonChange.trim()
+    ) {
       toast.error("Vui lòng chọn đầy đủ thông tin.");
       return;
     }
@@ -329,7 +334,7 @@ function AllCoursesSchedule() {
     setChangingBookingId(null);
   };
 
-  const handleSubmitChangeSchedule =  async ({
+  const handleSubmitChangeSchedule = async ({
     bookingId,
     scheduleId,
     newDate,
@@ -345,14 +350,19 @@ function AllCoursesSchedule() {
         newEndTime,
         reason,
       });
-      console.log("res" + res);
-      if (res.success) {
-        toast.success("Yêu cầu đổi lịch đã được gửi.");
+
+      console.log("📨 Kết quả yêu cầu đổi lịch:", res);
+
+      if (res?.success) {
+        toast.success(
+          res.message || "Yêu cầu đổi lịch đã được gửi thành công."
+        );
       } else {
-        toast.error(res.message || "Không thể gửi yêu cầu đổi lịch.");
+        toast.error(res?.message || "Không thể gửi yêu cầu đổi lịch.");
       }
     } catch (error) {
-      toast.error("Lỗi khi gửi yêu cầu đổi lịch.");
+      console.error("❌ Lỗi trong handleSubmitChangeSchedule:", error);
+      toast.error("Đã xảy ra lỗi trong quá trình gửi yêu cầu đổi lịch.");
     }
   };
 
@@ -444,8 +454,8 @@ function AllCoursesSchedule() {
     setLoadingSchedules(true);
     setErrorSchedules(null);
 
-    const result = await getMyWeeklySchedules(weekStart);
-
+    const result = await getMyWeeklySchedules();
+    console.log("result", result);
     if (result.success) {
       setAllWeeklySchedules(result.data);
     } else {
@@ -646,41 +656,53 @@ function AllCoursesSchedule() {
                         <span className="time">
                           {slot.startTime} - {slot.endTime}
                         </span>
-                        {slot.bookingId &&
-                          slot.bookingId.tutorId &&
-                          slot.bookingId.tutorId.user && (
-                            <div className="tutor-name">
-                              <strong>Gia sư:</strong>{" "}
-                              {slot.bookingId.tutorId.user.username}
-                            </div>
-                          )}
-                        {slot.bookingId && slot.bookingId.subjectId && (
+
+                        {slot.bookingId?.tutorId?.user && (
+                          <div className="tutor-name">
+                            <strong>Gia sư:</strong>{" "}
+                            {slot.bookingId.tutorId.user.username}
+                          </div>
+                        )}
+
+                        {slot.bookingId?.subjectId && (
                           <div className="subject-name">
                             <strong>Môn học:</strong>{" "}
                             {slot.bookingId.subjectId.name} -{" "}
                             {slot.bookingId.subjectId.classLevel}
                           </div>
                         )}
-                        {shouldShowAttendanceButton && (
-                          <button
-                            className={`attendance-button ${
-                              slot.attended
-                                ? "attended-btn"
-                                : "not-attended-btn"
-                            }`}
-                            onClick={() =>
-                              handleConfirmAttendanceClick(
-                                slot._id,
+
+                        {/* ✅ Hiển thị trạng thái */}
+                        <div className={`status-label ${slot.status}`}>
+                          {slot.status === "approved"
+                            ? "Đã duyệt"
+                            : "Chờ duyệt"}
+                        </div>
+
+                        {/* ✅ Chỉ hiển thị nút điểm danh nếu lịch đã duyệt */}
+                        {slot.status === "approved" &&
+                          shouldShowAttendanceButton && (
+                            <button
+                              className={`attendance-button ${
                                 slot.attended
-                              )
-                            }
-                            title={
-                              slot.attended ? "Đã điểm danh" : "Chưa điểm danh"
-                            }
-                          >
-                            {slot.attended ? "✓" : "✖"}
-                          </button>
-                        )}
+                                  ? "attended-btn"
+                                  : "not-attended-btn"
+                              }`}
+                              onClick={() =>
+                                handleConfirmAttendanceClick(
+                                  slot._id,
+                                  slot.attended
+                                )
+                              }
+                              title={
+                                slot.attended
+                                  ? "Đã điểm danh"
+                                  : "Chưa điểm danh"
+                              }
+                            >
+                              {slot.attended ? "✓" : "✖"}
+                            </button>
+                          )}
                       </div>
                     );
                   })
@@ -1004,7 +1026,12 @@ function AllCoursesSchedule() {
           <ChangeScheduleModal
             isOpen={showChangeScheduleModal}
             onClose={handleCloseChangeModal}
-            onSubmit={(data) => handleSubmitChangeSchedule({ bookingId: changingBookingId, ...data })}
+            onSubmit={(data) =>
+              handleSubmitChangeSchedule({
+                bookingId: changingBookingId,
+                ...data,
+              })
+            }
             bookingId={changingBookingId}
             schedules={allWeeklySchedules.filter(
               (s) => s.bookingId?._id === changingBookingId

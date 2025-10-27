@@ -120,34 +120,35 @@ export const getMyBookings = async () => {
       return null;
     }
   };
-  export const requestChangeSchedule = async (bookingId, payload) => {
-    try {
-      const token = Cookies.get("accessToken");
-      if (!token) {
-        window.open("/signin", "_blank");
-        return;
-      }
-  
-      const res = await axios.post(
-        `/api/booking/bookings/${bookingId}/request-change`,
-        payload,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-  
-      // ✅ Thành công thì trả luôn response data
-      return res.data;
-  
-    } catch (error) {
-      // ✅ Bắt lỗi từ backend và chuẩn hóa response để frontend xử lý thống nhất
-      return error.response?.data || {
-        success: false,
-        message: "Không thể gửi yêu cầu đổi lịch.",
-      };
-  
+export const requestChangeSchedule = async (bookingId, payload) => {
+  try {
+    const token = Cookies.get("accessToken");
+    if (!token) {
+      window.open("/signin", "_blank");
+      return { success: false, message: "Vui lòng đăng nhập trước." };
     }
-  };
+
+    const response = await axios.post(
+      `/api/booking/bookings/${bookingId}/request-change`,
+      payload,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+
+    return response; 
+  } catch (error) {
+    console.error("🚨 Lỗi khi gửi yêu cầu đổi lịch:", error);
+
+    const message =
+      error.response?.data?.message ||
+      error.response?.statusText ||
+      error.message ||
+      "Không thể gửi yêu cầu đổi lịch.";
+
+    return { success: false, message };
+  }
+};
+
+  
   export const getMyChangeRequests = async () => {
     try {
       const token = Cookies.get("accessToken");
