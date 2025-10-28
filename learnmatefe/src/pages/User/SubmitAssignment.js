@@ -1,12 +1,14 @@
 import React, { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { getAssignmentById } from "../../lib/assignments";
 import { Button } from "../../components/ui/Button";
-import { ArrowLeft, File, Upload, X } from "lucide-react";
+import { ArrowLeft, File, X, Upload, Download, FileText } from "lucide-react";
 import { Card } from "../../components/ui/Card";
-import { formatDate } from "date-fns";
 import { toast } from "react-toastify";
 import Textarea from "../../components/ui/TextArea";
+import { useDispatch, useSelector } from "react-redux";
+import { formatDate } from "../../lib/assignments";
+
+import { submitAssignment } from "../../redux/action/courseActions";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 const ALLOWED_TYPES = [
@@ -23,11 +25,19 @@ const SubmitAssignment = () => {
   const [isDragging, setIsDragging] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const {
+    selectedAssignment: assignment,
+    submitting,
+    loading,
+    feedback,
+    error,
+  } = useSelector((state) => state.assignments);
+
+  const dispatch = useDispatch();
+
   if (!courseId || !assignmentId) {
     return <div>Invalid assignment Id</div>;
   }
-
-  const assignment = getAssignmentById(courseId, assignmentId);
 
   const validateFile = (selectedFile) => {
     if (selectedFile.size > MAX_FILE_SIZE) {
@@ -98,21 +108,43 @@ const SubmitAssignment = () => {
       return;
     }
 
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("note", notes);
+    formData.append("assignmentId", assignmentId);
+
     setIsSubmitting(true);
+
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      dispatch(submitAssignment(formData));
       toast.success("Assignment submitted successfully!");
       navigate(`/user/my-courses/${courseId}`);
-    } catch (error) {
-      toast.error("Failed to submit assignment");
+    } catch (err) {
+      toast.error(error);
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleCancel = () => {
-    navigate(`/student/course/${courseId}`);
+    navigate(`/user/my-courses/${courseId}`);
   };
+
+  const getFileType = (url) => {
+    if (url.toLowerCase().endsWith(".pdf")) {
+      return "pdf";
+    }
+    if (url.toLowerCase().endsWith(".docx")) {
+      return "docx";
+    }
+    return "unknown";
+  };
+
+  const getFileName = (url) => {
+    return url.split("/").pop() || "assignment";
+  };
+
+  console.log(assignment);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-secondary/10 py-8 px-4 sm:px-6 lg:px-8">
@@ -123,7 +155,7 @@ const SubmitAssignment = () => {
         </Button>
 
         <Card className="p-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2">
+          <h1 className="text-3xl font-bold text-foreground mb-10">
             Submit Assignment
           </h1>
           <p className="text-lg text-muted-foreground mb-8">
@@ -131,11 +163,11 @@ const SubmitAssignment = () => {
           </p>
 
           <div className="space-y-6">
-            <div>
+            <div className="border border-border rounded-lg p-3 bg-muted/30 ">
               <h3 className="text-sm font-semibold text-foreground mb-2">
                 Description
               </h3>
-              <p className="text-foreground bg-muted/30 p-4 rounded-lg">
+              <p className="text-foreground bg-muted/30 p-2 rounded-lg">
                 {assignment.description}
               </p>
             </div>
@@ -143,8 +175,76 @@ const SubmitAssignment = () => {
               <h3 className="text-sm font-semibold text-foreground mb-2">
                 Due Date
               </h3>
-              <p>{formatDate(assignment.dueDate, "yyyy-MM-dd")}</p>
+              <p>{formatDate(assignment.deadline, "yyyy-MM-dd")}</p>
             </div>
+
+            {assignment.fileUrl && (
+              <div>
+                <h3 className="text-sm font-semibold text-foreground mb-2">
+                  Assignment File
+                </h3>
+                {getFileType(assignment.fileUrl) === "pdf" ? (
+                  <div className="border border-border rounded-lg overflow-hidden bg-white">
+                    <div className="flex items-center justify-between p-4 bg-muted/30 border-b border-border">
+                      <div className="flex items-center gap-2">
+                        <FileText className="w-5 h-5 text-red-600" />
+                        <span className="text-sm font-medium text-foreground">
+                          {getFileName(assignment.fileUrl)}
+                        </span>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          const link = document.createElement("a");
+                          link.href = assignment.fileUrl;
+                          link.download = getFileName(assignment.fileUrl);
+                          link.click();
+                        }}
+                        className="gap-2 text-white"
+                      >
+                        <Download className="w-4 h-4" />
+                        Download
+                      </Button>
+                    </div>
+                    <iframe
+                      src={`${assignment.fileUrl}#toolbar=0`}
+                      className="w-full h-96 border-none"
+                      title="Assignment PDF"
+                    />
+                  </div>
+                ) : (
+                  <div className="border border-border rounded-lg p-4 bg-muted/30 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <FileText className="w-6 h-6 text-blue-600" />
+                      <div>
+                        <p className="font-medium text-foreground">
+                          {getFileName(assignment.fileUrl)}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          DOCX file - Download to view
+                        </p>
+                      </div>
+                    </div>
+                    <Button
+                      variant="default"
+                      size="sm"
+                      onClick={() => {
+                        const link = document.createElement("a");
+                        link.href = assignment.fileUrl;
+                        link.download = getFileName(assignment.fileUrl);
+                        link.click();
+                      }}
+                      className="gap-2 text-white"
+                    >
+                      <Download className="w-4 h-4 text-white" />
+                      Download
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
+
             <div>
               <h3 className="text-sm font-semibold text-foreground mb-2">
                 Upload File
@@ -220,7 +320,7 @@ const SubmitAssignment = () => {
               <Button
                 onClick={handleSubmit}
                 disabled={!file || isSubmitting}
-                className="flex-1"
+                className="flex-1 text-white"
               >
                 {isSubmitting ? "Submitting..." : "Submit Assignment"}
               </Button>

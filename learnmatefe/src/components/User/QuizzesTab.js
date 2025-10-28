@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { format } from "date-fns";
+import { formatDate } from "../../lib/assignments";
 import { Card } from "../ui/Card";
 import { CheckCircle2 } from "lucide-react";
 import { Button } from "../ui/Button";
@@ -14,11 +14,13 @@ import {
 } from "../ui/Table";
 import { Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchQuizzesByCourseId } from "../../redux/action/quizActions";
+import { fetchQuizzes } from "../../redux/action/courseActions";
 
-const statusFor = (now, start, end) => {
-  if (now < start) return "Upcoming";
-  if (now > end) return "Completed";
+const statusFor = (now, deadline, attempted, maxAttempts) => {
+  if (attempted === 0 && now > deadline) return "Overdue";
+  if (attempted === maxAttempts || (attempted > 0 && now > deadline))
+    return "Completed";
+
   return "Active";
 };
 
@@ -28,25 +30,13 @@ const QuizzesTab = () => {
   const now = new Date();
   const dispatch = useDispatch();
 
-  const {
-    selectedCourse,
-    loading: courseLoading,
-    error: courseError,
-  } = useSelector((state) => state.courses);
-
-  const {
-    list: quizzes,
-    selectedQuiz,
-    userAnswers,
-    submitting,
-    loading: quizLoading,
-    score,
-    error: quizError,
-  } = useSelector((state) => state.quizzes);
+  const { selectedCourse, quizzes, loading, error } = useSelector(
+    (state) => state.courses
+  );
 
   useEffect(() => {
     if (selectedCourse) {
-      dispatch(fetchQuizzesByCourseId(selectedCourse._id));
+      dispatch(fetchQuizzes(selectedCourse._id));
     }
   }, [dispatch, selectedCourse]);
 
@@ -73,18 +63,15 @@ const QuizzesTab = () => {
             quizzes?.map((q) => {
               const status = statusFor(
                 now,
-                q?.startAt || new Date(currentYear, 9, 18, 0, 0),
-                q?.endAt || new Date(currentYear, 9, 28, 23, 59)
-              );
-              const displayDate = format(
-                q?.startAt || new Date(currentYear, 9, 18, 0, 0),
-                "MM d"
+                q.deadline,
+                q.attempted,
+                q.maxAttempts
               );
 
               return (
                 <TableRow key={q._id}>
                   <TableCell className="font-medium">{q.title}</TableCell>
-                  <TableCell>{displayDate}</TableCell>
+                  <TableCell>{formatDate(q.deadline)}</TableCell>
                   <TableCell>
                     {status === "Upcoming" && (
                       <Badge variant="secondary">Upcoming</Badge>
@@ -96,7 +83,7 @@ const QuizzesTab = () => {
                     )}
 
                     {status === "Completed" ? (
-                      q.attempts > 0 ? (
+                      q.attempted > 0 ? (
                         <Badge className="bg-slate-800 hover:bg-slate-800 text-white">
                           Completed
                         </Badge>
@@ -109,11 +96,13 @@ const QuizzesTab = () => {
                       <></>
                     )}
                   </TableCell>
-                  <TableCell>{q?.attempts > 0 ? q?.attempts : "—"}</TableCell>
                   <TableCell>
-                    {q.score !== undefined
-                      ? `${Math.round(q.score * 100)}%`
-                      : "—"}
+                    {q?.attempted} / {q?.maxAttempts}
+                  </TableCell>
+                  <TableCell>
+                    {q.attempted > 0
+                      ? Number(q.newestScore).toFixed(0) + "%"
+                      : "-"}
                   </TableCell>
                   <TableCell className="text-right">
                     {status === "Active" && (
@@ -122,7 +111,13 @@ const QuizzesTab = () => {
                         asChild
                         onClick={() => handleSelectQuiz(q)}
                       >
-                        <Link to={`/user/quiz/${q._id}/take`}>Bắt đầu</Link>
+                        <Link to={`/user/quiz/${q._id}/take`}>
+                          {q.attempted > 0 && q.attempted < q.maxAttempts
+                            ? "Thử lại"
+                            : q.attempted === 0
+                            ? "Bắt đầu"
+                            : "Xem kết quả"}
+                        </Link>
                       </Button>
                     )}
                     {status === "Completed" && (
@@ -131,9 +126,11 @@ const QuizzesTab = () => {
                         asChild
                         variant="secondary"
                         onClick={() => handleSelectQuiz(q)}
+                        disabled={q.attempted === q.maxAttempts}
                       >
                         <Link to={`/user/quiz/${q._id}/result`}>
-                          Xem kết quả
+                          {q.attempted < q.maxAttempts && "Thử lại"}
+                          {q.attempted >= q.maxAttempts && "Xem kết quả"}
                         </Link>
                       </Button>
                     )}

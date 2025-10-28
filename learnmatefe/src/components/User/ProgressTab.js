@@ -1,13 +1,43 @@
 import React from "react";
 import { Card } from "../ui/Card";
 import { BarChart3 } from "lucide-react";
+import { useDispatch, useSelector } from "react-redux";
+import { useEffect } from "react";
+import { fetchProgress } from "../../redux/action/courseActions";
 
 const ProgressTab = () => {
+  const { selectedCourse, progress } = useSelector((state) => state.courses);
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    dispatch(fetchProgress(selectedCourse._id));
+  }, [dispatch]);
+
   const progressItems = [
-    { label: "Bài tập đã hoàn thành", value: 2, total: 3, percentage: 67 },
-    { label: "Bài kiểm tra đã hoàn thành", value: 1, total: 3, percentage: 33 },
-    { label: "Điểm danh lớp học", value: 8, total: 10, percentage: 80 },
-    { label: "Tiến độ chung", value: 75, total: 100, percentage: 75 },
+    {
+      label: "Bài tập đã hoàn thành",
+      value: progress?.assignmentSubmitted,
+      total: progress?.totalAssignments,
+      percentage: Number(progress?.assignmentProgress).toFixed(2),
+    },
+    {
+      label: "Bài kiểm tra đã hoàn thành",
+      value: progress?.quizTaken,
+      total: progress?.totalQuizzes,
+      percentage: Number(progress?.quizProgress).toFixed(2),
+    },
+    {
+      label: "Điểm danh lớp học",
+      value: progress?.scheduleAttended,
+      total: progress?.totalSchedules,
+      percentage: Number(progress?.attendanceProgress).toFixed(2),
+    },
+    {
+      label: "Tiến độ chung",
+      value: Number(progress?.totalProgress).toFixed(2),
+      total: 100,
+      percentage: Number(progress?.totalProgress).toFixed(2),
+    },
   ];
 
   return (
@@ -41,7 +71,9 @@ const ProgressTab = () => {
             <h4 className="font-semibold text-foreground mb-1">
               Điểm khóa học
             </h4>
-            <p className="text-2xl font-bold text-primary mb-2">A (92%)</p>
+            <p className="text-2xl font-bold text-primary mb-2">
+              A ({Number(progress?.totalProgress).toFixed(2)}%)
+            </p>
             <p className="text-sm text-muted-foreground">
               Bạn làm rất tốt! Hãy tiếp tục phát huy nhé.
             </p>

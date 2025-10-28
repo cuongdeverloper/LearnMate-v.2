@@ -3,11 +3,15 @@ import { useNavigate } from "react-router-dom";
 import { Card, CardHeader, CardContent } from "../ui/Card";
 import { Button } from "../ui/Button";
 import Progress from "../ui/Progress";
+import { selectCourse } from "../../redux/action/courseActions";
+import { useDispatch } from "react-redux";
 
-const CourseCard = ({ id, course, progress = 80, nextDue = "Oct 25" }) => {
+const CourseCard = ({ course }) => {
+  const dispatch = useDispatch();
   const navigate = useNavigate();
   const handleEnter = () => {
-    navigate(`/user/my-courses/${course._id}`);
+    dispatch(selectCourse(course.id));
+    navigate(`/user/my-courses/${course.id}`);
   };
   return (
     <Card className="h-full hover:shadow-lg hover-scale-103 transition-all duration-300 cursor-pointer group">
@@ -16,10 +20,10 @@ const CourseCard = ({ id, course, progress = 80, nextDue = "Oct 25" }) => {
           className="text-lg font-semibold text-foreground line-clamp-2 group-hover:text-primary transition-colors"
           onClick={handleEnter}
         >
-          {course?.subjectId?.name}
+          {course?.subject?.name}
         </h3>
         <p className="text-sm text-muted-foreground">
-          {course?.tutorId?.user?.username}
+          Gia sư: {course?.tutor?.name}
         </p>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -27,14 +31,34 @@ const CourseCard = ({ id, course, progress = 80, nextDue = "Oct 25" }) => {
           <div className="flex justify-between items-center mb-2">
             <span className="text-sm font-medium text-foreground">Tiến độ</span>
             <span className="text-sm font-semibold text-primary">
-              {progress}%
+              {course?.progress}%
             </span>
           </div>
-          <Progress value={progress} className="h-2" />
+          <Progress value={course?.progress} className="h-2" />
         </div>
 
-        <div className="bg-accent/50 rounded-md p-3">
-          <p className="text-sm text-foreground">Bài tập đến hạn: {nextDue}</p>
+        <div className="bg-accent/50 rounded-md pt-2">
+          <p className="text-sm text-foreground m-0 ">Bài tập sắp đến hạn:</p>
+          <div className="flex items-center gap-2">
+            <p className="text-xs m-0">Trắc nghiệm:</p>
+            {course?.upcomingTasks?.quizzes?.length > 0 ? (
+              <p className="text-sm text-primary m-0">
+                {course?.upcomingTasks?.quizzes?.length}
+              </p>
+            ) : (
+              <p className="text-sm text-muted-foreground m-0">0</p>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            <p className="text-xs m-0 ">Tự luận:</p>
+            {course?.upcomingTasks?.assignments?.length > 0 ? (
+              <p className="text-sm text-primary m-0">
+                {course?.upcomingTasks?.assignments?.length}
+              </p>
+            ) : (
+              <p className="text-sm text-muted-foreground m-0">0</p>
+            )}
+          </div>
         </div>
 
         <Button

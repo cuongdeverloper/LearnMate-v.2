@@ -1,8 +1,8 @@
 const express = require("express");
 const router = express.Router();
 
-const { checkAccessToken} = require('../middleware/JWTAction');
-const uploadDocs = require("../config/cloudinaryDocxConfig"); 
+const { checkAccessToken } = require("../middleware/JWTAction");
+const uploadDocs = require("../config/cloudinaryDocxConfig");
 
 const {
   viewAssignment,
@@ -15,10 +15,16 @@ const {
   getAssignmentStorage,
   deleteAssignmentStorage,
   assignAssignmentFromStorage,
-} = require("../controller/Assignment/AssignmentController");
+  getAssignmentById,
+  getAssignmentsForCourse,
+} = require("../controller/assignment/assignmentController");
 
-
-router.post("/storage/create", checkAccessToken, uploadDocs.single("file"), createAssignmentStorage);
+router.post(
+  "/storage/create",
+  checkAccessToken,
+  uploadDocs.single("file"),
+  createAssignmentStorage
+);
 router.get("/storage", checkAccessToken, getAssignmentStorage);
 router.delete("/storage/:id", checkAccessToken, deleteAssignmentStorage);
 
@@ -34,17 +40,6 @@ router.post(
   "/submit",
   checkAccessToken,
   uploadDocs.single("file"),
-  async (req, res, next) => {
-    try {
-      if (req.file && req.file.path) {
-        req.body.fileUrl = req.file.path;
-      }
-      next();
-    } catch (err) {
-      console.error("❌ File upload failed:", err);
-      res.status(400).json({ error: "File upload failed", details: err.message });
-    }
-  },
   submitAssignment
 );
 
@@ -67,5 +62,8 @@ router.get("/feedbacks", checkAccessToken, viewGradeFeedback);
  * 🧩 Xóa assignment
  */
 router.delete("/:id", checkAccessToken, deleteAssignment);
+
+router.get("/:id", checkAccessToken, getAssignmentById);
+router.get("/course/:courseId", checkAccessToken, getAssignmentsForCourse);
 
 module.exports = router;

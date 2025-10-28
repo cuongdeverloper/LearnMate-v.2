@@ -1,6 +1,4 @@
 const Assignment = require("../../modal/Assignment");
-const AssignmentSubmission = require("../../modal/AssignmentSubmission");
-const Subject = require("../../modal/Subject");
 const Tutor = require("../../modal/Tutor");
 const User = require("../../modal/User");
 const Booking = require("../../modal/Booking");
@@ -10,14 +8,20 @@ const createAssignmentStorage = async (req, res) => {
   try {
     const tutor = await Tutor.findOne({ user: req.user.id });
     if (!tutor)
-      return res.status(404).json({ success: false, message: "Không tìm thấy tutor" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Không tìm thấy tutor" });
 
     if (!req.file)
-      return res.status(400).json({ success: false, message: "Không có file được upload" });
+      return res
+        .status(400)
+        .json({ success: false, message: "Không có file được upload" });
 
     const { title, description, subjectId } = req.body;
     if (!title || !subjectId)
-      return res.status(400).json({ success: false, message: "Thiếu thông tin cần thiết" });
+      return res
+        .status(400)
+        .json({ success: false, message: "Thiếu thông tin cần thiết" });
 
     const newStorage = await AssignmentStorage.create({
       tutorId: tutor._id,
@@ -27,7 +31,11 @@ const createAssignmentStorage = async (req, res) => {
       fileUrl: req.file.path, // URL từ Cloudinary
     });
 
-    res.status(200).json({ success: true, message: "Tạo Assignment Storage thành công", data: newStorage });
+    res.status(200).json({
+      success: true,
+      message: "Tạo Assignment Storage thành công",
+      data: newStorage,
+    });
   } catch (error) {
     console.error("CreateAssignmentStorage Error:", error);
     res.status(500).json({ success: false, message: "Lỗi server" });
@@ -38,10 +46,13 @@ const getAssignmentStorage = async (req, res) => {
   try {
     const tutor = await Tutor.findOne({ user: req.user.id });
     if (!tutor)
-      return res.status(404).json({ success: false, message: "Không tìm thấy tutor" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Không tìm thấy tutor" });
 
-    const storages = await AssignmentStorage.find({ tutorId: tutor._id })
-      .populate("subjectId", "name");
+    const storages = await AssignmentStorage.find({
+      tutorId: tutor._id,
+    }).populate("subjectId", "name");
 
     res.status(200).json({ success: true, data: storages });
   } catch (error) {
@@ -54,22 +65,31 @@ const assignAssignmentFromStorage = async (req, res) => {
   try {
     const tutor = await Tutor.findOne({ user: req.user.id });
     if (!tutor)
-      return res.status(404).json({ success: false, message: "Không tìm thấy tutor" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Không tìm thấy tutor" });
 
-    const { assignmentStorageId, bookingId, deadline, title, description } = req.body;
+    const { assignmentStorageId, bookingId, deadline, title, description } =
+      req.body;
     if (!assignmentStorageId || !bookingId || !deadline || !title)
-      return res.status(400).json({ success: false, message: "Thiếu dữ liệu assign" });
+      return res
+        .status(400)
+        .json({ success: false, message: "Thiếu dữ liệu assign" });
 
     const booking = await Booking.findById(bookingId)
       .populate("learnerId", "_id")
       .populate("subjectId", "_id");
 
     if (!booking)
-      return res.status(404).json({ success: false, message: "Không tìm thấy booking" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Không tìm thấy booking" });
 
     const storage = await AssignmentStorage.findById(assignmentStorageId);
     if (!storage)
-      return res.status(404).json({ success: false, message: "Không tìm thấy Assignment Storage" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Không tìm thấy Assignment Storage" });
 
     const newAssignment = await Assignment.create({
       assignmentStorageId,
@@ -94,8 +114,6 @@ const assignAssignmentFromStorage = async (req, res) => {
   }
 };
 
-
-
 /**
  * 🧩 Lấy tất cả assignment
  */
@@ -117,25 +135,29 @@ const viewAssignment = async (req, res) => {
  */
 const submitAssignment = async (req, res) => {
   try {
-    const { assignment, learnerId, fileUrl, submittedAt = Date.now() } = req.body;
+    const { assignmentId, note } = req.body;
 
-    if (!assignment || !learnerId) {
+    if (!assignmentId) {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
-    const assignmentObj = await Assignment.findById(assignment);
-    if (!assignmentObj) {
+    const assignment = await Assignment.findById(assignmentId);
+    if (!assignment) {
       return res.status(404).json({ error: "Assignment not found" });
     }
 
-    const learner = await User.findById(learnerId);
+    const learner = await User.findById(req.user.id);
     if (!learner) {
       return res.status(404).json({ error: "Learner not found" });
     }
 
+    const submittedAt = new Date();
+    const fileUrl = req.file ? req.file.path : null;
+
     const newSubmission = new AssignmentSubmission({
-      assignment,
-      learnerId,
+      assignment: assignment._id,
+      learnerId: learner._id,
+      note,
       fileUrl,
       submittedAt,
     });
@@ -151,7 +173,9 @@ const deleteAssignmentStorage = async (req, res) => {
   try {
     const { id } = req.params;
     await AssignmentStorage.findByIdAndDelete(id);
-    res.status(200).json({ success: true, message: "Đã xóa Assignment Storage" });
+    res
+      .status(200)
+      .json({ success: true, message: "Đã xóa Assignment Storage" });
   } catch (error) {
     console.error("DeleteAssignmentStorage Error:", error);
     res.status(500).json({ success: false, message: "Lỗi server" });
@@ -210,7 +234,9 @@ const gradeAssignment = async (req, res) => {
  */
 const viewGradeFeedback = async (req, res) => {
   try {
-    const submissions = await AssignmentSubmission.find({ grade: { $exists: true } })
+    const submissions = await AssignmentSubmission.find({
+      grade: { $exists: true },
+    })
       .populate("assignment")
       .populate("learnerId", "name");
     res.status(200).json(submissions);
@@ -231,6 +257,46 @@ const deleteAssignment = async (req, res) => {
   }
 };
 
+const getAssignmentById = async (req, res) => {
+  try {
+    const assignment = await Assignment.findById(req.params.id);
+    res.status(200).json(assignment);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+const getAssignmentsForCourse = async (req, res) => {
+  try {
+    let assignments = await Assignment.find({
+      bookingId: req.params.courseId,
+    });
+
+    const assignmentsWithSubmission = await Promise.all(
+      assignments.map(async (a) => {
+        const submission = await AssignmentSubmission.findOne({
+          assignment: a._id,
+          learnerId: req.user.id,
+        });
+        const assignmentObj = a.toObject();
+        if (submission) {
+          assignmentObj.submitted = true;
+          assignmentObj.grade = submission.grade;
+          assignmentObj.feedback = submission.feedback;
+          assignmentObj.submittedDate = submission.submittedAt;
+        } else {
+          assignmentObj.submitted = false;
+        }
+        return assignmentObj;
+      })
+    );
+
+    res.status(200).json(assignmentsWithSubmission);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
 module.exports = {
   viewAssignment,
   submitAssignment,
@@ -239,7 +305,9 @@ module.exports = {
   viewGradeFeedback,
   deleteAssignment,
   createAssignmentStorage,
-getAssignmentStorage,assignAssignmentFromStorage,
-deleteAssignmentStorage
-
+  getAssignmentStorage,
+  assignAssignmentFromStorage,
+  deleteAssignmentStorage,
+  getAssignmentById,
+  getAssignmentsForCourse,
 };

@@ -18,20 +18,15 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "../../components/ui/AlertDialog";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from "../../components/ui/Sheet";
 
 import { Label } from "../../components/ui/Label";
+import { toast } from "react-toastify";
 import { useDispatch, useSelector } from "react-redux";
+
 import {
   fetchQuizDetailsById,
   submitQuiz,
-} from "../../redux/action/quizActions";
-import { toast } from "react-toastify";
+} from "../../redux/action/courseActions";
 
 const formatTime = (sec) => {
   const m = String(Math.floor(sec / 60)).padStart(2, "0");
@@ -67,7 +62,8 @@ const StudentQuizTake = () => {
     return {
       currentIndex: 0,
       answers: {},
-      timer: 30 * 60,
+      timer: selectedQuiz.duration || 1800,
+      startedAt: Date.now(),
     };
   });
 
@@ -123,10 +119,15 @@ const StudentQuizTake = () => {
   const handleSubmit = async (fromAuto = false) => {
     if (!fromAuto) {
       setConfirmOpen(true);
-      return; 
+      return;
     }
+
+    const startedAt = state.startedAt;
+    const finishedAt = startedAt + (selectedQuiz.duration - state.timer) * 1000;
     try {
-      dispatch(submitQuiz(selectedQuiz._id, state.answers));
+      dispatch(
+        submitQuiz(selectedQuiz._id, state.answers, startedAt, finishedAt)
+      );
 
       localStorage.removeItem(storageKey);
       setState((s) => ({ currentIndex: 0, answers: {}, timer: 30 * 60 }));
@@ -136,6 +137,8 @@ const StudentQuizTake = () => {
       toast.error(e.message);
     }
   };
+
+  console.log("selectedQuiz", selectedQuiz);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-secondary/10 py-8 px-4 sm:px-6 lg:px-8">

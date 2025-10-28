@@ -3,7 +3,7 @@ import { Button } from "../../components/ui/Button";
 import { ArrowLeft, CheckCircle2, Download } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Card } from "../../components/ui/Card";
-import { formatDate, getAssignmentById } from "../../lib/assignments";
+import { formatDate } from "../../lib/assignments";
 
 import {
   RadarChart,
@@ -15,16 +15,23 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import { useSelector } from "react-redux";
 
 const ViewAssignmentFeedback = () => {
   const navigate = useNavigate();
   const { id: assignmentId, courseId } = useParams();
 
+  const {
+    selectedAssignment: assignment,
+    submitting,
+    loading,
+    feedback,
+    error,
+  } = useSelector((state) => state.assignments);
+
   if (!courseId || !assignmentId) {
     return <div>Invalid assignment Id</div>;
   }
-
-  const assignment = getAssignmentById(courseId, assignmentId);
 
   if (!assignment) {
     return (
