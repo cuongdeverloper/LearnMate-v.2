@@ -145,8 +145,6 @@ exports.createBooking = async (req, res) => {
       numberOfSession: totalSessions,
     });
 
-
-
     // Tạo lịch Schedule dựa trên dayOfWeek
     const schedulesData = [];
     const today = new Date();
@@ -180,7 +178,7 @@ exports.createBooking = async (req, res) => {
           date: scheduleDate,
           startTime: slot.startTime,
           endTime: slot.endTime,
-          status: "pending"
+          status: "pending",
         });
       }
     }
@@ -235,6 +233,8 @@ exports.getApprovedBookingsForLearner = async (req, res) => {
 
     const learnerId = req.user.id || req.user._id;
 
+    console.log("Learner ID:", learnerId);
+
     const bookings = await Booking.find({
       learnerId,
       status: "approve",
@@ -252,6 +252,8 @@ exports.getApprovedBookingsForLearner = async (req, res) => {
         select: "name classLevel",
       })
       .sort({ createdAt: -1 });
+
+    console.log(bookings);
 
     res.json(bookings);
   } catch (err) {

@@ -15,84 +15,22 @@ import {
   TabsTrigger,
   TabsContent,
 } from "../../components/ui/Tabs";
+
 import AssignmentsTab from "../../components/User/AssignmentsTab";
 import QuizzesTab from "../../components/User/QuizzesTab";
 import ProgressTab from "../../components/User/ProgressTab";
 import CourseSchedule from "../../components/User/CourseSchedule";
-import { useDispatch, useSelector } from "react-redux";
-import { fetchQuizzesByCourseId } from "../../redux/action/quizActions";
-
-const COURSE_DATA = {
-  1: {
-    id: "1",
-    title: "English 10A",
-    instructor: "Linh Tran",
-    description: "Advanced English language and literature course",
-  },
-  2: {
-    id: "2",
-    title: "Mathematics Advanced",
-    instructor: "Nguyen Minh",
-    description: "Advanced mathematics and calculus concepts",
-  },
-  3: {
-    id: "3",
-    title: "Physics Fundamentals",
-    instructor: "Tran Duc",
-    description: "Introduction to physics principles and experiments",
-  },
-  4: {
-    id: "4",
-    title: "Chemistry Essentials",
-    instructor: "Pham Huong",
-    description: "Essential chemistry concepts and lab work",
-  },
-  5: {
-    id: "5",
-    title: "History and Culture",
-    instructor: "Hoang Van",
-    description: "World history and cultural studies",
-  },
-  6: {
-    id: "6",
-    title: "Computer Science Basics",
-    instructor: "Le Thao",
-    description: "Introduction to computer science and programming",
-  },
-};
+import { useSelector } from "react-redux";
 
 const CourseDetails = () => {
-  const dispatch = useDispatch();
-  const {
-    list: myCourses,
-    selectedCourse,
-    loading: courseLoading,
-    error: courseError,
-  } = useSelector((state) => state.courses);
-
-  const {
-    list: quizzes,
-    selectedQuiz,
-    userAnswers,
-    submitting,
-    loading: quizLoading,
-    score,
-    error: quizError,
-  } = useSelector((state) => state.quizzes);
-
   const { id: courseId } = useParams();
-
   const navigate = useNavigate();
 
-  useEffect(() => {
-    myCourses.forEach((c) => {
-      if (c._id === courseId) {
-        dispatch({ type: "SELECT_COURSE", payload: c });
-      }
-    });
+  const { myCourses, selectedCourse, loading, error } = useSelector(
+    (state) => state.courses
+  );
 
-    dispatch(fetchQuizzesByCourseId(courseId));
-  }, [dispatch, myCourses, courseId]);
+  const course = myCourses.find((course) => course.id === selectedCourse);
 
   if (!selectedCourse) {
     return (
@@ -138,17 +76,13 @@ const CourseDetails = () => {
         </Button>
         <div className="bg-card border border-border rounded-lg shadow-sm p-8 mb-6">
           <h1 className="text-4xl font-bold text-foreground mb-4">
-            {selectedCourse?.subjectId?.name}
+            {course?.subject?.name}
           </h1>
           <p className="text-lg text-muted-foreground mb-2">
             Gia sư:{" "}
-            <span className="font-semibold text-foreground">
-              {selectedCourse?.tutorId.user.username}
-            </span>
+            <span className=" text-foreground">{course?.tutor?.name}</span>
           </p>
-          <p className="text-foreground">
-            Môn học: {selectedCourse?.subjectId?.name}
-          </p>
+          <p className="text-foreground">Môn học: {course?.subject?.name}</p>
         </div>
         <div className="bg-card border border-border rounded-lg shadow-sm p-6">
           <Tabs defaultValue="schedule" className="w-full">

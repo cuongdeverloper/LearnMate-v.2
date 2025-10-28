@@ -4,8 +4,7 @@ const ChangeRequest = require("../../modal/ChangeRequest");
 const User = require("../../modal/User");
 const Tutor = require("../../modal/Tutor");
 const FinancialHistory = require("../../modal/FinancialHistory");
-const TutorAvailability = require("../../modal/TutorAvailability")
-
+const TutorAvailability = require("../../modal/TutorAvailability");
 
 function addDays(date, days) {
   const d = new Date(date);
@@ -17,32 +16,55 @@ exports.requestChangeSchedule = async (req, res) => {
     const { bookingId } = req.params;
     const { scheduleId, newDate, newStartTime, newEndTime, reason } = req.body;
 
-    console.log("📩 Request change schedule:", { bookingId, scheduleId, newDate, newStartTime, newEndTime, reason });
+    console.log("📩 Request change schedule:", {
+      bookingId,
+      scheduleId,
+      newDate,
+      newStartTime,
+      newEndTime,
+      reason,
+    });
 
-    const booking = await Booking.findById(bookingId).populate("tutorId learnerId");
+    const booking = await Booking.findById(bookingId).populate(
+      "tutorId learnerId"
+    );
     if (!booking) {
-      return res.status(404).json({ success: false, message: "Không tìm thấy booking." });
+      return res
+        .status(404)
+        .json({ success: false, message: "Không tìm thấy booking." });
     }
 
     if (!scheduleId || !newDate || !newStartTime || !newEndTime || !reason) {
-      return res.status(400).json({ success: false, message: "Thiếu thông tin yêu cầu đổi lịch." });
+      return res
+        .status(400)
+        .json({ success: false, message: "Thiếu thông tin yêu cầu đổi lịch." });
     }
 
     const schedule = await Schedule.findById(scheduleId);
     if (!schedule) {
-      return res.status(404).json({ success: false, message: "Không tìm thấy lịch học." });
+      return res
+        .status(404)
+        .json({ success: false, message: "Không tìm thấy lịch học." });
     }
 
     if (
       schedule.learnerId.toString() !== req.user._id &&
       schedule.learnerId.toString() !== req.user.id
     ) {
-      return res.status(403).json({ success: false, message: "Không có quyền đổi lịch này." });
+      return res
+        .status(403)
+        .json({ success: false, message: "Không có quyền đổi lịch này." });
     }
 
-    const existingRequest = await ChangeRequest.findOne({ scheduleId, status: "pending" });
+    const existingRequest = await ChangeRequest.findOne({
+      scheduleId,
+      status: "pending",
+    });
     if (existingRequest) {
-      return res.status(400).json({ success: false, message: "Đã có yêu cầu đổi lịch đang chờ duyệt." });
+      return res.status(400).json({
+        success: false,
+        message: "Đã có yêu cầu đổi lịch đang chờ duyệt.",
+      });
     }
 
     const tutorId = schedule.tutorId;
@@ -58,7 +80,10 @@ exports.requestChangeSchedule = async (req, res) => {
     });
 
     if (!availability) {
-      return res.status(400).json({ success: false, message: "Gia sư không rảnh vào thời gian này." });
+      return res.status(400).json({
+        success: false,
+        message: "Gia sư không rảnh vào thời gian này.",
+      });
     }
 
     const changeRequest = new ChangeRequest({
@@ -415,12 +440,10 @@ exports.acceptChangeRequest = async (req, res) => {
         .json({ success: false, message: "Không tìm thấy lịch học." });
     }
     if (schedule.tutorId.toString() !== tutor._id.toString()) {
-      return res
-        .status(403)
-        .json({
-          success: false,
-          message: "Bạn không có quyền phê duyệt yêu cầu này.",
-        });
+      return res.status(403).json({
+        success: false,
+        message: "Bạn không có quyền phê duyệt yêu cầu này.",
+      });
     }
 
     changeRequest.status = "approved";
@@ -475,12 +498,10 @@ exports.rejectChangeRequest = async (req, res) => {
         .json({ success: false, message: "Không tìm thấy lịch học." });
     }
     if (schedule.tutorId.toString() !== tutor._id.toString()) {
-      return res
-        .status(403)
-        .json({
-          success: false,
-          message: "Bạn không có quyền từ chối yêu cầu này.",
-        });
+      return res.status(403).json({
+        success: false,
+        message: "Bạn không có quyền từ chối yêu cầu này.",
+      });
     }
 
     changeRequest.status = "rejected";
@@ -540,5 +561,47 @@ exports.getChangeRequestsByTutor = async (req, res) => {
       message: "Đã xảy ra lỗi khi lấy danh sách yêu cầu thay đổi.",
       error: error.message,
     });
+  }
+};
+
+exports.getMyCourseSchedules = async (req, res) => {
+  try {
+    const { courseId } = req.params;
+    if (!req.user) {
+      return res
+        .status(401)
+        .json({ message: "Unauthorized: User not logged in." });
+    }
+
+    const learnerId = req.user.id || req.user._id;
+
+    const schedules = await Schedule.find({
+      learnerId: learnerId,
+    })
+      .populate({
+        path: "bookingId",
+        select: "tutorId subjectId",
+        populate: [
+          {
+            path: "tutorId",
+            select: "user",
+            populate: {
+              path: "user",
+              select: "username",
+            },
+          },
+          {
+            path: "subjectId",
+            select: "name classLevel",
+          },
+        ],
+      })
+      .select("date startTime endTime bookingId attended status")
+      .sort({ date: 1 }); // sắp xếp theo ngày tăng dần
+
+    res.json(schedules);
+  } catch (error) {
+    console.error("Error fetching learner's schedules:", error);
+    res.status(500).json({ message: "Server error fetching schedules" });
   }
 };

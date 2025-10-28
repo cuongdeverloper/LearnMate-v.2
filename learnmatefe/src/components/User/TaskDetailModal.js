@@ -1,17 +1,25 @@
 import React from "react";
-import { EVENT_COLORS, EVENT_LABELS } from "../../lib/courseEvents";
-
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/Dialog";
 import { Calendar, FileText, MapPin } from "lucide-react";
 import { Button } from "../ui/Button";
 
-const EventDetailModal = ({ event, isOpen, onClose }) => {
-  if (!event) return null;
+export const TASK_COLORS = {
+  assignment: "bg-red-100 border-red-300 text-red-900",
+  quiz: "bg-green-100 border-green-300 text-green-900",
+};
 
-  const eventColor = EVENT_COLORS[event.type];
-  const eventLabel = EVENT_LABELS[event.type];
+export const TASK_LABELS = {
+  assignment: "Assignment",
+  quiz: "Quiz",
+};
 
-  const dateStr = event.date.toLocaleDateString("en-US", {
+const TaskDetailModal = ({ task, isOpen, onClose }) => {
+  if (!task) return null;
+
+  const taskColor = TASK_COLORS[task.type];
+  const taskLabel = TASK_LABELS[task.type];
+
+  const dateStr = new Date(task.deadline).toLocaleDateString("en-US", {
     weekday: "short",
     day: "numeric",
     month: "long",
@@ -24,11 +32,11 @@ const EventDetailModal = ({ event, isOpen, onClose }) => {
           <div className="flex items-start justify-between gap-4">
             <div className="flex flex-col items-start">
               <div
-                className={`inline-block px-3 py-1 rounded-full text-xs font-semibold mb-3 border ${eventColor}`}
+                className={`inline-block px-3 py-1 rounded-full text-xs font-semibold mb-3 border ${taskColor}`}
               >
-                {eventLabel}
+                {taskLabel}
               </div>
-              <DialogTitle className="text-2xl">{event.title}</DialogTitle>
+              <DialogTitle className="text-2xl">{task.title}</DialogTitle>
             </div>
           </div>
         </DialogHeader>
@@ -38,42 +46,23 @@ const EventDetailModal = ({ event, isOpen, onClose }) => {
             <div>
               <p className="font-medium">{dateStr}</p>
               <p className="text-sm text-muted-foreground">
-                {event.startTime}
-                {event.endTime && ` - ${event.endTime}`}
+                {task.createdAt}
+                {task.deadline && ` - ${task.deadline}`}
               </p>
             </div>
           </div>
 
-          {event.location && (
-            <div className="flex items-center gap-3 text-foreground">
-              <MapPin className="w-5 h-5 text-muted-foreground flex-shrink-0" />
-              <p>{event.location}</p>
-            </div>
-          )}
-
-          {event.description && (
+          {task.description && (
             <div>
               <p className="text-sm font-medium text-muted-foreground mb-1">
                 Description
               </p>
-              <p className="text-foreground">{event.description}</p>
-            </div>
-          )}
-
-          {event.notes && (
-            <div className="flex gap-3">
-              <FileText className="w-5 h-5 text-muted-foreground flex-shrink-0 mt-0.5" />
-              <div>
-                <p className="text-sm font-medium text-muted-foreground mb-1">
-                  Notes
-                </p>
-                <p className="text-foreground">{event.notes}</p>
-              </div>
+              <p className="text-foreground">{task.description}</p>
             </div>
           )}
 
           <div className="pt-4 border-t flex gap-2">
-            {event.type === "assignment" && (
+            {task.type === "assignment" && (
               <>
                 <Button className="flex-1" variant="default">
                   View Assignment
@@ -83,12 +72,12 @@ const EventDetailModal = ({ event, isOpen, onClose }) => {
                 </Button>
               </>
             )}
-            {event.type === "quiz" && (
+            {task.type === "quiz" && (
               <Button className="w-full" variant="default">
                 Open Quiz
               </Button>
             )}
-            {event.type === "class" && (
+            {task.type === "class" && (
               <Button className="w-full" variant="outline">
                 Add to Calendar
               </Button>
@@ -100,4 +89,4 @@ const EventDetailModal = ({ event, isOpen, onClose }) => {
   );
 };
 
-export default EventDetailModal;
+export default TaskDetailModal;

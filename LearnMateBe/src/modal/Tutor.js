@@ -1,20 +1,27 @@
-  const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
-  const certificationSchema = new mongoose.Schema({
+const certificationSchema = new mongoose.Schema(
+  {
     title: String,
     issuedBy: String,
     year: Number,
-  }, { _id: false });
+  },
+  { _id: false }
+);
 
-  const timeSlotSchema = new mongoose.Schema({
+const timeSlotSchema = new mongoose.Schema(
+  {
     day: String,
     slots: [String],
-  }, { _id: false });
+  },
+  { _id: false }
+);
 
-  const tutorSchema = new mongoose.Schema({
-    user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+const tutorSchema = new mongoose.Schema(
+  {
+    user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
     bio: String,
-    subjects: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Subject' }],
+    subjects: [{ type: mongoose.Schema.Types.ObjectId, ref: "Subject" }],
     pricePerHour: Number,
     experience: String,
     education: String,
@@ -24,13 +31,14 @@
     certifications: [certificationSchema],
     availableTimes: [timeSlotSchema],
     profileImage: String,
-    reviews: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Review' }],
+    reviews: [{ type: mongoose.Schema.Types.ObjectId, ref: "Review" }],
     isVerified: {
       type: Boolean,
-      default: false
+      default: false,
     },
     active: { type: Boolean, default: true },
+  },
+  { timestamps: true }
+);
 
-  }, { timestamps: true });
-
-  module.exports = mongoose.model('Tutor', tutorSchema);
+module.exports = mongoose.model("Tutor", tutorSchema);

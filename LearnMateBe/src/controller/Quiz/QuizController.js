@@ -57,16 +57,22 @@ exports.getQuizById = async (req, res) => {
 
 exports.createQuizFromStorage = async (req, res) => {
   try {
-    const { quizStorageId, bookingId, title } = req.body; 
+    const { quizStorageId, bookingId, title } = req.body;
 
     const tutor = await Tutor.findOne({ user: req.user.id });
     if (!tutor) {
-      return res.status(404).json({ success: false, message: "Không tìm thấy tutor." });
+      return res
+        .status(404)
+        .json({ success: false, message: "Không tìm thấy tutor." });
     }
 
-    const quizStorage = await QuizStorage.findById(quizStorageId).populate("questions");
+    const quizStorage = await QuizStorage.findById(quizStorageId).populate(
+      "questions"
+    );
     if (!quizStorage) {
-      return res.status(404).json({ success: false, message: "Không tìm thấy QuizStorage." });
+      return res
+        .status(404)
+        .json({ success: false, message: "Không tìm thấy QuizStorage." });
     }
 
     const quiz = new Quiz({
@@ -74,7 +80,7 @@ exports.createQuizFromStorage = async (req, res) => {
       subjectId: quizStorage.subjectId,
       bookingId,
       quizStorageId,
-      title: title || quizStorage.name, 
+      title: title || quizStorage.name,
       description: quizStorage.description || "",
     });
 
@@ -111,14 +117,15 @@ exports.createQuizFromStorage = async (req, res) => {
   }
 };
 
-
-
 // 🧩 Import câu hỏi từ file Excel
 // Import Excel
 exports.importQuestionsToStorage = async (req, res) => {
   try {
     const tutor = await Tutor.findOne({ user: req.user.id });
-    if (!tutor) return res.status(404).json({ success: false, message: "Không tìm thấy tutor." });
+    if (!tutor)
+      return res
+        .status(404)
+        .json({ success: false, message: "Không tìm thấy tutor." });
 
     const workbook = XLSX.read(req.file.buffer, { type: "buffer" });
     const sheet = workbook.Sheets[workbook.SheetNames[0]];
@@ -134,10 +141,15 @@ exports.importQuestionsToStorage = async (req, res) => {
 
     await QuestionStorage.insertMany(questions);
 
-    res.status(200).json({ success: true, message: "✅ Import câu hỏi vào storage thành công!" });
+    res.status(200).json({
+      success: true,
+      message: "✅ Import câu hỏi vào storage thành công!",
+    });
   } catch (error) {
     console.error("ImportQuestionsToStorage Error:", error);
-    res.status(500).json({ success: false, message: "Lỗi khi import câu hỏi vào storage." });
+    res
+      .status(500)
+      .json({ success: false, message: "Lỗi khi import câu hỏi vào storage." });
   }
 };
 
@@ -169,17 +181,18 @@ exports.getQuizStorage = async (req, res) => {
   }
 };
 
-
-
 exports.getQuestionStorage = async (req, res) => {
   try {
     const tutor = await Tutor.findOne({ user: req.user.id });
-    const questions = await QuestionStorage.find({ tutorId: tutor._id })
-      .populate("subjectId");
+    const questions = await QuestionStorage.find({
+      tutorId: tutor._id,
+    }).populate("subjectId");
     res.status(200).json({ success: true, questions });
   } catch (error) {
     console.error("GetQuestionStorage Error:", error);
-    res.status(500).json({ success: false, message: "Lỗi khi tải question storage." });
+    res
+      .status(500)
+      .json({ success: false, message: "Lỗi khi tải question storage." });
   }
 };
 
@@ -290,10 +303,10 @@ exports.getAllQuizzesByLearnerId = async (req, res) => {
 exports.submitQuiz = async (req, res) => {
   try {
     const { quizId } = req.params;
-    const { answers } = req.body;
+    const { answers, startedAt, finishedAt } = req.body;
     console.log(answers);
+    console.log("started at: ", startedAt, "finished at: ", finishedAt);
 
-    let score = 0;
     const quiz = await Quiz.findById(quizId);
 
     if (!quiz) {
@@ -302,24 +315,35 @@ exports.submitQuiz = async (req, res) => {
         .json({ success: false, message: "Không tìm thấy quiz." });
     }
 
+    if (quiz.attempted >= quiz.maxAttempts) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Quiz has been attempted maximum." });
+    }
+
     const questions = await Question.find({ quizId });
 
-    questions.forEach((question, index) => {
-      const answer = new Answer({
-        questionId: question._id,
-        learnerId: req.user.id,
-        selectedAnswer: Number.parseInt(answers[question._id.toString()]) + 1,
-        isCorrect:
+    const results = await Promise.all(
+      questions.map(async (question) => {
+        const selectedAnswer =
+          Number.parseInt(answers[question._id.toString()]) + 1;
+        const isCorrect =
           Number.parseInt(answers[question._id.toString()]) + 1 ===
-          question.correctAnswer,
-      });
+          question.correctAnswer;
 
-      answer.save();
+        const answer = new Answer({
+          questionId: question._id,
+          learnerId: req.user.id,
+          selectedAnswer: selectedAnswer,
+          isCorrect: isCorrect,
+        });
 
-      if (answer.isCorrect) {
-        score += 1;
-      }
-    });
+        await answer.save();
+        return isCorrect;
+      })
+    );
+
+    const score = results.filter((isCorrect) => isCorrect).length;
 
     console.log("🥪🥪🥪Score:", score);
 
@@ -329,7 +353,8 @@ exports.submitQuiz = async (req, res) => {
       totalQuestions: questions.length,
       correctAnswers: score,
       score: (score / questions.length) * 100,
-      finishedAt: Date.now(),
+      startedAt,
+      finishedAt,
     });
 
     await quizAttempt.save();
@@ -338,11 +363,17 @@ exports.submitQuiz = async (req, res) => {
       score: quizAttempt.score,
       correct: quizAttempt.correctAnswers,
       totalQuestions: quizAttempt.totalQuestions,
-      timeTaken: quizAttempt.finishedAt - quizAttempt.startedAt,
+      timeTaken: Math.floor(
+        (quizAttempt.finishedAt - quizAttempt.startedAt) / 1000
+      ),
       questions,
       answers,
       rank: 1,
     };
+
+    quiz.attempted += 1;
+    quiz.newestScore = (score / questions.length) * 100;
+    await quiz.save();
 
     res.status(200).json({ success: true, result });
   } catch (error) {
@@ -355,7 +386,10 @@ exports.addQuestionsFromStorageToQuiz = async (req, res) => {
   try {
     const { quizId, questionIds } = req.body;
     const quiz = await Quiz.findById(quizId);
-    if (!quiz) return res.status(404).json({ success: false, message: "Không tìm thấy quiz." });
+    if (!quiz)
+      return res
+        .status(404)
+        .json({ success: false, message: "Không tìm thấy quiz." });
 
     const tutor = await Tutor.findOne({ user: req.user.id });
 
@@ -380,10 +414,15 @@ exports.addQuestionsFromStorageToQuiz = async (req, res) => {
     quiz.questions.push(...newQuestions.filter(Boolean));
     await quiz.save();
 
-    res.status(200).json({ success: true, message: "✅ Đã thêm câu hỏi từ storage vào quiz." });
+    res.status(200).json({
+      success: true,
+      message: "✅ Đã thêm câu hỏi từ storage vào quiz.",
+    });
   } catch (error) {
     console.error("AddQuestionsFromStorageToQuiz Error:", error);
-    res.status(500).json({ success: false, message: "Lỗi khi thêm câu hỏi từ storage." });
+    res
+      .status(500)
+      .json({ success: false, message: "Lỗi khi thêm câu hỏi từ storage." });
   }
 };
 
@@ -393,10 +432,12 @@ exports.createQuizStorage = async (req, res) => {
 
     const tutor = await Tutor.findOne({ user: req.user.id });
     if (!tutor)
-      return res.status(404).json({ success: false, message: "Không tìm thấy tutor." });
+      return res
+        .status(404)
+        .json({ success: false, message: "Không tìm thấy tutor." });
 
     const quizStorage = new QuizStorage({
-      name: title, 
+      name: title,
       tutorId: tutor._id,
       subjectId,
       questions: questionIds || [],
@@ -406,7 +447,9 @@ exports.createQuizStorage = async (req, res) => {
     res.status(201).json({ success: true, quizStorage });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ success: false, message: "Lỗi khi tạo QuizStorage." });
+    res
+      .status(500)
+      .json({ success: false, message: "Lỗi khi tạo QuizStorage." });
   }
 };
 
@@ -423,22 +466,31 @@ exports.deleteQuizStorage = async (req, res) => {
       .json({ success: true, message: "Đã xoá Quiz Storage thành công." });
   } catch (error) {
     console.error("Delete Quiz Storage Error:", error);
-    res.status(500).json({ success: false, message: "Lỗi khi xoá Quiz Storage." });
+    res
+      .status(500)
+      .json({ success: false, message: "Lỗi khi xoá Quiz Storage." });
   }
 };
 
 exports.updateQuizStorage = async (req, res) => {
   try {
     const { quizStorageId } = req.params;
-    const { questionIds, name } = req.body; 
+    const { questionIds, name } = req.body;
 
     const tutor = await Tutor.findOne({ user: req.user.id });
     if (!tutor)
-      return res.status(404).json({ success: false, message: "Không tìm thấy tutor." });
+      return res
+        .status(404)
+        .json({ success: false, message: "Không tìm thấy tutor." });
 
-    const quizStorage = await QuizStorage.findOne({ _id: quizStorageId, tutorId: tutor._id });
+    const quizStorage = await QuizStorage.findOne({
+      _id: quizStorageId,
+      tutorId: tutor._id,
+    });
     if (!quizStorage)
-      return res.status(404).json({ success: false, message: "Không tìm thấy QuizStorage." });
+      return res
+        .status(404)
+        .json({ success: false, message: "Không tìm thấy QuizStorage." });
 
     if (name) quizStorage.name = name;
 
@@ -457,6 +509,8 @@ exports.updateQuizStorage = async (req, res) => {
     });
   } catch (error) {
     console.error("UpdateQuizStorage Error:", error);
-    res.status(500).json({ success: false, message: "Lỗi khi cập nhật QuizStorage." });
+    res
+      .status(500)
+      .json({ success: false, message: "Lỗi khi cập nhật QuizStorage." });
   }
 };

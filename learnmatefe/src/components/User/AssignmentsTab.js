@@ -1,10 +1,9 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 
 import {
   calculateAssignmentStatus,
   formatDate,
-  getAssignmentsForCourse,
   getDaysUntilDue,
   isOverdue,
 } from "../../lib/assignments";
@@ -19,14 +18,19 @@ import {
 } from "../ui/Table";
 import { Button } from "../ui/Button";
 import { Badge } from "../ui/Badge";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchAssignments } from "../../redux/action/courseActions";
 
 const AssignmentsTab = ({ courseTitle }) => {
   const { id: courseId } = useParams();
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
-  if (!courseId) return null;
+  const { assignments, loading, error } = useSelector((state) => state.courses);
 
-  const assignments = getAssignmentsForCourse(courseId);
+  useEffect(() => {
+    dispatch(fetchAssignments(courseId));
+  }, [courseId, dispatch]);
 
   const getStatusBadge = (status) => {
     switch (status) {
@@ -41,20 +45,27 @@ const AssignmentsTab = ({ courseTitle }) => {
             Overdue
           </Badge>
         );
-      case "pending":
-        return <Badge variant="outline">Pending</Badge>;
+      case "not_submitted":
+        return <Badge variant="outline">Not submitted</Badge>;
       default:
         return <Badge>{status}</Badge>;
     }
   };
 
-  const handleSubmit = (assignmentId) => {
-    navigate(`/user/my-courses/${courseId}/assignments/${assignmentId}/submit`);
+  const handleSelectAssignment = (assignment) => {
+    dispatch({ type: "ASSIGNMENT_SELECT", payload: assignment });
+    navigate(
+      `/user/my-courses/${courseId}/assignments/${assignment._id}/submit`
+    );
   };
 
   const handleViewFeedback = (assignmentId) => {
     return;
   };
+
+  if (!courseId) return null;
+
+  console.log("Assignments: ", assignments);
 
   return (
     <div className="space-y-4">
@@ -77,76 +88,85 @@ const AssignmentsTab = ({ courseTitle }) => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {assignments.map((assignment) => {
-              const status = calculateAssignmentStatus(assignment);
-              const daysLeft = getDaysUntilDue(assignment.dueDate);
-              const showOverdueWarning =
-                isOverdue(assignment.dueDate) && !assignment.submitted;
+            {assignments?.length > 0 &&
+              assignments?.map((assignment) => {
+                assignment = { ...assignment, status: "pending" };
+                const status = calculateAssignmentStatus(assignment);
+                const daysLeft = getDaysUntilDue(assignment.deadline);
+                const showOverdueWarning =
+                  isOverdue(assignment.deadline) && !assignment.submitted;
 
-              return (
-                <TableRow key={assignment.id} className="hover:bg-muted/30">
-                  <TableCell className="font-medium text-foreground">
-                    <div>
-                      <p>{assignment.title}</p>
-                      {showOverdueWarning && (
-                        <p className="text-xs text-destructive mt-1">
-                          ⚠️ Overdue
-                        </p>
-                      )}
-                      {!showOverdueWarning &&
-                        daysLeft > 0 &&
-                        !assignment.submitted && (
-                          <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
-                            <Clock className="w-3 h-3" />
-                            {daysLeft} day{daysLeft !== 1 ? "s" : ""} left
+                return (
+                  <TableRow key={assignment._id} className="hover:bg-muted/30">
+                    <TableCell className="font-medium text-foreground">
+                      <div>
+                        <p>{assignment.title}</p>
+                        {showOverdueWarning && (
+                          <p className="text-xs text-destructive mt-1">
+                            ⚠️ Overdue
                           </p>
                         )}
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {formatDate(assignment.dueDate)}
-                  </TableCell>
-                  <TableCell>{getStatusBadge(status)}</TableCell>
-                  <TableCell className="text-center">
-                    {assignment.grade !== undefined ? (
-                      <span className="font-semibold text-primary">
-                        {assignment.grade}/{assignment.maxGrade}
-                      </span>
-                    ) : (
-                      <span className="text-muted-foreground">-</span>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-center">
-                    {assignment.feedback ? (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleViewFeedback(assignment.id)}
-                      >
-                        Xem phản hồi
-                      </Button>
-                    ) : (
-                      <span className="text-muted-foreground">-</span>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-center">
-                    {!assignment.submitted && status !== "graded" ? (
-                      <Button
-                        variant="default"
-                        size="sm"
-                        onClick={() => handleSubmit(assignment.id)}
-                      >
-                        Nộp bài
-                      </Button>
-                    ) : (
-                      <Button variant="outline" size="sm" disabled>
-                        Đã nộp bài
-                      </Button>
-                    )}
-                  </TableCell>
-                </TableRow>
-              );
-            })}
+                        {!showOverdueWarning &&
+                          daysLeft > 0 &&
+                          !assignment.submitted && (
+                            <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                              <Clock className="w-3 h-3" />
+                              {daysLeft} day{daysLeft !== 1 ? "s" : ""} left
+                            </p>
+                          )}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {formatDate(assignment.deadline)}
+                    </TableCell>
+                    <TableCell>{getStatusBadge(status)}</TableCell>
+                    <TableCell className="text-center">
+                      {assignment.grade !== undefined ? (
+                        <span className="font-semibold text-primary">
+                          {assignment.grade}/{assignment.maxGrade}
+                        </span>
+                      ) : (
+                        <span className="text-muted-foreground">-</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      {assignment.feedback ? (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleViewFeedback(assignment.id)}
+                        >
+                          Xem phản hồi
+                        </Button>
+                      ) : (
+                        <span className="text-muted-foreground">-</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      {!assignment.submitted && status !== "graded" ? (
+                        <Button
+                          className="text-white"
+                          variant="default"
+                          size="sm"
+                          onClick={() => handleSelectAssignment(assignment)}
+                        >
+                          Nộp bài
+                        </Button>
+                      ) : (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            handleSelectAssignment(assignment);
+                          }}
+                        >
+                          Xem bài đã nộp
+                        </Button>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
           </TableBody>
         </Table>
       </div>

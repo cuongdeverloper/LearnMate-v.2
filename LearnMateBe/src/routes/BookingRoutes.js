@@ -41,6 +41,12 @@ RouteBooking.get(
   checkAccessToken,
   scheduleController.getLearnerWeeklySchedules
 );
+
+RouteBooking.get(
+  "/schedule/my-course-schedules",
+  checkAccessToken,
+  scheduleController.getMyCourseSchedules
+);
 RouteBooking.patch(
   "/schedule/:scheduleId/attendance",
   checkAccessToken,

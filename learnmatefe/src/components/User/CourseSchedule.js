@@ -1,19 +1,88 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 
-import {
-  SAMPLE_EVENTS,
-  EVENT_COLORS,
-  EVENT_LABELS,
-} from "../../lib/courseEvents";
 import { Card } from "../ui/Card";
 import { Button } from "../ui/Button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import EventDetailModal from "./EventDetailModal";
+import TaskDetailModal from "./TaskDetailModal";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  fetchAssignments,
+  fetchQuizzes,
+} from "../../redux/action/courseActions";
+
+export const TASK_COLORS = {
+  assignment: "bg-red-100 border-red-300 text-red-900",
+  quiz: "bg-green-100 border-green-300 text-green-900",
+};
+
+export const TASK_LABELS = {
+  assignment: "Assignment",
+  quiz: "Quiz",
+};
+
+export const SAMPLE_TASKS = [
+  {
+    id: "2",
+    title: "Essay submission",
+    type: "assignment",
+    date: new Date(2024, 9, 20),
+    startTime: "23:59",
+    description: "Submit your essay on modern literature",
+    notes: "2000-3000 words",
+  },
+  {
+    id: "3",
+    title: "Vocabulary Quiz",
+    type: "quiz",
+    date: new Date(2024, 9, 21),
+    startTime: "10:00",
+    endTime: "10:30",
+    description: "Covers Lesson 1–3",
+    location: "Online",
+  },
+];
+
+const getTasksList = (assignments, quizzes) => {
+  const tasks = [
+    ...assignments.map((a) => ({
+      id: a._id,
+      title: a.title,
+      type: "assignment",
+      deadline: a.deadline,
+      description: a.description,
+    })),
+    ...quizzes.map((q) => ({
+      id: q._id,
+      title: q.title,
+      type: "quiz",
+      deadline: q.deadline,
+      description: q.description,
+    })),
+  ];
+  return tasks;
+};
 
 const CourseSchedule = () => {
+  const dispatch = useDispatch();
+
+  const {
+    myCourses,
+    selectedCourse,
+    quizzes,
+    assignments,
+    loading: error,
+  } = useSelector((state) => state.courses);
+
+  useEffect(() => {
+    dispatch(fetchAssignments(selectedCourse));
+    dispatch(fetchQuizzes(selectedCourse));
+  }, [dispatch, selectedCourse]);
+
   const [currentDate, setCurrentDate] = useState(new Date(2024, 9, 1));
-  const [selectedEvent, setSelectedEvent] = useState(null);
+  const [selectedTask, setSelectedTask] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const [tasks, setTasks] = useState(getTasksList(assignments, quizzes));
 
   const monthName = currentDate.toLocaleDateString("en-US", {
     month: "long",
@@ -56,52 +125,61 @@ const CourseSchedule = () => {
     return days;
   }, [firstDayOfMonth, daysInMonth]);
 
-  const getEventsForDate = (day) => {
-    return SAMPLE_EVENTS.filter((event) => {
+  const getTasksForDate = (day) => {
+    return tasks.filter((t) => {
       return (
-        event.date.getDate() === day &&
-        event.date.getMonth() === currentDate.getMonth() &&
-        event.date.getFullYear() === currentDate.getFullYear()
+        new Date(t.deadline).getDate() === day &&
+        new Date(t.deadline).getMonth() === currentDate.getMonth() &&
+        new Date(t.deadline).getFullYear() === currentDate.getFullYear()
       );
     });
   };
 
-  const upcomingEvents = useMemo(() => {
+  const upcomingTasks = useMemo(() => {
     const now = new Date();
-    return SAMPLE_EVENTS.filter((event) => event.date >= now)
-      .sort((a, b) => a.date.getTime() - b.date.getTime())
+    return tasks
+      .filter((t) => t.deadline >= now)
+      .sort(
+        (a, b) =>
+          new Date(a.deadline).getTime() - new Date(b.deadline).getTime()
+      )
       .slice(0, 5);
   }, []);
 
-  const handleEventClick = (event) => {
-    setSelectedEvent(event);
+  const handleTaskClick = (task) => {
+    setSelectedTask(task);
     setIsModalOpen(true);
   };
+
+  console.log("tasks", tasks);
 
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         <div className="lg:col-span-1">
           <Card className="p-4">
-            <h3 className="font-semibold text-foreground mb-4 text-xl">
-              📅 Sự kiện sắp tới
+            <h3 className="font-semibold text-foreground mb-4 text-lg">
+              📅 Nhiệm vụ sắp tới
             </h3>
             <div className="space-y-3">
-              {upcomingEvents.length > 0 ? (
-                upcomingEvents.map((event) => {
-                  const eventColor = EVENT_COLORS[event.type];
-                  const dateStr = event.date.toLocaleDateString("en-US", {
-                    month: "short",
-                    day: "numeric",
-                  });
+              {upcomingTasks.length > 0 ? (
+                upcomingTasks.map((task) => {
+                  const taskColor = TASK_COLORS[task.type];
+                  const dateStr = new Date(task.deadline).toLocaleDateString(
+                    "en-US",
+                    {
+                      month: "short",
+                      day: "numeric",
+                    }
+                  );
                   return (
                     <button
-                      key={event.id}
-                      onClick={() => handleEventClick(event)}
-                      className={`w-full p-2 rounded-md border-l-4 hover:bg-accent transition-colors text-left ${eventColor}`}
+                      key={task.id}
+                      onClick={() => handleTaskClick(task)}
+                      className={`w-full p-2 rounded-md border-l-4 hover:bg-accent transition-colors text-left ${taskColor}`}
                     >
                       <p className="text-sm font-medium line-clamp-1">
-                        {event.title}
+                        {task.title}
                       </p>
                       <p className="text-xs opacity-75 mt-1">{dateStr}</p>
                     </button>
@@ -162,11 +240,12 @@ const CourseSchedule = () => {
 
             <div className="grid grid-cols-7 gap-2">
               {calendarDays.map((day, index) => {
-                const events = day ? getEventsForDate(day) : [];
+                const dateTasks = day ? getTasksForDate(day) : [];
                 const isToday =
                   day &&
                   new Date().getDate() === day &&
-                  new Date().getMonth() === currentDate.getMonth();
+                  new Date().getMonth() === currentDate.getMonth() &&
+                  new Date().getFullYear() === currentDate.getFullYear();
 
                 return (
                   <div
@@ -189,22 +268,22 @@ const CourseSchedule = () => {
                           {day}
                         </p>
                         <div className="space-y-1">
-                          {events.slice(0, 2).map((event) => {
-                            const eventColor = EVENT_COLORS[event.type];
+                          {dateTasks.slice(0, 2).map((task) => {
+                            const taskColor = TASK_COLORS[task.type];
                             return (
                               <button
-                                key={event.id}
-                                onClick={() => handleEventClick(event)}
-                                className={`w-full text-xs px-1.5 py-1 rounded border truncate hover:shadow-md transition-shadow ${eventColor}`}
-                                title={event.title}
+                                key={task.id}
+                                onClick={() => handleTaskClick(task)}
+                                className={`w-full text-xs px-1.5 py-1 rounded border truncate hover:shadow-md transition-shadow ${taskColor}`}
+                                title={task.title}
                               >
-                                {event.title}
+                                {task.title}
                               </button>
                             );
                           })}
-                          {events.length > 2 && (
+                          {dateTasks.length > 2 && (
                             <p className="text-xs text-muted-foreground px-1.5">
-                              +{events.length - 2} more
+                              +{tasks.length - 2} more
                             </p>
                           )}
                         </div>
@@ -217,12 +296,12 @@ const CourseSchedule = () => {
           </Card>
         </div>
       </div>
-      <EventDetailModal
-        event={selectedEvent}
+      <TaskDetailModal
+        task={selectedTask}
         isOpen={isModalOpen}
         onClose={() => {
           setIsModalOpen(false);
-          setSelectedEvent(null);
+          setSelectedTask(null);
         }}
       />
     </div>

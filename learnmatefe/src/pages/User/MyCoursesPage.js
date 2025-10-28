@@ -1,7 +1,7 @@
 import { BookOpen, Calendar } from "lucide-react";
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchCourses, selectCourse } from "../../redux/action/courseActions";
+import { fetchAllMyCourses } from "../../redux/action/courseActions";
 
 import CourseListHeader from "../../components/User/CourseListHeader";
 import CourseCard from "../../components/User/CourseCard";
@@ -9,9 +9,11 @@ import AllCoursesSchedule from "./AllCoursesSchedule";
 
 const MyCoursesPage = () => {
   const dispatch = useDispatch();
-  const { list, selectedCourse, loading, error } = useSelector(
-    (state) => state.courses
-  );
+  const {
+    myCourses = [],
+    loading,
+    error,
+  } = useSelector((state) => state.courses);
 
   const [activeTab, setActiveTab] = useState("courses");
   const [searchQuery, setSearchQuery] = useState("");
@@ -20,41 +22,39 @@ const MyCoursesPage = () => {
   const [hasCourses, setHasCourses] = useState(true);
 
   useEffect(() => {
-    dispatch(fetchCourses());
+    dispatch(fetchAllMyCourses());
   }, [dispatch]);
 
   const filteredAndSortedCourses = useMemo(() => {
-    let courses = [...list];
+    let courses = [...myCourses];
 
-    // if (searchQuery) {
-    //   courses = courses.filter(
-    //     (course) =>
-    //       course.subjectId.name
-    //         .toLowerCase()
-    //         .includes(searchQuery.toLowerCase()) ||
-    //       course?.tutorId?.user?.username
-    //         .toLowerCase()
-    //         .includes(searchQuery.toLowerCase())
-    //   );
-    // }
+    if (searchQuery) {
+      courses = courses.filter(
+        (course) =>
+          course.subject.name
+            .toLowerCase()
+            .includes(searchQuery.toLowerCase()) ||
+          course?.tutor?.name.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
 
-    // if (filter === "active") {
-    //   courses = courses.filter((course) => course.progress < 100);
-    // } else if (filter === "completed") {
-    //   courses = courses.filter((course) => course.progress === 100);
-    // } else if (filter === "upcoming") {
-    //   courses = courses.filter((course) => course.progress === 0);
-    // }
+    if (filter === "active") {
+      courses = courses.filter((course) => course.progress < 100);
+    } else if (filter === "completed") {
+      courses = courses.filter((course) => course.progress === 100);
+    } else if (filter === "upcoming") {
+      courses = courses.filter((course) => course.progress === 0);
+    }
 
-    // if (sort === "name-asc") {
-    //   courses.sort((a, b) => a.title.localeCompare(b.title));
-    // } else if (sort === "name-desc") {
-    //   courses.sort((a, b) => b.title.localeCompare(a.title));
-    // } else if (sort === "progress-asc") {
-    //   courses.sort((a, b) => a.progress - b.progress);
-    // } else if (sort === "progress-desc") {
-    //   courses.sort((a, b) => b.progress - a.progress);
-    // }
+    if (sort === "name-asc") {
+      courses.sort((a, b) => a.title.localeCompare(b.title));
+    } else if (sort === "name-desc") {
+      courses.sort((a, b) => b.title.localeCompare(a.title));
+    } else if (sort === "progress-asc") {
+      courses.sort((a, b) => a.progress - b.progress);
+    } else if (sort === "progress-desc") {
+      courses.sort((a, b) => b.progress - a.progress);
+    }
 
     return courses;
   }, [searchQuery, filter, sort]);
@@ -118,7 +118,7 @@ const MyCoursesPage = () => {
                 {hasCourses && filteredAndSortedCourses.length > 0 ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {filteredAndSortedCourses.map((course) => (
-                      <CourseCard key={course._id} course={course} />
+                      <CourseCard key={course.id} course={course} />
                     ))}
                   </div>
                 ) : (

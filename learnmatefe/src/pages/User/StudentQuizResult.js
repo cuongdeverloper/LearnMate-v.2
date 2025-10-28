@@ -20,11 +20,10 @@ const StudentQuizResult = () => {
   const { selectedCourse } = useSelector((state) => state.courses);
 
   const { id } = useParams();
-  const location = useLocation();
-  const payload = location.state;
-  const time = payload
-    ? `${Math.floor(payload.timeTaken / 60)}:${String(
-        payload.timeTaken % 60
+
+  const time = result?.timeTaken
+    ? `${Math.floor(result.timeTaken / 60)}:${String(
+        result.timeTaken % 60
       ).padStart(2, "0")}`
     : "-";
 
@@ -35,6 +34,8 @@ const StudentQuizResult = () => {
         <p className="text-lg text-gray-600">Đang chấm bài... Vui lòng chờ</p>
       </div>
     );
+
+  console.log("Result: ", result);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-secondary/10 py-8 px-4 sm:px-6 lg:px-8">
@@ -61,7 +62,9 @@ const StudentQuizResult = () => {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="rounded-lg border p-4">
             <div className="text-sm text-muted-foreground">Điểm số</div>
-            <div className="text-2xl font-semibold">{result?.score}%</div>
+            <div className="text-2xl font-semibold">
+              {Number(result?.score).toFixed(0)}%
+            </div>
           </div>
           <div className="rounded-lg border p-4">
             <div className="text-sm text-muted-foreground">Số câu đúng</div>
@@ -73,7 +76,7 @@ const StudentQuizResult = () => {
             <div className="text-sm text-muted-foreground">
               Thời gian hoàn thành
             </div>
-            <div className="text-2xl font-semibold">{result?.timeTaken}</div>
+            <div className="text-2xl font-semibold">{time}</div>
           </div>
           <div className="rounded-lg border p-4">
             <div className="text-sm text-muted-foreground">Xếp hạng</div>
@@ -81,7 +84,7 @@ const StudentQuizResult = () => {
           </div>
         </div>
         <div className="mt-8 rounded-lg border p-6">
-          <div className="font-medium mb-2">Detailed analytics</div>
+          <div className="font-medium mb-2">Lịch sử làm bài</div>
           <p className="text-muted-foreground text-sm">
             {quizDetails.description}
           </p>
