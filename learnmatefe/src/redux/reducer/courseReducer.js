@@ -1,7 +1,7 @@
 const initialState = {
   myCourses: [],
   selectedCourse: null, // courseId
-  scheduleTasks: {},
+  schedule: [],
 
   quizzes: [],
   selectedQuiz: null,
@@ -53,30 +53,30 @@ const courseReducer = (state = initialState, action) => {
       return initialState;
 
     // -------------------------------- SCHEDULE TASKS -------------------------------
-    case "SCHEDULE_TASKS_REQUEST":
+    case "SCHEDULE_REQUEST":
       return {
         ...state,
         loading: true,
         error: null,
       };
 
-    case "SCHEDULE_TASKS_SUCCESS":
+    case "SCHEDULE_SUCCESS":
       return {
         ...state,
-        scheduleTasks: action.payload,
+        schedule: action.payload,
       };
 
-    case "SCHEDULE_TASKS_FAILURE":
+    case "SCHEDULE_FAILURE":
       return {
         ...state,
         loading: false,
         error: action.payload,
       };
 
-    case "SCHEDULE_TASKS_RESET":
+    case "SCHEDULE_RESET":
       return {
         ...state,
-        scheduleTasks: {},
+        schedule: [],
       };
 
     // -------------------------------- QUIZZES -------------------------------

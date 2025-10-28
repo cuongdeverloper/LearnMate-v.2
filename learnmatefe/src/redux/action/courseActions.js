@@ -30,20 +30,20 @@ export const resetCourses = () => ({
 
 // -------------------------------- SCHEDULE -------------------------------
 
-export const fetchScheduleTasks = (courseId) => async (dispatch) => {
-  dispatch({ type: "SCHEDULE_TASKS_REQUEST" });
+export const fetchSchedule = (courseId) => async (dispatch) => {
+  dispatch({ type: "SCHEDULE_REQUEST" });
   try {
     const res = await axios.get(
-      `/api/courses/my-courses/approved/${courseId}/schedule/tasks`,
+      `/api/courses/my-courses/approved/${courseId}/schedule`,
       {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       }
     );
-    dispatch({ type: "SCHEDULE_TASKS_SUCCESS", payload: res.data });
+    dispatch({ type: "SCHEDULE_SUCCESS", payload: res.data });
   } catch (err) {
-    dispatch({ type: "SCHEDULE_TASKS_FAILURE", payload: err.message });
+    dispatch({ type: "SCHEDULE_FAILURE", payload: err.message });
   }
 };
 

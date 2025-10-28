@@ -8,6 +8,7 @@ import { useDispatch, useSelector } from "react-redux";
 import {
   fetchAssignments,
   fetchQuizzes,
+  fetchSchedule,
 } from "../../redux/action/courseActions";
 
 export const TASK_COLORS = {
@@ -19,28 +20,6 @@ export const TASK_LABELS = {
   assignment: "Assignment",
   quiz: "Quiz",
 };
-
-export const SAMPLE_TASKS = [
-  {
-    id: "2",
-    title: "Essay submission",
-    type: "assignment",
-    date: new Date(2024, 9, 20),
-    startTime: "23:59",
-    description: "Submit your essay on modern literature",
-    notes: "2000-3000 words",
-  },
-  {
-    id: "3",
-    title: "Vocabulary Quiz",
-    type: "quiz",
-    date: new Date(2024, 9, 21),
-    startTime: "10:00",
-    endTime: "10:30",
-    description: "Covers Lesson 1–3",
-    location: "Online",
-  },
-];
 
 const getTasksList = (assignments, quizzes) => {
   const tasks = [
@@ -70,15 +49,17 @@ const CourseSchedule = () => {
     selectedCourse,
     quizzes,
     assignments,
+    schedule,
     loading: error,
   } = useSelector((state) => state.courses);
 
   useEffect(() => {
     dispatch(fetchAssignments(selectedCourse));
     dispatch(fetchQuizzes(selectedCourse));
+    dispatch(fetchSchedule(selectedCourse));
   }, [dispatch, selectedCourse]);
 
-  const [currentDate, setCurrentDate] = useState(new Date(2024, 9, 1));
+  const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedTask, setSelectedTask] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -131,6 +112,16 @@ const CourseSchedule = () => {
         new Date(t.deadline).getDate() === day &&
         new Date(t.deadline).getMonth() === currentDate.getMonth() &&
         new Date(t.deadline).getFullYear() === currentDate.getFullYear()
+      );
+    });
+  };
+
+  const hasClassOnDate = (day) => {
+    return schedule.some((s) => {
+      return (
+        new Date(s.date).getDate() - 1 === day &&
+        new Date(s.date).getMonth() === currentDate.getMonth() &&
+        new Date(s.date).getFullYear() === currentDate.getFullYear()
       );
     });
   };
@@ -241,6 +232,7 @@ const CourseSchedule = () => {
             <div className="grid grid-cols-7 gap-2">
               {calendarDays.map((day, index) => {
                 const dateTasks = day ? getTasksForDate(day) : [];
+                const hasClass = day ? hasClassOnDate(day) : false;
                 const isToday =
                   day &&
                   new Date().getDate() === day &&
@@ -256,7 +248,7 @@ const CourseSchedule = () => {
                           ? "bg-primary/10 border-primary"
                           : "bg-background hover:bg-accent/50"
                         : "bg-muted/30"
-                    }`}
+                    } ${day && hasClass ? "bg-green-200" : ""}`}
                   >
                     {day && (
                       <>

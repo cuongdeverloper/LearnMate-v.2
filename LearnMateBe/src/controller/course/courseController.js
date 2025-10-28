@@ -148,26 +148,15 @@ const getMyCourseDetails = async (req, res) => {
   }
 };
 
-const getScheduleTasksForCourse = async (req, res) => {
+const getScheduleForCourse = async (req, res) => {
   try {
     const { courseId } = req.params;
-    const quizzes = await Quiz.find({ bookingId: courseId }).sort({
-      createdAt: -1,
-    });
-    const assignments = await Assignment.find({ bookingId: courseId }).sort({
-      createdAt: -1,
-    });
+
     const schedules = await Schedule.find({ bookingId: courseId }).sort({
       createdAt: -1,
     });
 
-    const result = {
-      quizzes,
-      assignments,
-      schedules,
-    };
-
-    res.status(200).json({ success: true, data: result });
+    res.status(200).json({ success: true, data: schedules });
   } catch (error) {
     console.error("GetScheduleTasks Error:", error);
     res.status(500).json({ success: false, message: "Lỗi server." });
@@ -256,7 +245,7 @@ const getProgressDetailsForCourse = async (req, res) => {
 module.exports = {
   getMyAllCoursesDetails,
   getMyCourseDetails,
-  getScheduleTasksForCourse,
+  getScheduleForCourse,
   getQuizzesForCourse,
   getAssignmentsForCourse,
   getProgressDetailsForCourse,

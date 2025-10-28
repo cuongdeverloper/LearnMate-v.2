@@ -4,7 +4,7 @@ const { checkAccessToken } = require("../middleware/JWTAction");
 const {
   getMyAllCoursesDetails,
   getMyCourseDetails,
-  getScheduleTasksForCourse,
+  getScheduleForCourse,
   getQuizzesForCourse,
   getAssignmentsForCourse,
   getProgressDetailsForCourse,
@@ -25,9 +25,9 @@ router.get(
 );
 
 router.get(
-  "/my-courses/approved/:courseId/schedule/tasks",
+  "/my-courses/approved/:courseId/schedule",
   checkAccessToken,
-  getScheduleTasksForCourse
+  getScheduleForCourse
 );
 
 router.get(
