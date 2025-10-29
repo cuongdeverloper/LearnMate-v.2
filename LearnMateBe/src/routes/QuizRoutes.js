@@ -8,12 +8,10 @@ const { checkAccessToken } = require("../middleware/JWTAction");
 const {
   getAllQuizzes,
   getQuizById,
-  getQuizzesByBookingId,
   getQuestionsByQuizId,
   updateQuestion,
   deleteQuestion,
   getAllQuizzesByLearnerId,
-  submitQuiz,
   createQuizFromStorage,
   importQuestionsToStorage,
   getQuizStorage,
@@ -22,6 +20,10 @@ const {
   createQuizStorage,
   deleteQuizStorage,
   updateQuizStorage,
+
+  submitQuiz,
+  getQuizResultById,
+  getQuizDetailsById,
 } = require("../controller/quiz/quizController");
 
 // =========================
@@ -61,8 +63,9 @@ router.post(
 router.post("/quiz-storage/create", checkAccessToken, createQuizStorage);
 router.put("/quiz-storage/:quizStorageId", checkAccessToken, updateQuizStorage);
 
-// công việc của tui
-router.get("/booking/:bookingId", checkAccessToken, getQuizzesByBookingId);
+// ---------------------- LEARNER ----------------------
 router.post("/:quizId/submit", checkAccessToken, submitQuiz);
+router.get("/:quizId/result", checkAccessToken, getQuizResultById);
+router.get("/:quizId/details", checkAccessToken, getQuizDetailsById);
 
 module.exports = router;

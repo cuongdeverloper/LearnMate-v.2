@@ -52,11 +52,9 @@ const AssignmentsTab = ({ courseTitle }) => {
     }
   };
 
-  const handleSelectAssignment = (assignment) => {
-    dispatch({ type: "ASSIGNMENT_SELECT", payload: assignment });
-    navigate(
-      `/user/my-courses/${courseId}/assignments/${assignment._id}/submit`
-    );
+  const handleSelectAssignment = (assignmentId) => {
+    dispatch({ type: "ASSIGNMENT_SELECT", payload: assignmentId });
+    navigate(`/user/my-courses/${courseId}/assignments/${assignmentId}/submit`);
   };
 
   const handleViewFeedback = (assignmentId) => {
@@ -148,7 +146,7 @@ const AssignmentsTab = ({ courseTitle }) => {
                           className="text-white"
                           variant="default"
                           size="sm"
-                          onClick={() => handleSelectAssignment(assignment)}
+                          onClick={() => handleSelectAssignment(assignment._id)}
                         >
                           Nộp bài
                         </Button>
@@ -157,7 +155,7 @@ const AssignmentsTab = ({ courseTitle }) => {
                           variant="outline"
                           size="sm"
                           onClick={() => {
-                            handleSelectAssignment(assignment);
+                            handleSelectAssignment(assignment._id);
                           }}
                         >
                           Xem bài đã nộp

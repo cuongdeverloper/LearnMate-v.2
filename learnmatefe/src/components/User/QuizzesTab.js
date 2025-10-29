@@ -14,7 +14,7 @@ import {
 } from "../ui/Table";
 import { Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchQuizzes } from "../../redux/action/courseActions";
+import { fetchQuizzes, selectQuiz } from "../../redux/action/courseActions";
 
 const statusFor = (now, deadline, attempted, maxAttempts) => {
   if (attempted === 0 && now > deadline) return "Overdue";
@@ -30,7 +30,7 @@ const QuizzesTab = () => {
   const now = new Date();
   const dispatch = useDispatch();
 
-  const { selectedCourse, quizzes, loading, error } = useSelector(
+  const { selectedCourse, quizzes, submitting, loading, error } = useSelector(
     (state) => state.courses
   );
 
@@ -38,10 +38,10 @@ const QuizzesTab = () => {
     if (selectedCourse) {
       dispatch(fetchQuizzes(selectedCourse._id));
     }
-  }, [dispatch, selectedCourse]);
+  }, [dispatch, selectedCourse, submitting]);
 
-  const handleSelectQuiz = (quiz) => {
-    dispatch({ type: "QUIZ_SELECT", payload: quiz });
+  const handleSelectQuiz = (quizId) => {
+    dispatch(selectQuiz(quizId));
   };
 
   return (
@@ -109,11 +109,14 @@ const QuizzesTab = () => {
                       <Button
                         className="text-white"
                         asChild
-                        onClick={() => handleSelectQuiz(q)}
+                        onClick={() => handleSelectQuiz(q._id)}
                       >
-                        <Link to={`/user/quiz/${q._id}/take`}>
+                        <Link to={`/user/quizzes/${q._id}/take`}>
                           {q.attempted > 0 && q.attempted < q.maxAttempts
-                            ? "Thử lại"
+                            ? "Thử lại " +
+                              "(còn " +
+                              (q.maxAttempts - q.attempted) +
+                              " lần thử)"
                             : q.attempted === 0
                             ? "Bắt đầu"
                             : "Xem kết quả"}
@@ -125,10 +128,10 @@ const QuizzesTab = () => {
                         className="text-white"
                         asChild
                         variant="secondary"
-                        onClick={() => handleSelectQuiz(q)}
+                        onClick={() => handleSelectQuiz(q._id)}
                         disabled={q.attempted === q.maxAttempts}
                       >
-                        <Link to={`/user/quiz/${q._id}/result`}>
+                        <Link to={`/user/quizzes/${q._id}/result`}>
                           {q.attempted < q.maxAttempts && "Thử lại"}
                           {q.attempted >= q.maxAttempts && "Xem kết quả"}
                         </Link>
@@ -138,9 +141,9 @@ const QuizzesTab = () => {
                       <Button
                         asChild
                         variant="outline"
-                        onClick={() => handleSelectQuiz(q)}
+                        onClick={() => handleSelectQuiz(q._id)}
                       >
-                        <Link to={`/user/quiz/${q._id}`}>Xem thông tin</Link>
+                        <Link to={`/user/quizzes/${q._id}`}>Xem thông tin</Link>
                       </Button>
                     )}
                   </TableCell>

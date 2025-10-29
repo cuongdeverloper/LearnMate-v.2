@@ -1,31 +1,58 @@
-import React from "react";
-import { useSelector } from "react-redux";
+import React, { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { cn } from "../../lib/utils";
 import { Button } from "../../components/ui/Button";
 import { ArrowLeft } from "lucide-react";
+import { toast } from "react-toastify";
+
+import { fetchQuizResult } from "../../redux/action/courseActions";
+
+const getTimeTaken = (startedAt, finishedAt) => {
+  const timeTakenInSeconds =
+    (new Date(finishedAt) - new Date(startedAt)) / 1000;
+
+  return `${Math.floor(timeTakenInSeconds / 60)}:${String(
+    timeTakenInSeconds % 60
+  ).padStart(2, "0")}`;
+};
+
+function formatDateTime(isoString) {
+  const date = new Date(isoString);
+
+  const options = {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  };
+
+  return date.toLocaleString("en-US", options);
+}
 
 const StudentQuizResult = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+
   const {
+    selectedCourse,
+
+    quizzes,
     selectedQuiz,
     quizDetails,
-    userAnswers,
+    quizResult,
+
     submitting,
     loading,
-    result,
     error,
-  } = useSelector((state) => state.quizzes);
-
-  const { selectedCourse } = useSelector((state) => state.courses);
+  } = useSelector((state) => state.courses);
 
   const { id } = useParams();
 
-  const time = result?.timeTaken
-    ? `${Math.floor(result.timeTaken / 60)}:${String(
-        result.timeTaken % 60
-      ).padStart(2, "0")}`
-    : "-";
+  useEffect(() => {
+    dispatch(fetchQuizResult(selectedQuiz));
+  }, [dispatch, selectedQuiz, submitting]);
 
   if (submitting || loading)
     return (
@@ -35,7 +62,7 @@ const StudentQuizResult = () => {
       </div>
     );
 
-  console.log("Result: ", result);
+  console.log("Result: ", quizResult);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-secondary/10 py-8 px-4 sm:px-6 lg:px-8">
@@ -53,47 +80,104 @@ const StudentQuizResult = () => {
             <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
               {quizDetails.title}
             </h1>
-            <p className="text-muted-foreground">Quiz ID: {quizDetails._id}</p>
+            <p className="text-muted-foreground">
+              Quiz ID: {quizResult?.latestAttempt?.quizId}
+            </p>
           </div>
-          <Button asChild className="text-white">
-            <Link to={`/user/quiz/${id}/take`}>Thử lại lần nữa</Link>
+          <Button
+            asChild
+            className="text-white"
+            disabled={
+              quizResult?.quiz?.attempted >= quizResult?.quiz?.maxAttempts
+            }
+          >
+            <Link
+              to={`/user/quizzes/${id}/take`}
+              onClick={(e) => {
+                if (
+                  quizResult?.quiz?.attempted >= quizResult?.quiz?.maxAttempts
+                ) {
+                  e.preventDefault();
+                  toast.warning("Bạn đã hết lượt thử quiz này!");
+                }
+              }}
+            >
+              Thử lại lần nữa{" "}
+              {quizResult?.quiz?.attempted < quizResult?.quiz?.maxAttempts
+                ? "(còn " +
+                  (quizResult?.quiz?.maxAttempts -
+                    quizResult?.quiz?.attempted) +
+                  " lần thử)"
+                : ""}
+            </Link>
           </Button>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="rounded-lg border p-4">
             <div className="text-sm text-muted-foreground">Điểm số</div>
             <div className="text-2xl font-semibold">
-              {Number(result?.score).toFixed(0)}%
+              {Number(quizResult?.latestAttempt?.score).toFixed(0)}%
             </div>
           </div>
           <div className="rounded-lg border p-4">
             <div className="text-sm text-muted-foreground">Số câu đúng</div>
             <div className="text-2xl font-semibold">
-              {result?.correct}/{result?.totalQuestions}
+              {quizResult?.latestAttempt?.correctAnswers}/
+              {quizResult?.latestAttempt?.totalQuestions}
             </div>
           </div>
           <div className="rounded-lg border p-4">
             <div className="text-sm text-muted-foreground">
               Thời gian hoàn thành
             </div>
-            <div className="text-2xl font-semibold">{time}</div>
+            <div className="text-2xl font-semibold">
+              {getTimeTaken(
+                quizResult?.latestAttempt?.startedAt,
+                quizResult?.latestAttempt?.finishedAt
+              )}
+            </div>
           </div>
           <div className="rounded-lg border p-4">
             <div className="text-sm text-muted-foreground">Xếp hạng</div>
-            <div className="text-2xl font-semibold">{result?.rank}</div>
+            <div className="text-2xl font-semibold">{quizResult?.rank}</div>
           </div>
         </div>
         <div className="mt-8 rounded-lg border p-6">
           <div className="font-medium mb-2">Lịch sử làm bài</div>
-          <p className="text-muted-foreground text-sm">
-            {quizDetails.description}
-          </p>
+          <div className="flex flex-col gap-3">
+            {quizResult?.attempts?.map((attempt) => (
+              <div
+                key={attempt._id}
+                className="flex flex-col gap-2 hover:bg-purple-400/10 rounded-lg px-4 py-2"
+              >
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-muted-foreground">Bài tập</span>
+                  <span>{Number(attempt.score).toFixed(0)}%</span>
+                </div>
+                <div className="w-full bg-secondary rounded-full h-2 overflow-hidden">
+                  <div
+                    className="bg-primary h-full rounded-full transition-all duration-300"
+                    style={{ width: `${Number(attempt.score).toFixed(0)}%` }}
+                  />
+                </div>
+                <div>
+                  <span className="text-sm text-muted-foreground">
+                    {formatDateTime(attempt?.startedAt)}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
 
         <div className="font-medium text-2xl mb-6 mt-16">Chi tiết bài thi</div>
-        {result?.questions?.map((q, index) => {
+        {quizResult?.questions?.map((q, index) => {
+          const answer = quizResult?.answers?.filter(
+            (a) => a.questionId === q._id
+          )[0];
+
           const isCorrect =
-            Number.parseInt(result?.answers[q._id]) + 1 === q.correctAnswer;
+            Number.parseInt(answer?.selectedAnswer) === q.correctAnswer;
 
           return (
             <div
@@ -116,7 +200,7 @@ const StudentQuizResult = () => {
               <div className="space-y-2">
                 {q.options.map((opt, id) => {
                   const isUserAnswer =
-                    Number.parseInt(result?.answers[q._id]) === id;
+                    Number.parseInt(answer?.selectedAnswer) - 1 === id;
                   const isRightAnswer = q.correctAnswer - 1 === id;
 
                   return (

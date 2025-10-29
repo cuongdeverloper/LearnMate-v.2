@@ -193,7 +193,6 @@ const Layout = () => {
               <ProtectedRoute allowedRoles={["tutor", "student"]}>
                 <AppLayout>
                   <MyCoursesPage />
-                  {/* <MyCourses /> */}
                 </AppLayout>
               </ProtectedRoute>
             }
@@ -209,7 +208,7 @@ const Layout = () => {
             }
           />
           <Route
-            path="/user/quiz/:id"
+            path="/user/quizzes/:id"
             element={
               <ProtectedRoute allowedRoles={["tutor", "student"]}>
                 <AppLayout>
@@ -219,7 +218,7 @@ const Layout = () => {
             }
           />
           <Route
-            path="/user/quiz/:id/take"
+            path="/user/quizzes/:id/take"
             element={
               <ProtectedRoute allowedRoles={["tutor", "student"]}>
                 <AppLayout>
@@ -229,7 +228,7 @@ const Layout = () => {
             }
           />
           <Route
-            path="/user/quiz/:id/result"
+            path="/user/quizzes/:id/result"
             element={
               <ProtectedRoute allowedRoles={["tutor", "student"]}>
                 <AppLayout>
@@ -239,7 +238,7 @@ const Layout = () => {
             }
           />
           <Route
-            path="/user/my-courses/:courseId/assignments/:id/submit"
+            path="/user/assignments/:id/submit"
             element={
               <ProtectedRoute allowedRoles={["tutor", "student"]}>
                 <AppLayout>
@@ -249,7 +248,7 @@ const Layout = () => {
             }
           />
           <Route
-            path="/user/my-courses/:courseId/assignments/:id/feedback"
+            path="/user/assignments/:id/feedback"
             element={
               <ProtectedRoute allowedRoles={["tutor", "student"]}>
                 <AppLayout>

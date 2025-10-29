@@ -300,88 +300,6 @@ exports.getAllQuizzesByLearnerId = async (req, res) => {
   }
 };
 
-exports.submitQuiz = async (req, res) => {
-  try {
-    const { quizId } = req.params;
-    const { answers, startedAt, finishedAt } = req.body;
-    console.log(answers);
-    console.log("started at: ", startedAt, "finished at: ", finishedAt);
-
-    const quiz = await Quiz.findById(quizId);
-
-    if (!quiz) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Không tìm thấy quiz." });
-    }
-
-    if (quiz.attempted >= quiz.maxAttempts) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Quiz has been attempted maximum." });
-    }
-
-    const questions = await Question.find({ quizId });
-
-    const results = await Promise.all(
-      questions.map(async (question) => {
-        const selectedAnswer =
-          Number.parseInt(answers[question._id.toString()]) + 1;
-        const isCorrect =
-          Number.parseInt(answers[question._id.toString()]) + 1 ===
-          question.correctAnswer;
-
-        const answer = new Answer({
-          questionId: question._id,
-          learnerId: req.user.id,
-          selectedAnswer: selectedAnswer,
-          isCorrect: isCorrect,
-        });
-
-        await answer.save();
-        return isCorrect;
-      })
-    );
-
-    const score = results.filter((isCorrect) => isCorrect).length;
-
-    console.log("🥪🥪🥪Score:", score);
-
-    const quizAttempt = new QuizAttempt({
-      quizId,
-      learnerId: req.user.id,
-      totalQuestions: questions.length,
-      correctAnswers: score,
-      score: (score / questions.length) * 100,
-      startedAt,
-      finishedAt,
-    });
-
-    await quizAttempt.save();
-
-    const result = {
-      score: quizAttempt.score,
-      correct: quizAttempt.correctAnswers,
-      totalQuestions: quizAttempt.totalQuestions,
-      timeTaken: Math.floor(
-        (quizAttempt.finishedAt - quizAttempt.startedAt) / 1000
-      ),
-      questions,
-      answers,
-      rank: 1,
-    };
-
-    quiz.attempted += 1;
-    quiz.newestScore = (score / questions.length) * 100;
-    await quiz.save();
-
-    res.status(200).json({ success: true, result });
-  } catch (error) {
-    console.error("Submit Quiz Error:", error);
-    res.status(500).json({ success: false, message: "Lỗi khi nộp bài quiz!" });
-  }
-};
-
 exports.addQuestionsFromStorageToQuiz = async (req, res) => {
   try {
     const { quizId, questionIds } = req.body;
@@ -512,5 +430,198 @@ exports.updateQuizStorage = async (req, res) => {
     res
       .status(500)
       .json({ success: false, message: "Lỗi khi cập nhật QuizStorage." });
+  }
+};
+
+// ----------------------------- LEARNER -----------------------------
+
+exports.getQuizDetailsById = async (req, res) => {
+  try {
+    const { quizId } = req.params;
+    const quiz = await Quiz.findById(quizId).populate("subjectId tutorId");
+
+    if (!quiz)
+      return res
+        .status(404)
+        .json({ success: false, message: "Không tìm thấy quiz." });
+
+    const questions = await Question.find({ quizId: quiz._id });
+    const quizAttempts = await QuizAttempt.find({
+      userId: req.user.id,
+      quizId: quiz._id,
+    });
+    const quizDetails = {
+      title: quiz.title,
+      description: quiz.description,
+      attempted: quiz.attempted,
+      maxAttempts: quiz.maxAttempts,
+      duration: quiz.duration,
+      deadline: quiz.deadline,
+      newestScore: quiz.newestScore,
+      createdAt: quiz.createdAt,
+      updatedAt: quiz.updatedAt,
+    };
+
+    quizDetails.questions = questions;
+    quizDetails.attempts = quizAttempts;
+
+    console.log(quizDetails);
+
+    res.status(200).json({ success: true, data: quizDetails });
+  } catch (error) {
+    console.error("GetQuizById Error:", error);
+    res.status(500).json({ success: false, message: "Lỗi khi lấy quiz." });
+  }
+};
+
+exports.submitQuiz = async (req, res) => {
+  try {
+    const { quizId } = req.params;
+    const { answers, startedAt, finishedAt } = req.body;
+    console.log("Answers: ", answers);
+    console.log("started at: ", startedAt, "finished at: ", finishedAt);
+
+    const quiz = await Quiz.findById(quizId);
+
+    if (!quiz) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Không tìm thấy quiz." });
+    }
+
+    if (quiz.attempted >= quiz.maxAttempts) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Quiz has been attempted maximum." });
+    }
+
+    const questions = await Question.find({ quizId });
+
+    const results = await Promise.all(
+      questions.map(async (question) => {
+        const selectedAnswer =
+          Number.parseInt(answers[question._id.toString()]) + 1;
+
+        const isCorrect = selectedAnswer === question.correctAnswer;
+        return isCorrect;
+      })
+    );
+
+    const correctAnswers = results.filter((isCorrect) => isCorrect).length;
+
+    console.log("🥪🥪🥪 Correct Answers:", correctAnswers);
+
+    const quizAttempt = new QuizAttempt({
+      quizId,
+      learnerId: req.user.id,
+      bookingId: quiz.bookingId,
+      totalQuestions: questions.length,
+      correctAnswers,
+      score: (correctAnswers / questions.length) * 100,
+      startedAt,
+      finishedAt,
+    });
+
+    await quizAttempt.save();
+
+    await Promise.all(
+      questions.map(async (question) => {
+        const selectedAnswer =
+          Number.parseInt(answers[question._id.toString()]) + 1;
+
+        const isCorrect = selectedAnswer === question.correctAnswer;
+
+        const answer = new Answer({
+          quizAttemptId: quizAttempt._id,
+          questionId: question._id,
+          selectedAnswer: selectedAnswer,
+          isCorrect: isCorrect,
+        });
+
+        await answer.save();
+        return isCorrect;
+      })
+    );
+
+    const attempts = await QuizAttempt.find({
+      quizId,
+      bookingId: quiz.bookingId,
+    }).sort({ score: -1 });
+
+    quiz.attempted += 1;
+    quiz.newestScore = (correctAnswers / questions.length) * 100;
+    await quiz.save();
+
+    const result = {
+      latestAttempt: quizAttempt,
+      attempts,
+
+      questions,
+      answers,
+      rank: 1,
+    };
+
+    res.status(200).json({ success: true, data: result });
+  } catch (error) {
+    console.error("Submit Quiz Error:", error);
+    res.status(500).json({ success: false, message: "Lỗi khi nộp bài quiz!" });
+  }
+};
+
+exports.getQuizResultById = async (req, res) => {
+  try {
+    const { quizId } = req.params;
+    const quiz = await Quiz.findById(quizId);
+
+    if (!quiz) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Không tìm thấy quiz." });
+    }
+
+    const questions = await Question.find({ quizId }).lean();
+
+    const attempts = await QuizAttempt.find({
+      quizId: quizId,
+      bookingId: quiz.bookingId,
+    })
+      .sort({ startedAt: -1 })
+      .lean();
+
+    if (attempts.length === 0) {
+      return res.status(200).json({
+        success: true,
+        data: {
+          quiz,
+          latestAttempt: null,
+
+          attempts: [],
+          questions,
+          answers: [],
+        },
+        message: "Người học chưa thực hiện bài quiz nào.",
+      });
+    }
+
+    const latestQuizAttempt = attempts[0];
+
+    const answers = await Answer.find({ quizAttemptId: latestQuizAttempt._id });
+
+    const result = {
+      quiz,
+      latestAttempt: latestQuizAttempt,
+
+      attempts,
+      questions,
+      answers,
+      rank: 1,
+    };
+
+    res.status(200).json({ success: true, data: result });
+  } catch (error) {
+    console.error("GetQuizById Error:", error);
+    res
+      .status(500)
+      .json({ success: false, message: "Lỗi khi lấy quiz result." });
   }
 };
