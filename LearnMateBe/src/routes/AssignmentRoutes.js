@@ -34,16 +34,6 @@ router.post("/assign", checkAccessToken, assignAssignmentFromStorage);
 router.get("/", checkAccessToken, viewAssignment);
 
 /**
- * 🧩 Học viên nộp bài assignment
- */
-router.post(
-  "/submit",
-  checkAccessToken,
-  uploadDocs.single("file"),
-  submitAssignment
-);
-
-/**
  * 🧩 Tutor xem danh sách bài nộp
  */
 router.get("/submissions", checkAccessToken, viewSubmission);
@@ -54,16 +44,22 @@ router.get("/submissions", checkAccessToken, viewSubmission);
 router.post("/grade", checkAccessToken, gradeAssignment);
 
 /**
- * 🧩 Học viên xem feedback điểm
- */
-router.get("/feedbacks", checkAccessToken, viewGradeFeedback);
-
-/**
  * 🧩 Xóa assignment
  */
 router.delete("/:id", checkAccessToken, deleteAssignment);
 
 router.get("/:id", checkAccessToken, getAssignmentById);
 router.get("/course/:courseId", checkAccessToken, getAssignmentsForCourse);
+
+// ------------------------ LEARNER ------------------------
+
+router.post(
+  "/submit",
+  checkAccessToken,
+  uploadDocs.single("file"),
+  submitAssignment
+);
+
+router.get("/:id/feedbacks", checkAccessToken, viewGradeFeedback);
 
 module.exports = router;

@@ -12,7 +12,7 @@ export const calculateAssignmentStatus = (assignment, today = new Date()) => {
 };
 
 export const formatDate = (date) => {
-  return new Date(date).toLocaleDateString("en-US", {
+  return new Date(date).toLocaleDateString("vn-VN", {
     month: "short",
     day: "numeric",
     year: "numeric",

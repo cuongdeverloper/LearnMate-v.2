@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Button } from "../../components/ui/Button";
 import { ArrowLeft, CheckCircle2, Download } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
@@ -15,40 +15,49 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchAssignments } from "../../redux/action/courseActions";
 
 const ViewAssignmentFeedback = () => {
   const navigate = useNavigate();
-  const { id: assignmentId, courseId } = useParams();
+  const { id: assignmentId } = useParams();
+  const dispatch = useDispatch();
 
   const {
-    selectedAssignment: assignment,
+    selectedCourse,
+
+    assignments,
+    selectedAssignment,
+
     submitting,
     loading,
-    feedback,
     error,
-  } = useSelector((state) => state.assignments);
+  } = useSelector((state) => state.courses);
 
-  if (!courseId || !assignmentId) {
-    return <div>Invalid assignment Id</div>;
-  }
+  useEffect(() => {
+    dispatch(fetchAssignments(selectedAssignment));
+  }, [dispatch, selectedAssignment, submitting]);
 
-  if (!assignment) {
+  const assignment = assignments.find((a) => a._id === selectedAssignment);
+
+  if (!selectedAssignment) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background via-background to-secondary/10 py-8 px-4 sm:px-6 lg:px-8">
         <div className="max-w-3xl mx-auto">
           <Button
             variant="ghost"
-            onClick={() => navigate(`/student/course/${courseId}`)}
+            onClick={() => navigate(`/user/my-courses/${selectedCourse}`)}
             className="mb-6 gap-2"
           >
             <ArrowLeft className="w-4 h-4" />
-            Back
+            Trở lại
           </Button>
           <div className="bg-card border border-border rounded-lg shadow-sm p-8 text-center">
-            <p className="text-foreground mb-4">Assignment not found</p>
-            <Button onClick={() => navigate(`/student/course/${courseId}`)}>
-              Go back to course
+            <p className="text-foreground mb-4">Không tìm thấy bài tập</p>
+            <Button
+              onClick={() => navigate(`/user/my-courses/${selectedCourse}`)}
+            >
+              Quay trở lại khóa học
             </Button>
           </div>
         </div>
@@ -56,24 +65,26 @@ const ViewAssignmentFeedback = () => {
     );
   }
 
-  if (!assignment.feedback) {
+  if (!assignment?.feedback) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background via-background to-secondary/10 py-8 px-4 sm:px-6 lg:px-8">
         <div className="max-w-3xl mx-auto">
           <Button
             variant="ghost"
-            onClick={() => navigate(`/student/course/${courseId}`)}
+            onClick={() => navigate(`/user/my-courses/${selectedCourse}`)}
             className="mb-6 gap-2"
           >
             <ArrowLeft className="w-4 h-4" />
-            Back
+            Trở lại
           </Button>
           <div className="bg-card border border-border rounded-lg shadow-sm p-8 text-center">
             <p className="text-foreground mb-4">
               No feedback available yet for this assignment.
             </p>
-            <Button onClick={() => navigate(`/student/course/${courseId}`)}>
-              Go back to course
+            <Button
+              onClick={() => navigate(`/user/my-courses/${selectedCourse}`)}
+            >
+              Quay trở lại khóa học
             </Button>
           </div>
         </div>
@@ -98,20 +109,20 @@ const ViewAssignmentFeedback = () => {
       <div className="max-w-4xl mx-auto">
         <Button
           variant="ghost"
-          onClick={() => navigate(`/user/course/${courseId}`)}
+          onClick={() => navigate(`/user/my-courses/${selectedCourse}`)}
           className="mb-6 gap-2"
         >
           <ArrowLeft className="w-4 h-4" />
-          Back to Course
+          Quay lại khóa học
         </Button>
         <Card className="p-8 mb-6">
-          <h1 className="text-3xl font-bold text-foreground mb-1">Feedback</h1>
+          <h1 className="text-3xl font-bold text-foreground mb-1">Phản hồi</h1>
           <p>{assignment.title}</p>
         </Card>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
           <Card className="p-6 bg-primary/5 border-primary/20">
             <h3 className="text-sm font-semibold text-muted-foreground mb-2">
-              Your Grade
+              Điểm của bạn
             </h3>
             <div className="space-y-2">
               <p className="text-4xl font-bold text-primary">
@@ -158,7 +169,7 @@ const ViewAssignmentFeedback = () => {
           </h3>
           <div className="bg-muted/30 p-6 rounded-lg border border-border">
             <p className="text-foreground leading-relaxed">
-              {assignment.feedback}
+              {assignment?.feedback}
             </p>
           </div>
         </Card>

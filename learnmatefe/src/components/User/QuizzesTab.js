@@ -1,5 +1,4 @@
 import React, { useEffect } from "react";
-import { formatDate } from "../../lib/assignments";
 import { Card } from "../ui/Card";
 import { CheckCircle2 } from "lucide-react";
 import { Button } from "../ui/Button";
@@ -24,7 +23,13 @@ const statusFor = (now, deadline, attempted, maxAttempts) => {
   return "Active";
 };
 
-const currentYear = new Date().getFullYear();
+const formatDate = (date) =>
+  new Date(date).toLocaleDateString("vi-VN", {
+    weekday: "short",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
 
 const QuizzesTab = () => {
   const now = new Date();

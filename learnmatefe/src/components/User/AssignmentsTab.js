@@ -3,7 +3,6 @@ import { useParams, useNavigate } from "react-router-dom";
 
 import {
   calculateAssignmentStatus,
-  formatDate,
   getDaysUntilDue,
   isOverdue,
 } from "../../lib/assignments";
@@ -19,18 +18,30 @@ import {
 import { Button } from "../ui/Button";
 import { Badge } from "../ui/Badge";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchAssignments } from "../../redux/action/courseActions";
+import {
+  fetchAssignments,
+  selectAssignment,
+} from "../../redux/action/courseActions";
+
+const formatDate = (date) =>
+  new Date(date).toLocaleDateString("vi-VN", {
+    weekday: "short",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
 
 const AssignmentsTab = ({ courseTitle }) => {
   const { id: courseId } = useParams();
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  const { assignments, loading, error } = useSelector((state) => state.courses);
+  const { selectedCourse, assignments, submitting, loading, error } =
+    useSelector((state) => state.courses);
 
   useEffect(() => {
-    dispatch(fetchAssignments(courseId));
-  }, [courseId, dispatch]);
+    dispatch(fetchAssignments(selectedCourse));
+  }, [selectedCourse, dispatch, submitting]);
 
   const getStatusBadge = (status) => {
     switch (status) {
@@ -52,13 +63,14 @@ const AssignmentsTab = ({ courseTitle }) => {
     }
   };
 
-  const handleSelectAssignment = (assignmentId) => {
-    dispatch({ type: "ASSIGNMENT_SELECT", payload: assignmentId });
-    navigate(`/user/my-courses/${courseId}/assignments/${assignmentId}/submit`);
+  const handleSubmitAssignment = (assignmentId) => {
+    dispatch(selectAssignment(assignmentId));
+    navigate(`/user/assignments/${assignmentId}/submit`);
   };
 
   const handleViewFeedback = (assignmentId) => {
-    return;
+    dispatch(selectAssignment(assignmentId));
+    navigate(`/user/assignments/${assignmentId}/feedback`);
   };
 
   if (!courseId) return null;
@@ -146,7 +158,7 @@ const AssignmentsTab = ({ courseTitle }) => {
                           className="text-white"
                           variant="default"
                           size="sm"
-                          onClick={() => handleSelectAssignment(assignment._id)}
+                          onClick={() => handleSubmitAssignment(assignment._id)}
                         >
                           Nộp bài
                         </Button>
@@ -155,7 +167,7 @@ const AssignmentsTab = ({ courseTitle }) => {
                           variant="outline"
                           size="sm"
                           onClick={() => {
-                            handleSelectAssignment(assignment._id);
+                            handleViewFeedback(assignment._id);
                           }}
                         >
                           Xem bài đã nộp

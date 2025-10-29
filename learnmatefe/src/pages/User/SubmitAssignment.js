@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "../../components/ui/Button";
 import { ArrowLeft, File, X, Upload, Download, FileText } from "lucide-react";
@@ -6,9 +6,11 @@ import { Card } from "../../components/ui/Card";
 import { toast } from "react-toastify";
 import Textarea from "../../components/ui/TextArea";
 import { useDispatch, useSelector } from "react-redux";
-import { formatDate } from "../../lib/assignments";
 
-import { submitAssignment } from "../../redux/action/courseActions";
+import {
+  submitAssignment,
+  fetchAssignments,
+} from "../../redux/action/courseActions";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 const ALLOWED_TYPES = [
@@ -17,14 +19,26 @@ const ALLOWED_TYPES = [
 ];
 const ALLOWED_EXTENSIONS = [".pdf", ".docx"];
 
+const formatDate = (date) =>
+  new Date(date).toLocaleDateString("vi-VN", {
+    weekday: "short",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+
 const SubmitAssignment = () => {
-  const { id: assignmentId, courseId } = useParams();
+  const { id: assignmentId } = useParams();
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+
   const [file, setFile] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const {
+    selectedCourse,
+
     assignments,
     selectedAssignment,
 
@@ -33,14 +47,13 @@ const SubmitAssignment = () => {
     error,
   } = useSelector((state) => state.courses);
 
+  useEffect(() => {
+    dispatch(fetchAssignments(selectedCourse));
+  }, [dispatch, selectedAssignment, submitting]);
+
   const assignment = assignments.find((a) => a._id === selectedAssignment);
-  const [notes, setNotes] = useState(assignment?.notes || "");
 
-  const dispatch = useDispatch();
-
-  if (!courseId || !assignmentId) {
-    return <div>Invalid assignment Id</div>;
-  }
+  const [notes, setNotes] = useState(assignment?.note || "");
 
   const validateFile = (selectedFile) => {
     if (selectedFile.size > MAX_FILE_SIZE) {
@@ -121,7 +134,7 @@ const SubmitAssignment = () => {
     try {
       dispatch(submitAssignment(formData));
       toast.success("Assignment submitted successfully!");
-      navigate(`/user/my-courses/${courseId}`);
+      navigate(`/user/my-courses/${selectedCourse}`);
     } catch (err) {
       toast.error(error);
     } finally {
@@ -130,7 +143,7 @@ const SubmitAssignment = () => {
   };
 
   const handleCancel = () => {
-    navigate(`/user/my-courses/${courseId}`);
+    navigate(`/user/my-courses/${selectedCourse}`);
   };
 
   const getFileType = (url) => {
@@ -154,12 +167,12 @@ const SubmitAssignment = () => {
       <div className="max-w-2xl mx-auto">
         <Button variant="ghost" onClick={handleCancel} className="mb-6 gap-2">
           <ArrowLeft className="w-4 h-4" />
-          Back to Course
+          Quay trở lại khóa học
         </Button>
 
         <Card className="p-8">
           <h1 className="text-3xl font-bold text-foreground mb-10">
-            Submit Assignment
+            Nộp bài tập
           </h1>
           <p className="text-lg text-muted-foreground mb-8">
             {assignment.title}
@@ -168,7 +181,7 @@ const SubmitAssignment = () => {
           <div className="space-y-6">
             <div className="border border-border rounded-lg p-3 bg-muted/30 ">
               <h3 className="text-sm font-semibold text-foreground mb-2">
-                Description
+                Mô tả
               </h3>
               <p className="text-foreground bg-muted/30 p-2 rounded-lg">
                 {assignment.description}
@@ -176,7 +189,7 @@ const SubmitAssignment = () => {
             </div>
             <div>
               <h3 className="text-sm font-semibold text-foreground mb-2">
-                Due Date
+                Ngày hết hạn
               </h3>
               <p>{formatDate(assignment.deadline, "yyyy-MM-dd")}</p>
             </div>
@@ -184,7 +197,7 @@ const SubmitAssignment = () => {
             {assignment.fileUrl && (
               <div>
                 <h3 className="text-sm font-semibold text-foreground mb-2">
-                  Assignment File
+                  File bài tập
                 </h3>
                 {getFileType(assignment.fileUrl) === "pdf" ? (
                   <div className="border border-border rounded-lg overflow-hidden bg-white">
@@ -207,7 +220,7 @@ const SubmitAssignment = () => {
                         className="gap-2 text-white"
                       >
                         <Download className="w-4 h-4" />
-                        Download
+                        Tải xuống
                       </Button>
                     </div>
                     <iframe
@@ -241,7 +254,7 @@ const SubmitAssignment = () => {
                       className="gap-2 text-white"
                     >
                       <Download className="w-4 h-4 text-white" />
-                      Download
+                      Tải xuống
                     </Button>
                   </div>
                 )}
@@ -251,7 +264,7 @@ const SubmitAssignment = () => {
             {assignment.submitFileUrl && (
               <div>
                 <h3 className="text-sm font-semibold text-foreground mb-2">
-                  Submitted File
+                  File đã nộp
                 </h3>
                 {getFileType(assignment.submitFileUrl) === "pdf" ? (
                   <div className="border border-border rounded-lg overflow-hidden bg-white">
@@ -271,10 +284,10 @@ const SubmitAssignment = () => {
                           link.download = getFileName(assignment.submitFileUrl);
                           link.click();
                         }}
-                        className="gap-2 text-white"
+                        className="gap-2"
                       >
                         <Download className="w-4 h-4" />
-                        Download
+                        Tải xuống
                       </Button>
                     </div>
                     <iframe
@@ -308,7 +321,7 @@ const SubmitAssignment = () => {
                       className="gap-2 text-white"
                     >
                       <Download className="w-4 h-4 text-white" />
-                      Download
+                      Tải xuống
                     </Button>
                   </div>
                 )}
@@ -317,7 +330,7 @@ const SubmitAssignment = () => {
 
             <div>
               <h3 className="text-sm font-semibold text-foreground mb-2">
-                Upload File
+                Tải file lên
               </h3>
               <div
                 onDragOver={handleDragOver}
@@ -370,13 +383,13 @@ const SubmitAssignment = () => {
                   className="mt-2 gap-2 text-destructive hover:text-destructive"
                 >
                   <X className="w-4 h-4" />
-                  Remove file
+                  Xóa file
                 </Button>
               )}
             </div>
             <div>
               <h3 className="text-sm font-semibold text-foreground mb-2">
-                Notes (Optional)
+                Ghi chú (Tùy chọn)
               </h3>
               <Textarea
                 placeholder="Add any notes about your submission..."
@@ -392,7 +405,7 @@ const SubmitAssignment = () => {
                 disabled={!file || isSubmitting}
                 className="flex-1 text-white"
               >
-                {isSubmitting ? "Submitting..." : "Submit Assignment"}
+                {isSubmitting ? "Đang nộp..." : "Nộp bài tập"}
               </Button>
               <Button
                 variant="outline"
@@ -400,7 +413,7 @@ const SubmitAssignment = () => {
                 disabled={isSubmitting}
                 className="flex-1"
               >
-                Cancel
+                Hủy bỏ
               </Button>
             </div>
           </div>

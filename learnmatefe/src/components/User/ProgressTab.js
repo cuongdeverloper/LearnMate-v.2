@@ -79,15 +79,15 @@ const ProgressTab = () => {
               <p className="m-0 font-semibold">Cơ sở tính điểm khóa học:</p>
               <div className="flex gap-2 items-center pl-5">
                 <div>
-                  <p className="m-0">Quizzes</p>
+                  <p className="m-0">Câu đố</p>
                   <span>30%</span>
                 </div>
                 <div>
-                  <p className="m-0">Assignments</p>
+                  <p className="m-0">Bài tập</p>
                   <span>50%</span>
                 </div>
                 <div>
-                  <p className="m-0">Attendance</p>
+                  <p className="m-0">Điểm danh</p>
                   <span>20%</span>
                 </div>
               </div>

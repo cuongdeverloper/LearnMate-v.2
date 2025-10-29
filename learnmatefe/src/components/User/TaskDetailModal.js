@@ -17,6 +17,14 @@ export const TASK_LABELS = {
   quiz: "Quiz",
 };
 
+const formatDate = (date) =>
+  new Date(date).toLocaleDateString("vi-VN", {
+    weekday: "short",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+
 const TaskDetailModal = ({ task, isOpen, onClose, courseId }) => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -25,11 +33,7 @@ const TaskDetailModal = ({ task, isOpen, onClose, courseId }) => {
   const taskColor = TASK_COLORS[task.type];
   const taskLabel = TASK_LABELS[task.type];
 
-  const dateStr = new Date(task.deadline).toLocaleDateString("en-US", {
-    weekday: "short",
-    day: "numeric",
-    month: "long",
-  });
+  const dateStr = formatDate(task.deadline);
 
   const handleOpenAssignment = (task) => {
     onClose();
@@ -60,11 +64,11 @@ const TaskDetailModal = ({ task, isOpen, onClose, courseId }) => {
         <div className="space-y-4">
           <div className="flex items-center gap-3 text-foreground">
             <Calendar className="w-5 h-5 text-muted-foreground flex-shrink-0" />
-            <div>
-              <p className="font-medium">{dateStr}</p>
-              <p className="text-sm text-muted-foreground">
-                {task.createdAt}
-                {task.deadline && ` - ${task.deadline}`}
+            <div className="flex flex-col gap-1">
+              <p className="font-medium m-0">{dateStr}</p>
+              <p className="text-sm text-muted-foreground m-0">
+                {formatDate(task.createdAt)}
+                {task.deadline && ` - ${formatDate(task.deadline)}`}
               </p>
             </div>
           </div>
