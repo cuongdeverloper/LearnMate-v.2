@@ -190,7 +190,7 @@ const getAssignmentsForCourse = async (req, res) => {
 
 const getProgressDetailsForCourse = async (req, res) => {
   try {
-    const { bookingId } = req.params;
+    const { courseId: bookingId } = req.params;
     console.log("Booking ID:", bookingId);
 
     const [quizzes, assignments, schedules] = await Promise.all([

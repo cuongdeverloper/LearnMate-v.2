@@ -10,7 +10,7 @@ const ProgressTab = () => {
   const dispatch = useDispatch();
 
   useEffect(() => {
-    dispatch(fetchProgress(selectedCourse._id));
+    dispatch(fetchProgress(selectedCourse));
   }, [dispatch]);
 
   const progressItems = [
@@ -71,12 +71,37 @@ const ProgressTab = () => {
             <h4 className="font-semibold text-foreground mb-1">
               Điểm khóa học
             </h4>
-            <p className="text-2xl font-bold text-primary mb-2">
+            <p className="text-2xl font-bold text-primary mb-3">
               A ({Number(progress?.totalProgress).toFixed(2)}%)
             </p>
-            <p className="text-sm text-muted-foreground">
-              Bạn làm rất tốt! Hãy tiếp tục phát huy nhé.
-            </p>
+
+            <div className="mb-3">
+              <p className="m-0 font-semibold">Cơ sở tính điểm khóa học:</p>
+              <div className="flex gap-2 items-center pl-5">
+                <div>
+                  <p className="m-0">Quizzes</p>
+                  <span>30%</span>
+                </div>
+                <div>
+                  <p className="m-0">Assignments</p>
+                  <span>50%</span>
+                </div>
+                <div>
+                  <p className="m-0">Attendance</p>
+                  <span>20%</span>
+                </div>
+              </div>
+            </div>
+
+            {Number(progress?.totalProgress).toFixed(2) < 50 ? (
+              <p className="text-sm text-muted-foreground">
+                Hãy nỗ lực để hoàn thành khóa học nhé!
+              </p>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                Bạn làm rất tốt! Hãy tiếp tục phát huy nhé.
+              </p>
+            )}
           </div>
         </div>
       </Card>
