@@ -56,6 +56,7 @@ const ViewAssignmentFeedback = () => {
             <p className="text-foreground mb-4">Không tìm thấy bài tập</p>
             <Button
               onClick={() => navigate(`/user/my-courses/${selectedCourse}`)}
+              className="text-white "
             >
               Quay trở lại khóa học
             </Button>
@@ -77,12 +78,23 @@ const ViewAssignmentFeedback = () => {
             <ArrowLeft className="w-4 h-4" />
             Trở lại
           </Button>
-          <div className="bg-card border border-border rounded-lg shadow-sm p-8 text-center">
+          <div className="bg-card border border-border rounded-lg shadow-sm p-8 text-center relative">
+            <Button
+              onClick={() =>
+                navigate(`/user/assignments/${selectedAssignment}/submit`)
+              }
+              className="text-white absolute top-2 right-2"
+            >
+              Nộp lại
+            </Button>
+
             <p className="text-foreground mb-4">
-              No feedback available yet for this assignment.
+              Chưa có phản hồi nào cho bài tập này.
             </p>
+
             <Button
               onClick={() => navigate(`/user/my-courses/${selectedCourse}`)}
+              className="text-white "
             >
               Quay trở lại khóa học
             </Button>
