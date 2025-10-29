@@ -130,45 +130,6 @@ const viewAssignment = async (req, res) => {
   }
 };
 
-/**
- * 🧩 Học viên nộp bài tập
- */
-const submitAssignment = async (req, res) => {
-  try {
-    const { assignmentId, note } = req.body;
-
-    if (!assignmentId) {
-      return res.status(400).json({ error: "Missing required fields" });
-    }
-
-    const assignment = await Assignment.findById(assignmentId);
-    if (!assignment) {
-      return res.status(404).json({ error: "Assignment not found" });
-    }
-
-    const learner = await User.findById(req.user.id);
-    if (!learner) {
-      return res.status(404).json({ error: "Learner not found" });
-    }
-
-    const submittedAt = new Date();
-    const fileUrl = req.file ? req.file.path : null;
-
-    const newSubmission = new AssignmentSubmission({
-      assignment: assignment._id,
-      learnerId: learner._id,
-      note,
-      fileUrl,
-      submittedAt,
-    });
-
-    await newSubmission.save();
-    res.status(201).json(newSubmission);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-};
-
 const deleteAssignmentStorage = async (req, res) => {
   try {
     const { id } = req.params;
@@ -230,22 +191,6 @@ const gradeAssignment = async (req, res) => {
 };
 
 /**
- * 🧩 Xem feedback chấm điểm
- */
-const viewGradeFeedback = async (req, res) => {
-  try {
-    const submissions = await AssignmentSubmission.find({
-      grade: { $exists: true },
-    })
-      .populate("assignment")
-      .populate("learnerId", "name");
-    res.status(200).json(submissions);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-};
-
-/**
  * 🧩 Xóa bài tập
  */
 const deleteAssignment = async (req, res) => {
@@ -292,6 +237,60 @@ const getAssignmentsForCourse = async (req, res) => {
     );
 
     res.status(200).json(assignmentsWithSubmission);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// ----------------------- LEARNER -----------------------
+
+const submitAssignment = async (req, res) => {
+  try {
+    const { assignmentId, note } = req.body;
+
+    console.log("Assignment ID:", assignmentId);
+
+    if (!assignmentId) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
+
+    const assignment = await Assignment.findById(assignmentId);
+    if (!assignment) {
+      return res.status(404).json({ error: "Assignment not found" });
+    }
+
+    const learner = await User.findById(req.user.id);
+    if (!learner) {
+      return res.status(404).json({ error: "Learner not found" });
+    }
+
+    const submittedAt = new Date();
+    const fileUrl = req.file ? req.file.path : null;
+
+    assignment.note = note;
+    assignment.submitFileUrl = fileUrl;
+    assignment.submittedAt = submittedAt;
+    assignment.submitted = true;
+
+    await assignment.save();
+
+    res
+      .status(201)
+      .json({ message: "Assignment submitted successfully", data: assignment });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+const viewGradeFeedback = async (req, res) => {
+  try {
+    const { id: assignmentId } = req.params;
+    const assignment = await Assignment.findById(assignmentId);
+
+    res.status(200).json({
+      message: "View grade feedback successfully",
+      data: assignment,
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

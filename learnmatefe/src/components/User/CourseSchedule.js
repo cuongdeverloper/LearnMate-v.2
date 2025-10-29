@@ -29,6 +29,7 @@ const getTasksList = (assignments, quizzes) => {
       type: "assignment",
       deadline: a.deadline,
       description: a.description,
+      createdAt: a.createdAt,
     })),
     ...quizzes.map((q) => ({
       id: q._id,
@@ -36,6 +37,7 @@ const getTasksList = (assignments, quizzes) => {
       type: "quiz",
       deadline: q.deadline,
       description: q.description,
+      createdAt: q.createdAt,
     })),
   ];
   return tasks;
@@ -129,7 +131,7 @@ const CourseSchedule = () => {
   const upcomingTasks = useMemo(() => {
     const now = new Date();
     return tasks
-      .filter((t) => t.deadline >= now)
+      .filter((t) => new Date(t.deadline) >= now)
       .sort(
         (a, b) =>
           new Date(a.deadline).getTime() - new Date(b.deadline).getTime()

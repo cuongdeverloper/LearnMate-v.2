@@ -146,7 +146,7 @@ export const fetchAssignments = (courseId) => async (dispatch) => {
 export const submitAssignment = (formData) => async (dispatch) => {
   dispatch({ type: "ASSIGNMENT_SUBMIT_REQUEST" });
   try {
-    const res = await axios.post(`/api/assignment/submit`, formData, {
+    const res = await axios.post(`/api/assignments/submit`, formData, {
       headers: {
         "Content-Type": "multipart/form-data",
         Authorization: `Bearer ${token}`,
