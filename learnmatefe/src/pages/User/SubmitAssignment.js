@@ -35,6 +35,7 @@ const SubmitAssignment = () => {
   const [file, setFile] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [notes, setNotes] = useState("");
 
   const {
     selectedCourse,
@@ -53,7 +54,11 @@ const SubmitAssignment = () => {
 
   const assignment = assignments.find((a) => a._id === selectedAssignment);
 
-  const [notes, setNotes] = useState(assignment?.note || "");
+  useEffect(() => {
+    if (assignment) {
+      setNotes(assignment?.note || "");
+    }
+  }, [assignment]);
 
   const validateFile = (selectedFile) => {
     if (selectedFile.size > MAX_FILE_SIZE) {
@@ -165,7 +170,11 @@ const SubmitAssignment = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-secondary/10 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-2xl mx-auto">
-        <Button variant="ghost" onClick={handleCancel} className="mb-6 gap-2">
+        <Button
+          variant="ghost"
+          onClick={handleCancel}
+          className="mb-6 gap-2 text-white"
+        >
           <ArrowLeft className="w-4 h-4" />
           Quay trở lại khóa học
         </Button>
@@ -175,7 +184,7 @@ const SubmitAssignment = () => {
             Nộp bài tập
           </h1>
           <p className="text-lg text-muted-foreground mb-8">
-            {assignment.title}
+            {assignment?.title}
           </p>
 
           <div className="space-y-6">
@@ -184,28 +193,28 @@ const SubmitAssignment = () => {
                 Mô tả
               </h3>
               <p className="text-foreground bg-muted/30 p-2 rounded-lg">
-                {assignment.description}
+                {assignment?.description}
               </p>
             </div>
             <div>
               <h3 className="text-sm font-semibold text-foreground mb-2">
                 Ngày hết hạn
               </h3>
-              <p>{formatDate(assignment.deadline, "yyyy-MM-dd")}</p>
+              <p>{formatDate(assignment?.deadline, "yyyy-MM-dd")}</p>
             </div>
 
-            {assignment.fileUrl && (
+            {assignment?.fileUrl && (
               <div>
                 <h3 className="text-sm font-semibold text-foreground mb-2">
                   File bài tập
                 </h3>
-                {getFileType(assignment.fileUrl) === "pdf" ? (
+                {getFileType(assignment?.fileUrl) === "pdf" ? (
                   <div className="border border-border rounded-lg overflow-hidden bg-white">
                     <div className="flex items-center justify-between p-4 bg-muted/30 border-b border-border">
                       <div className="flex items-center gap-2">
                         <FileText className="w-5 h-5 text-red-600" />
                         <span className="text-sm font-medium text-foreground">
-                          {getFileName(assignment.fileUrl)}
+                          {getFileName(assignment?.fileUrl)}
                         </span>
                       </div>
                       <Button
@@ -213,8 +222,8 @@ const SubmitAssignment = () => {
                         size="sm"
                         onClick={() => {
                           const link = document.createElement("a");
-                          link.href = assignment.fileUrl;
-                          link.download = getFileName(assignment.fileUrl);
+                          link.href = assignment?.fileUrl;
+                          link.download = getFileName(assignment?.fileUrl);
                           link.click();
                         }}
                         className="gap-2 text-white"
@@ -224,7 +233,7 @@ const SubmitAssignment = () => {
                       </Button>
                     </div>
                     <iframe
-                      src={`${assignment.fileUrl}#toolbar=0`}
+                      src={`${assignment?.fileUrl}#toolbar=0`}
                       className="w-full h-96 border-none"
                       title="Assignment PDF"
                     />
@@ -235,7 +244,7 @@ const SubmitAssignment = () => {
                       <FileText className="w-6 h-6 text-blue-600" />
                       <div>
                         <p className="font-medium text-foreground">
-                          {getFileName(assignment.fileUrl)}
+                          {getFileName(assignment?.fileUrl)}
                         </p>
                         <p className="text-sm text-muted-foreground">
                           DOCX file - Download to view
@@ -247,8 +256,8 @@ const SubmitAssignment = () => {
                       size="sm"
                       onClick={() => {
                         const link = document.createElement("a");
-                        link.href = assignment.fileUrl;
-                        link.download = getFileName(assignment.fileUrl);
+                        link.href = assignment?.fileUrl;
+                        link.download = getFileName(assignment?.fileUrl);
                         link.click();
                       }}
                       className="gap-2 text-white"
@@ -261,18 +270,18 @@ const SubmitAssignment = () => {
               </div>
             )}
 
-            {assignment.submitFileUrl && (
+            {assignment?.submitFileUrl && (
               <div>
                 <h3 className="text-sm font-semibold text-foreground mb-2">
                   File đã nộp
                 </h3>
-                {getFileType(assignment.submitFileUrl) === "pdf" ? (
+                {getFileType(assignment?.submitFileUrl) === "pdf" ? (
                   <div className="border border-border rounded-lg overflow-hidden bg-white">
                     <div className="flex items-center justify-between p-4 bg-muted/30 border-b border-border">
                       <div className="flex items-center gap-2">
                         <FileText className="w-5 h-5 text-red-600" />
                         <span className="text-sm font-medium text-foreground">
-                          {getFileName(assignment.submitFileUrl)}
+                          {getFileName(assignment?.submitFileUrl)}
                         </span>
                       </div>
                       <Button
@@ -280,8 +289,10 @@ const SubmitAssignment = () => {
                         size="sm"
                         onClick={() => {
                           const link = document.createElement("a");
-                          link.href = assignment.submitFileUrl;
-                          link.download = getFileName(assignment.submitFileUrl);
+                          link.href = assignment?.submitFileUrl;
+                          link.download = getFileName(
+                            assignment?.submitFileUrl
+                          );
                           link.click();
                         }}
                         className="gap-2"
@@ -291,7 +302,7 @@ const SubmitAssignment = () => {
                       </Button>
                     </div>
                     <iframe
-                      src={`${assignment.submitFileUrl}#toolbar=0`}
+                      src={`${assignment?.submitFileUrl}#toolbar=0`}
                       className="w-full h-96 border-none"
                       title="Assignment PDF"
                     />
@@ -302,7 +313,7 @@ const SubmitAssignment = () => {
                       <FileText className="w-6 h-6 text-blue-600" />
                       <div>
                         <p className="font-medium text-foreground">
-                          {getFileName(assignment.submitFileUrl)}
+                          {getFileName(assignment?.submitFileUrl)}
                         </p>
                         <p className="text-sm text-muted-foreground">
                           DOCX file - Download to view
@@ -314,8 +325,8 @@ const SubmitAssignment = () => {
                       size="sm"
                       onClick={() => {
                         const link = document.createElement("a");
-                        link.href = assignment.submitFileUrl;
-                        link.download = getFileName(assignment.submitFileUrl);
+                        link.href = assignment?.submitFileUrl;
+                        link.download = getFileName(assignment?.submitFileUrl);
                         link.click();
                       }}
                       className="gap-2 text-white"
