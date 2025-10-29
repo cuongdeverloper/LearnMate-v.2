@@ -37,32 +37,23 @@ const formatTime = (sec) => {
 const StudentQuizTake = () => {
   const { id } = useParams();
   const dispatch = useDispatch();
+  const navigate = useNavigate();
 
-  const {
-    selectedQuiz,
-    quizDetails,
-    loading: quizLoading,
-    error: quizError,
-  } = useSelector((state) => state.quizzes);
+  const { quizzes, selectedQuiz, quizDetails, submitting, loading, error } =
+    useSelector((state) => state.courses);
 
   useEffect(() => {
-    if (!selectedQuiz) {
-      navigate("/");
-    }
+    dispatch(fetchQuizDetailsById(selectedQuiz));
+  }, [dispatch, selectedQuiz]);
 
-    dispatch(fetchQuizDetailsById(selectedQuiz._id));
-  }, [dispatch]);
-
-  const navigate = useNavigate();
   const storageKey = `quiz-${id}-state`;
-
   const [state, setState] = useState(() => {
     const saved = localStorage.getItem(storageKey);
     if (saved) return JSON.parse(saved);
     return {
       currentIndex: 0,
       answers: {},
-      timer: selectedQuiz.duration || 1800,
+      timer: quizDetails.duration || 1800,
       startedAt: Date.now(),
     };
   });
@@ -123,16 +114,19 @@ const StudentQuizTake = () => {
     }
 
     const startedAt = state.startedAt;
-    const finishedAt = startedAt + (selectedQuiz.duration - state.timer) * 1000;
+    const finishedAt = startedAt + (quizDetails.duration - state.timer) * 1000;
     try {
-      dispatch(
-        submitQuiz(selectedQuiz._id, state.answers, startedAt, finishedAt)
-      );
-
-      localStorage.removeItem(storageKey);
-      setState((s) => ({ currentIndex: 0, answers: {}, timer: 30 * 60 }));
-      toast.success("Submitted successfully!");
-      navigate(`/user/quiz/${selectedQuiz._id}/result`);
+      await dispatch(
+        submitQuiz(selectedQuiz, state.answers, startedAt, finishedAt)
+      ).unwrap();
+      if (!error) {
+        localStorage.removeItem(storageKey);
+        setState((s) => ({ currentIndex: 0, answers: {}, timer: 30 * 60 }));
+        toast.success("Submitted successfully!");
+        navigate(`/user/quizzes/${selectedQuiz}/result`);
+      } else {
+        toast.error(error);
+      }
     } catch (e) {
       toast.error(e.message);
     }

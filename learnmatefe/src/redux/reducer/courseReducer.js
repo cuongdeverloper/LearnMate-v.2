@@ -4,13 +4,12 @@ const initialState = {
   schedule: [],
 
   quizzes: [],
-  selectedQuiz: null,
+  selectedQuiz: null, // quizId
   quizDetails: null,
-  userAnswers: {},
   quizResult: {},
 
   assignments: [],
-  selectedAssignment: null,
+  selectedAssignment: null, // assignmentId
 
   progress: {},
 
@@ -102,13 +101,31 @@ const courseReducer = (state = initialState, action) => {
         error: action.payload,
       };
 
+    case "QUIZ_DETAILS_REQUEST":
+      return {
+        ...state,
+        loading: true,
+        error: null,
+      };
+
+    case "QUIZ_DETAILS_SUCCESS":
+      return {
+        ...state,
+        loading: false,
+        quizDetails: action.payload,
+      };
+
+    case "QUIZ_DETAILS_FAILURE":
+      return {
+        ...state,
+        loading: false,
+        error: action.payload,
+      };
+
     case "QUIZ_SELECT":
       return {
         ...state,
-        selectedQuiz: action.payload.quizId,
-        quizDetails: action.payload.quizDetails,
-        userAnswers: {},
-        quizResult: {},
+        selectedQuiz: action.payload,
       };
 
     case "QUIZ_SUBMIT_REQUEST":
@@ -132,6 +149,27 @@ const courseReducer = (state = initialState, action) => {
       return {
         ...state,
         submitting: false,
+        error: action.payload,
+      };
+
+    case "QUIZ_RESULT_REQUEST":
+      return {
+        ...state,
+        loading: true,
+        error: null,
+      };
+
+    case "QUIZ_RESULT_SUCCESS":
+      return {
+        ...state,
+        loading: false,
+        quizResult: action.payload,
+      };
+
+    case "QUIZ_RESULT_FAILURE":
+      return {
+        ...state,
+        loading: false,
         error: action.payload,
       };
 

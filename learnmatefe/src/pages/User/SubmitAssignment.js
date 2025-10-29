@@ -21,17 +21,20 @@ const SubmitAssignment = () => {
   const { id: assignmentId, courseId } = useParams();
   const navigate = useNavigate();
   const [file, setFile] = useState(null);
-  const [notes, setNotes] = useState("");
   const [isDragging, setIsDragging] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const {
-    selectedAssignment: assignment,
+    assignments,
+    selectedAssignment,
+
     submitting,
     loading,
-    feedback,
     error,
-  } = useSelector((state) => state.assignments);
+  } = useSelector((state) => state.courses);
+
+  const assignment = assignments.find((a) => a._id === selectedAssignment);
+  const [notes, setNotes] = useState(assignment?.notes || "");
 
   const dispatch = useDispatch();
 
@@ -233,6 +236,73 @@ const SubmitAssignment = () => {
                         const link = document.createElement("a");
                         link.href = assignment.fileUrl;
                         link.download = getFileName(assignment.fileUrl);
+                        link.click();
+                      }}
+                      className="gap-2 text-white"
+                    >
+                      <Download className="w-4 h-4 text-white" />
+                      Download
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {assignment.submitFileUrl && (
+              <div>
+                <h3 className="text-sm font-semibold text-foreground mb-2">
+                  Submitted File
+                </h3>
+                {getFileType(assignment.submitFileUrl) === "pdf" ? (
+                  <div className="border border-border rounded-lg overflow-hidden bg-white">
+                    <div className="flex items-center justify-between p-4 bg-muted/30 border-b border-border">
+                      <div className="flex items-center gap-2">
+                        <FileText className="w-5 h-5 text-red-600" />
+                        <span className="text-sm font-medium text-foreground">
+                          {getFileName(assignment.submitFileUrl)}
+                        </span>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          const link = document.createElement("a");
+                          link.href = assignment.submitFileUrl;
+                          link.download = getFileName(assignment.submitFileUrl);
+                          link.click();
+                        }}
+                        className="gap-2 text-white"
+                      >
+                        <Download className="w-4 h-4" />
+                        Download
+                      </Button>
+                    </div>
+                    <iframe
+                      src={`${assignment.submitFileUrl}#toolbar=0`}
+                      className="w-full h-96 border-none"
+                      title="Assignment PDF"
+                    />
+                  </div>
+                ) : (
+                  <div className="border border-border rounded-lg p-4 bg-muted/30 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <FileText className="w-6 h-6 text-blue-600" />
+                      <div>
+                        <p className="font-medium text-foreground">
+                          {getFileName(assignment.submitFileUrl)}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          DOCX file - Download to view
+                        </p>
+                      </div>
+                    </div>
+                    <Button
+                      variant="default"
+                      size="sm"
+                      onClick={() => {
+                        const link = document.createElement("a");
+                        link.href = assignment.submitFileUrl;
+                        link.download = getFileName(assignment.submitFileUrl);
                         link.click();
                       }}
                       className="gap-2 text-white"

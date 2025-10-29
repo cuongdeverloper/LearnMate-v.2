@@ -295,6 +295,7 @@ const CourseSchedule = () => {
           setIsModalOpen(false);
           setSelectedTask(null);
         }}
+        courseId={selectedCourse}
       />
     </div>
   );

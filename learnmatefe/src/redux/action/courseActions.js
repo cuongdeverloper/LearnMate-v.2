@@ -69,20 +69,21 @@ export const fetchQuizzes = (courseId) => async (dispatch) => {
 export const fetchQuizDetailsById = (quizId) => async (dispatch) => {
   dispatch({ type: "QUIZ_DETAILS_REQUEST" });
   try {
-    const res = await axios.get(`/api/quiz/getdetailquiz/${quizId}`, {
+    const res = await axios.get(`/api/quizzes/${quizId}/details`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
     });
-    dispatch({ type: "QUIZ_DETAILS_SUCCESS", payload: res.quiz });
+
+    dispatch({ type: "QUIZ_DETAILS_SUCCESS", payload: res.data });
   } catch (err) {
     dispatch({ type: "QUIZ_DETAILS_FAILURE", payload: err.message });
   }
 };
 
-export const selectQuiz = (quiz) => ({
+export const selectQuiz = (quizId) => ({
   type: "QUIZ_SELECT",
-  payload: quiz,
+  payload: quizId,
 });
 
 export const submitQuiz =
@@ -90,7 +91,7 @@ export const submitQuiz =
     dispatch({ type: "QUIZ_SUBMIT_REQUEST" });
     try {
       const res = await axios.post(
-        `/api/quiz/${quizId}/submit`,
+        `/api/quizzes/${quizId}/submit`,
         { answers, startedAt, finishedAt },
         {
           headers: {
@@ -99,11 +100,25 @@ export const submitQuiz =
           },
         }
       );
-      dispatch({ type: "QUIZ_SUBMIT_SUCCESS", payload: res });
+      dispatch({ type: "QUIZ_SUBMIT_SUCCESS", payload: res.data });
     } catch (err) {
       dispatch({ type: "QUIZ_SUBMIT_FAILURE", payload: err.message });
     }
   };
+
+export const fetchQuizResult = (quizId) => async (dispatch) => {
+  dispatch({ type: "QUIZ_RESULT_REQUEST" });
+  try {
+    const res = await axios.get(`/api/quizzes/${quizId}/result`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    dispatch({ type: "QUIZ_RESULT_SUCCESS", payload: res.data });
+  } catch (err) {
+    dispatch({ type: "QUIZ_RESULT_FAILURE", payload: err.message });
+  }
+};
 
 export const resetQuiz = () => ({
   type: "QUIZ_RESET",

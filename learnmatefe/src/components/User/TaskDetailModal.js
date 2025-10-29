@@ -2,6 +2,10 @@ import React from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/Dialog";
 import { Calendar, FileText, MapPin } from "lucide-react";
 import { Button } from "../ui/Button";
+import { useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
+
+import { selectAssignment, selectQuiz } from "../../redux/action/courseActions";
 
 export const TASK_COLORS = {
   assignment: "bg-red-100 border-red-300 text-red-900",
@@ -13,9 +17,11 @@ export const TASK_LABELS = {
   quiz: "Quiz",
 };
 
-const TaskDetailModal = ({ task, isOpen, onClose }) => {
-  if (!task) return null;
+const TaskDetailModal = ({ task, isOpen, onClose, courseId }) => {
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
 
+  if (!task) return null;
   const taskColor = TASK_COLORS[task.type];
   const taskLabel = TASK_LABELS[task.type];
 
@@ -24,6 +30,17 @@ const TaskDetailModal = ({ task, isOpen, onClose }) => {
     day: "numeric",
     month: "long",
   });
+
+  const handleOpenAssignment = (task) => {
+    onClose();
+    dispatch(selectAssignment(task.id));
+    navigate(`/user/assignments/${task.id}/submit`);
+  };
+  const handleOpenQuiz = (task) => {
+    onClose();
+    dispatch(selectQuiz(task.id));
+    navigate(`/user/quizzes/${task.id}/take`);
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -61,25 +78,27 @@ const TaskDetailModal = ({ task, isOpen, onClose }) => {
             </div>
           )}
 
-          <div className="pt-4 border-t flex gap-2">
+          <div className="pt-4 border-t flex gap-2 justify-end">
             {task.type === "assignment" && (
-              <>
-                <Button className="flex-1" variant="default">
-                  View Assignment
-                </Button>
-                <Button className="flex-1" variant="outline">
-                  Submit
-                </Button>
-              </>
-            )}
-            {task.type === "quiz" && (
-              <Button className="w-full" variant="default">
-                Open Quiz
+              <Button
+                className=" text-white"
+                variant="default"
+                onClick={() => {
+                  handleOpenAssignment(task);
+                }}
+              >
+                Open Assignment
               </Button>
             )}
-            {task.type === "class" && (
-              <Button className="w-full" variant="outline">
-                Add to Calendar
+            {task.type === "quiz" && (
+              <Button
+                className=" text-white"
+                variant="default"
+                onClick={() => {
+                  handleOpenQuiz(task);
+                }}
+              >
+                Open Quiz
               </Button>
             )}
           </div>
