@@ -13,7 +13,7 @@ const getTutorById = async (tutorId) => {
   };
 const getReviewsByTutor = async (tutorId) => {
     try {
-      const response = await axios.get(`/api/tutor/review/${tutorId}`);
+      const response = await axios.get(`/api/learner/tutors/${tutorId}/reviews`);
       return response;
     } catch (error) {
       console.error("Error fetching reviews by tutor:", error);

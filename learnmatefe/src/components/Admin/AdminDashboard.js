@@ -53,11 +53,7 @@ const AdminDashboard = () => {
         students: 0
     });
 
-    // Add debug - check user authentication
     const user = useSelector(state => state.user?.account);
-    console.log('Current user from Redux:', user);
-    console.log('Access token:', user?.access_token);
-    console.log('User role:', user?.role);
 
     useEffect(() => {
         fetchUsers();
@@ -67,13 +63,11 @@ const AdminDashboard = () => {
         setLoading(true);
         try {
             const response = await AdminService.getAllUsers();
-            console.log('API Response:', response); // Debug log
             
             if (response && Array.isArray(response)) {
                 const userList = response;
                 setUsers(userList);
                 calculateStats(userList);
-                console.log('Users loaded successfully:', userList.length);
             } else {
                 console.error('No data in response');
                 setUsers([]);
