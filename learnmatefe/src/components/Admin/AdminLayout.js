@@ -7,7 +7,8 @@ import {
     UserOutlined,
     FileTextOutlined,
     LogoutOutlined,
-    SettingOutlined
+    SettingOutlined,
+    CommentOutlined
 } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
@@ -43,6 +44,11 @@ const AdminLayout = ({ children }) => {
             key: '/admin/tutor-management',
             icon: <FileTextOutlined />,
             label: 'Quản lý đơn gia sư',
+        },
+        {
+            key: '/admin/review-management',
+            icon: <CommentOutlined />,
+            label: 'Quản lý đánh giá',
         },
     ];
 
