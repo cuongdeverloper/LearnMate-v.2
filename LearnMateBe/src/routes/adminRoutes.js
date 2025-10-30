@@ -12,30 +12,37 @@ const {
     rejectTutorApplication
 } = require('../controller/User/UserController');
 
+const {
+    getAllReviews,
+    toggleHideReview,
+    deleteReview,
+    markReview,
+    getReviewStats
+} = require('../controller/Admin/AdminReviewController');
+
 const RouterAdmin = express.Router();
 
 // Middleware: Kiểm tra access token và quyền admin
 RouterAdmin.use(checkAccessToken);
 RouterAdmin.use(checkAdminRole);
 
-// Get all users for admin
+// User management routes
 RouterAdmin.get('/users', getAllUsers);
-
-// Get specific user by ID
 RouterAdmin.get('/users/:userId', getUserByUserId);
-
-// Block user
 RouterAdmin.patch('/users/:userId/block', blockUser);
-
-// Unblock user  
 RouterAdmin.patch('/users/:userId/unblock', unblockUser);
-
-// Delete user
 RouterAdmin.delete('/users/:userId', deleteUser);
 
 // Tutor management routes
 RouterAdmin.get('/tutor-applications', getAllTutorApplications);
 RouterAdmin.patch('/tutor-applications/:applicationId/approve', approveTutorApplication);
 RouterAdmin.patch('/tutor-applications/:applicationId/reject', rejectTutorApplication);
+
+// Review management routes
+RouterAdmin.get('/reviews', getAllReviews);
+RouterAdmin.get('/reviews/stats', getReviewStats);
+RouterAdmin.patch('/reviews/:reviewId/toggle-hide', toggleHideReview);
+RouterAdmin.delete('/reviews/:reviewId', deleteReview);
+RouterAdmin.patch('/reviews/:reviewId/mark', markReview);
 
 module.exports = RouterAdmin;

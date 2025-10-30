@@ -34,20 +34,50 @@ exports.createReview = async (req, res) => {
   }
 };
 
-// Lấy review của 1 gia sư
+// Lấy review của user (bao gồm cả những review đã bị xóa)
+exports.getUserReviews = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const reviews = await Review.find({ user: userId })
+      .populate('tutor', 'user')
+      .populate('course', 'subject')
+      .sort({ createdAt: -1 });
+    
+    res.json(reviews);
+  } catch (err) {
+    console.error('Error in getUserReviews:', err);
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// Lấy review của 1 gia sư (chỉ những review không bị xóa và không bị ẩn)
 exports.getReviewsByTutor = async (req, res) => {
   try {
-    const reviews = await Review.find({ tutor: req.params.tutorId }).populate('user', 'username');
+    const reviews = await Review.find({ 
+      tutor: req.params.tutorId,
+      isDeleted: false,
+      isHidden: false 
+    })
+    .populate('user', 'username')
+    .populate('course', 'subject')
+    .sort({ createdAt: -1 });
+    
     res.json(reviews);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
 
-// Lấy review của 1 khóa học
+// Lấy review của 1 khóa học (chỉ những review không bị xóa và không bị ẩn)
 exports.getReviewsByCourse = async (req, res) => {
   try {
-    const reviews = await Review.find({ course: req.params.courseId }).populate('user', 'username');
+    const reviews = await Review.find({ 
+      course: req.params.courseId,
+      isDeleted: false,
+      isHidden: false 
+    })
+    .populate('user', 'username')
+    .sort({ createdAt: -1 });
     res.json(reviews);
   } catch (err) {
     res.status(500).json({ error: err.message });
