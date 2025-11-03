@@ -1,3 +1,4 @@
+
 const mongoose = require("mongoose");
 
 const bookingSchema = new mongoose.Schema(
@@ -26,6 +27,7 @@ const bookingSchema = new mongoose.Schema(
       default: "pending",
     },
     address: { type: String, default: "" },
+
     amount: { type: Number, required: true }, // Tổng tiền toàn khóa
     deposit: { type: Number, default: 0 }, // Số tiền cọc
     depositPercent: { type: Number, default: 30 }, // 30% hoặc 60%
@@ -33,12 +35,12 @@ const bookingSchema = new mongoose.Schema(
     numberOfMonths: { type: Number, default: 1 }, // Tổng số tháng học
     numberOfSession: { type: Number, default: 1 },
     paidMonths: { type: Number, default: 0 }, // Số tháng đã thanh toán
-    note: { type: String, default: "" },
+
+    note: { type: String, default: '' },
     completed: { type: Boolean, default: false },
     reported: { type: Boolean, default: false },
-    reportedAt: { type: Date },
-  },
-  { timestamps: true }
-);
+    reportedAt: { type: Date }
+  }, { timestamps: true });
 
-module.exports = mongoose.model("Booking", bookingSchema);
+  module.exports = mongoose.model('Booking', bookingSchema);
+
