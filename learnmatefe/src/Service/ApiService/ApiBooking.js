@@ -72,7 +72,7 @@ export const getMyBookings = async () => {
       const token = Cookies.get("accessToken"); 
   
       const response = await axios.post(
-        '/report', // URL
+        '/api/booking/report', // URL
         { 
           targetType: 'booking',
           targetId: bookingId,

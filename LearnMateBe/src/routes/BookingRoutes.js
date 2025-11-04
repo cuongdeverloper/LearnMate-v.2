@@ -65,5 +65,6 @@ RouteBooking.get(
 );
 
 RouteBooking.post("/review", checkAccessToken, ReviewController.createReview);
+RouteBooking.post("/report", checkAccessToken, bookingController.createReport);
 
 module.exports = RouteBooking;

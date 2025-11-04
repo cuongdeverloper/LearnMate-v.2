@@ -23,7 +23,7 @@ export const TASK_LABELS = {
 
 const getTasksList = (assignments, quizzes) => {
   const tasks = [
-    ...assignments.map((a) => ({
+    ...assignments?.map((a) => ({
       id: a._id,
       title: a.title,
       type: "assignment",
