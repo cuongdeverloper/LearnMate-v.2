@@ -501,7 +501,7 @@ export const createQuizFromStorage = async (data) => {
     const token = Cookies.get("accessToken");
     if (!token) throw new Error("Unauthorized");
 
-    const res = await axios.post(`/api/quiz`, data, {
+    const res = await axios.post(`/api/quizzes`, data, {
       headers: { Authorization: `Bearer ${token}` },
     });
 

@@ -45,7 +45,8 @@ const TutorQuizManager = () => {
           getBookingsByTutorId(tutorId),
         ]);
         setSubjects(subRes.subjects || []);
-        setBookings(bookingRes.bookings || []);
+        setBookings(bookingRes.data.bookings || []);
+        console.log(bookingRes.data.bookings)
       } catch {
         toast.error("❌ Lỗi khi tải dữ liệu ban đầu");
       }
@@ -83,7 +84,7 @@ const TutorQuizManager = () => {
     }
   };
 
-const handleAddQuestionToQuizStorage = (question) => {
+  const handleAddQuestionToQuizStorage = (question) => {
     if (!selectedQuizStorageId) return toast.warning("⚠️ Chọn QuizStorage trước");
     if (quizStorageQuestions.some((q) => q._id === question._id)) return;
 
@@ -98,16 +99,21 @@ const handleAddQuestionToQuizStorage = (question) => {
 
 
   useEffect(() => {
-    if (!selectedQuizStorageId) {
-      setQuizStorageQuestions([]);
-      return;
-    }
-
-    const selectedQuiz = quizStorageList.find(qs => qs._id === selectedQuizStorageId);
+  if (selectedQuizStorageId) {
+    const selectedQuiz = quizStorageList.find(
+      (qs) => qs._id === selectedQuizStorageId
+    );
     if (selectedQuiz) {
       setQuizStorageQuestions(selectedQuiz.questions || []);
+      // 🔥 Load QuestionStorage theo môn của quiz đó
+      if (selectedQuiz.subjectId?._id) {
+        setSelectedSubject(selectedQuiz.subjectId._id);
+        fetchQuestionStorage(selectedQuiz.subjectId._id);
+      }
     }
-  }, [selectedQuizStorageId, quizStorageList]);
+  }
+}, [selectedQuizStorageId, quizStorageList]);
+
 
   // --- Import Questions ---
   const handleImportQuestions = async () => {
@@ -184,7 +190,7 @@ const handleAddQuestionToQuizStorage = (question) => {
   const subjectOptions = subjects.map((s) => ({ value: s._id, label: s.name }));
   const bookingOptions = bookings.map((b) => ({
     value: b._id,
-    label: `${b.subjectId?.name || "Không rõ môn"} - ${b.learnerId?.username || "Học viên"}`,
+    label: `${b.subject?.name || "Không rõ môn"} ${b.subject?.classLevel || "Không rõ lớp"} - ${b.learner?.username || "Học viên"}`,
   }));
   const quizStorageOptions = filteredQuizStorage.map((qs) => ({
     value: qs._id,
@@ -376,20 +382,28 @@ const handleAddQuestionToQuizStorage = (question) => {
 
             <h4 className="text-lg font-medium mt-4 mb-2">➕ Thêm câu hỏi từ QuestionStorage</h4>
             <div className="max-h-60 overflow-y-auto border rounded-md p-3 bg-gray-50">
-              {questionStorage.map((q) => (
-                <div
-                  key={q._id}
-                  className="flex justify-between items-center mb-1 p-1 rounded hover:bg-gray-100"
-                >
-                  <span>{q.text}</span>
-                  <button
-                    onClick={() => handleAddQuestionToQuizStorage(q)}
-                    className="text-green-500 hover:text-green-700 px-2"
-                  >
-                    ➕
-                  </button>
+              {questionStorage.length === 0 ? (
+                <div className="text-gray-500 italic text-center py-3 border rounded-md bg-gray-50">
+                  ⚠️ Chưa có câu hỏi nào. Hãy chọn môn học để tải QuestionStorage.
                 </div>
-              ))}
+              ) : (
+                <div className="max-h-60 overflow-y-auto border rounded-md p-3 bg-gray-50">
+                  {questionStorage.map((q) => (
+                    <div
+                      key={q._id}
+                      className="flex justify-between items-center mb-1 p-1 rounded hover:bg-gray-100"
+                    >
+                      <span>{q.text}</span>
+                      <button
+                        onClick={() => handleAddQuestionToQuizStorage(q)}
+                        className="text-green-500 hover:text-green-700 px-2"
+                      >
+                        ➕
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             <button
@@ -440,7 +454,7 @@ const handleAddQuestionToQuizStorage = (question) => {
           <Select
             options={bookingOptions}
             onChange={(sel) => setSelectedBookingId(sel?.value || "")}
-            placeholder="📅 Chọn buổi học"
+            placeholder="📅 Chọn khoá học"
             className="flex-1"
           />
         </div>

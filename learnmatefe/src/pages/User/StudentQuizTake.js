@@ -53,7 +53,7 @@ const StudentQuizTake = () => {
     return {
       currentIndex: 0,
       answers: {},
-      timer: quizDetails.duration || 1800,
+      timer: quizDetails?.duration || 1800,
       startedAt: Date.now(),
     };
   });
@@ -116,9 +116,9 @@ const StudentQuizTake = () => {
     const startedAt = state.startedAt;
     const finishedAt = startedAt + (quizDetails.duration - state.timer) * 1000;
     try {
-      await dispatch(
+      dispatch(
         submitQuiz(selectedQuiz, state.answers, startedAt, finishedAt)
-      ).unwrap();
+      );
       if (!error) {
         localStorage.removeItem(storageKey);
         setState((s) => ({ currentIndex: 0, answers: {}, timer: 30 * 60 }));
@@ -187,19 +187,19 @@ const StudentQuizTake = () => {
           <div className="lg:col-span-3 space-y-4">
             <Card className="p-6">
               <div className="text-lg font-medium mb-4">
-                {currentQuestion.text}
+                {currentQuestion?.text}
               </div>
               <RadioGroup
-                value={state.answers[currentQuestion._id]?.toString() || ""}
-                onValueChange={(v) => selectAnswer(currentQuestion._id, v)}
+                value={state.answers[currentQuestion?._id]?.toString() || ""}
+                onValueChange={(v) => selectAnswer(currentQuestion?._id, v)}
                 className="space-y-3"
               >
-                {currentQuestion.options.map((opt, id) => (
+                {currentQuestion?.options.map((opt, id) => (
                   <div
                     key={id}
                     className={cn(
                       "flex items-center gap-3 rounded-md border p-3",
-                      state.answers[currentQuestion._id] === id &&
+                      state.answers[currentQuestion?._id] === id &&
                         "border-primary bg-blue-500/5 text-primary"
                     )}
                   >
@@ -254,7 +254,7 @@ const StudentQuizTake = () => {
             <Card className="p-4 w-full max-w-[240px] lg:max-w-none">
               <h3 className="font-semibold mb-3 text-xl">Question Navigator</h3>
               <div className="grid grid-cols-5 gap-2">
-                {quizDetails.questions.map((q, idx) => {
+                {quizDetails?.questions.map((q, idx) => {
                   const answered = state.answers[q._id] !== undefined;
                   const isCurrent = idx === state.currentIndex;
                   return (
@@ -289,7 +289,7 @@ const StudentQuizTake = () => {
               <AlertDialogTitle>Submit Quiz?</AlertDialogTitle>
               <AlertDialogDescription>
                 You have answered {answeredCount} of{" "}
-                {quizDetails.questions.length} questions. Once submitted, you
+                {quizDetails?.questions.length} questions. Once submitted, you
                 cannot change your answers.
               </AlertDialogDescription>
             </AlertDialogHeader>

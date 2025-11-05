@@ -41,7 +41,7 @@ const [deadline, setDeadline] = useState("");
         ]);
         console.log( storageRes)
         setSubjects(subRes.subjects || []);
-        setBookings(bookingRes.bookings || []);
+        setBookings(bookingRes.data.bookings || []);
         setAssignmentStorageList(storageRes.data || []);
         setFilteredStorage(storageRes.data || []);
       } catch {
@@ -118,7 +118,7 @@ const [deadline, setDeadline] = useState("");
   const subjectOptions = subjects.map((s) => ({ value: s._id, label: s.name }));
   const bookingOptions = bookings.map((b) => ({
     value: b._id,
-    label: `${b.subjectId?.name} - ${b.learnerId?.username}`,
+    label: `${b.subject?.name || "Không rõ môn"} ${b.subject?.classLevel || "Không rõ lớp"} - ${b.learner?.username || "Học viên"}`,
   }));
   const storageOptions = filteredStorage.map((a) => ({
     value: a._id,

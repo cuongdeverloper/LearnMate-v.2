@@ -153,7 +153,7 @@ const MaterialsModal = ({ bookingTitle, materials, onClose }) => {
             </p>
           ) : (
             <ul className="materials-list">
-              {materials.map((material) => (
+              {materials?.map((material) => (
                 <li key={material._id} className="material-item">
                   <h4 className="material-title">{material.title}</h4>
                   {material.description && (
@@ -781,7 +781,7 @@ function AllCoursesSchedule() {
                     {booking.tutorId?.user?.username || "N/A"}
                   </p>
                   <p>
-                    <strong>Số buổi học:</strong> {booking.numberOfSessions}
+                    <strong>Số buổi học:</strong> {booking.numberOfSession}
                   </p>
                   <p>
                     <strong>Chi phí mỗi buổi:</strong>{" "}
