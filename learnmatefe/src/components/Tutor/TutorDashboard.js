@@ -53,12 +53,6 @@ const TutorDashboard = () => {
       description: 'Duyệt và quản lý các yêu cầu học' 
     },
     { 
-      id: 'progress', 
-      icon: ProgressIcon, 
-      label: 'Tiến độ học tập', 
-      description: 'Theo dõi tiến bộ của học viên' 
-    },
-    { 
       id: 'materials', 
       icon: MaterialIcon, 
       label: 'Tài liệu', 

@@ -40,7 +40,7 @@ RouterTutor.get("/progress/:studentId", checkTutorRole,tutorCtrl.getProgress);
 RouterTutor.post(
   "/material/upload",
   uploadDocs.single("file"),
-  checkTutorRole,
+  checkAccessToken,
   tutorCtrl.uploadMaterial
 );
 RouterTutor.get("/material/:bookingId", checkAccessToken,checkTutorRole,tutorCtrl.getMaterials);

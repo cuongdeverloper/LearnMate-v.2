@@ -42,6 +42,7 @@ RouterAdmin.use(checkAccessToken);
 RouterAdmin.use(checkAdminRole);
 
 // User management routes
+// User management routes
 RouterAdmin.get('/users', getAllUsers);
 RouterAdmin.get('/users/:userId', getUserByUserId);
 RouterAdmin.patch('/users/:userId/block', blockUser);

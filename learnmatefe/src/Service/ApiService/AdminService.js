@@ -23,6 +23,7 @@ class AdminService {
             return response;
         } catch (error) {
             console.error('Error fetching users:', error.response?.data?.message || error.message);
+            console.error('Error fetching users:', error.response?.data?.message || error.message);
             return null;
         }
     }

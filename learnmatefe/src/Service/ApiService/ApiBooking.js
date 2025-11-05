@@ -72,7 +72,7 @@ export const getMyBookings = async () => {
       const token = Cookies.get("accessToken"); 
   
       const response = await axios.post(
-        '/report', // URL
+        '/api/booking/report', // URL
         { 
           targetType: 'booking',
           targetId: bookingId,
@@ -134,7 +134,7 @@ export const requestChangeSchedule = async (bookingId, payload) => {
       { headers: { Authorization: `Bearer ${token}` } }
     );
 
-    return response; 
+    return response.data; 
   } catch (error) {
     console.error("🚨 Lỗi khi gửi yêu cầu đổi lịch:", error);
 

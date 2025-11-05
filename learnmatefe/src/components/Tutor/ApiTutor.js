@@ -31,10 +31,9 @@ export const uploadMaterial = async ({
         "Content-Type": "multipart/form-data",
       },
     });
-
     // kiểm tra response
-    if (response.errorCode === 0) {
-      return { errorCode: 0, data: response.data };
+    if (response) {
+      return { errorCode: 0, data: response };
     } else {
       return { errorCode: 1, message: response?.message || "Upload failed" };
     }
@@ -43,7 +42,7 @@ export const uploadMaterial = async ({
 
     // lấy message từ backend nếu có
     const msg =
-      error?.response?.data?.message ||
+      error?.response?.message ||
       error.message ||
       "Failed to upload material";
     return { errorCode: 1, message: msg };
@@ -90,8 +89,7 @@ export const getBookingsByTutorId = async (tutorId) => {
     const token = Cookies.get("accessToken");
 
     if (!token) {
-      window.open("/signin", "_blank");
-      return;
+      return { errorCode: 1, message: "Unauthorized" };
     }
 
     const response = await axios.get(`/api/tutor/tutor/${tutorId}/bookings`, {
@@ -99,10 +97,27 @@ export const getBookingsByTutorId = async (tutorId) => {
         Authorization: `Bearer ${token}`,
       },
     });
-    return response;
+
+    if (Array.isArray(response)) {
+      return { errorCode: 0, data: response };
+    }
+
+    // Nếu backend có errorCode riêng (tùy server)
+    if (response) {
+      return { errorCode: 0, data: response };
+    }
+
+    return {
+      errorCode: 1,
+      message: response?.message || "Failed to fetch bookings",
+    };
   } catch (error) {
     console.error("Error fetching bookings by tutorId:", error);
-    return null;
+    const msg =
+      error?.response?.message ||
+      error.message ||
+      "Failed to fetch bookings";
+    return { errorCode: 1, message: msg };
   }
 };
 

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import dayjs from "dayjs";
 import { useSelector } from "react-redux";
 import { toast } from "react-toastify";
-import { uploadMaterial, getMaterialsForBooking, getTutorSchedule } from "../ApiTutor";
+import { uploadMaterial, getMaterialsForBooking, getBookingsByTutorId } from "../ApiTutor";
 import "./MaterialUploader.scss";
 
 const MaterialUploader = () => {
@@ -15,18 +15,32 @@ const MaterialUploader = () => {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  const loadBookings = async () => {
-    if (!tutorId) return;
-    try {
-      const res = await getTutorSchedule(tutorId);
-      const uniqueBookings = Array.isArray(res)
-        ? [...new Map(res.map((bk) => [bk.bookingId, bk])).values()]
-        : [];
+const loadBookings = async () => {
+  if (!tutorId) return;
+
+  try {
+    const res = await getBookingsByTutorId(tutorId);
+
+    // ✅ dữ liệu thực nằm ở res.data.bookings
+    const data = res?.data?.bookings;
+
+    if (Array.isArray(data)) {
+      const uniqueBookings = [
+        ...new Map(data.map((bk) => [bk._id, bk])).values(),
+      ];
       setBookings(uniqueBookings);
-    } catch {
+      console.log("✅ Unique bookings:", uniqueBookings);
+    } else {
+      console.error("⚠️ Không nhận được danh sách booking hợp lệ:", data);
       setBookings([]);
     }
-  };
+  } catch (error) {
+    console.error("❌ Error loading bookings:", error);
+    setBookings([]);
+  }
+};
+
+
 
   useEffect(() => {
     loadBookings();
@@ -62,7 +76,6 @@ const MaterialUploader = () => {
     setLoading(true);
     try {
       const res = await uploadMaterial({ bookingId, title, description, file });
-      console.log(res)
       if (res.errorCode === 0) {
         toast.success("Tải tài liệu thành công");
         setFile(null);
@@ -95,14 +108,38 @@ const MaterialUploader = () => {
       <div className="upload-card">
         <div className="form-group">
           <label>Chọn khóa học:</label>
-          <select value={bookingId} onChange={(e) => setBookingId(e.target.value)}>
-            <option value="">-- Chọn booking --</option>
-            {(bookings || []).map((bk, index) => (
-              <option key={`${bk.bookingId}-${index}`} value={bk.bookingId}>
-                {dayjs(bk.date).format("DD/MM/YYYY - HH:mm")} - {bk.learnerId?.username || "Học viên"}
-              </option>
-            ))}
-          </select>
+           <select
+    value={bookingId}
+    onChange={(e) => setBookingId(e.target.value)}
+  >
+    <option value="">-- Chọn khóa học --</option>
+    {(bookings || []).map((bk) => {
+      const learner = bk.learnerId?.username || "Không rõ học viên";
+      const subject = bk.subjectId?.name || "Không rõ môn học";
+      const start = bk.startDate
+        ? dayjs(bk.startDate).format("DD/MM/YYYY")
+        : "Chưa có";
+      const end = bk.endDate
+        ? dayjs(bk.endDate).format("DD/MM/YYYY")
+        : "Chưa có";
+      const status =
+        bk.status === "approve"
+          ? "✅ Đã duyệt"
+          : bk.status === "pending"
+          ? "⏳ Chờ duyệt"
+          : bk.status === "cancelled"
+          ? "❌ Hủy"
+          : bk.status === "completed"
+          ? "🏁 Hoàn tất"
+          : "⚠️ Khác";
+
+      return (
+        <option key={bk._id} value={bk._id}>
+  {`${bk.subject?.name || "Môn học"} (${bk.subject?.classLevel || "Không rõ"}) | ${bk.learner?.username || "Học viên"} | ${dayjs(bk.startDate).format("DD/MM/YYYY")} → ${dayjs(bk.endDate).format("DD/MM/YYYY")}`}
+</option>
+      );
+    })}
+  </select>
         </div>
 
         <div className="form-group">

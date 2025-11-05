@@ -407,18 +407,36 @@ exports.finishBooking = async (req, res) => {
 exports.getAllBookingsByTutorId = async (req, res) => {
   try {
     const { tutorId } = req.params;
+
+    // 🔍 Tìm user theo ID
     const user = await User.findById(tutorId);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "Không tìm thấy user với ID này.",
+      });
+    }
+
+    // 🔍 Tìm tutor theo userId
     const tutor = await Tutor.findOne({ user: user._id });
+    if (!tutor) {
+      return res.status(404).json({
+        success: false,
+        message: "Không tìm thấy tutor tương ứng với user này.",
+      });
+    }
+
     const IdTutor = tutor._id;
-    // Kiểm tra định dạng ID
-    if (!IdTutor || !IdTutor.toString().match(/^[0-9a-fA-F]{24}$/)) {
+
+    // Kiểm tra định dạng ObjectId
+    if (!IdTutor.toString().match(/^[0-9a-fA-F]{24}$/)) {
       return res.status(400).json({
         success: false,
         message: "❌ Định dạng tutor ID không hợp lệ.",
       });
     }
 
-    // Tìm các booking của tutor đó
+    // ✅ Lấy danh sách bookings
     const bookings = await Booking.find({ tutorId: IdTutor })
       .populate({
         path: "learnerId",
@@ -426,7 +444,7 @@ exports.getAllBookingsByTutorId = async (req, res) => {
       })
       .populate({
         path: "subjectId",
-        select: "name classLevel description",
+        select: "name classLevel", // chỉ lấy 2 field thực tế có
       })
       .populate({
         path: "scheduleIds",
@@ -434,20 +452,39 @@ exports.getAllBookingsByTutorId = async (req, res) => {
       })
       .sort({ createdAt: -1 });
 
-    // Xử lý dữ liệu lịch học để có startDate và endDate
+    // ✅ Enrich dữ liệu: thêm startDate, endDate, classLevel, ...
     const enrichedBookings = bookings.map((booking) => {
       const schedules = booking.scheduleIds || [];
       const dates = schedules.map((s) => new Date(s.date));
-
       const startDate = dates.length ? new Date(Math.min(...dates)) : null;
       const endDate = dates.length ? new Date(Math.max(...dates)) : null;
 
+      const subject = booking.subjectId || {};
+      const learner = booking.learnerId || {};
+
       return {
-        ...booking.toObject(),
+        _id: booking._id,
+        status: booking.status,
+        amount: booking.amount,
+        address: booking.address,
+        note: booking.note,
+        createdAt: booking.createdAt,
+        updatedAt: booking.updatedAt,
         startDate,
         endDate,
         totalSessions: schedules.length,
         completedSessions: schedules.filter((s) => s.attended).length,
+        learner: {
+          username: learner.username,
+          email: learner.email,
+          phoneNumber: learner.phoneNumber,
+          gender: learner.gender,
+          image: learner.image,
+        },
+        subject: {
+          name: subject.name,
+          classLevel: subject.classLevel, // ✅ thêm classLevel vào dữ liệu trả về
+        },
       };
     });
 
@@ -464,6 +501,7 @@ exports.getAllBookingsByTutorId = async (req, res) => {
     });
   }
 };
+
 
 exports.createReport = async (req, res) => {
   const { targetType, targetId, reason } = req.body;
