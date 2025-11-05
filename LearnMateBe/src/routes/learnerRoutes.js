@@ -8,6 +8,7 @@ const profileController = require('../controller/User/ProfileController');
 const paymentController = require('../controller/Payment/PaymentController');
 const scheduleController = require('../controller/Schedule/ScheduleController');
 const materialController = require('../controller/Booking/MaterialController');
+const ReviewController = require('../controller/Review/ReviewController');
 
 routerApi.get('/tutors', tutorController.getTutors);             // GET /api/tutors
 routerApi.get('/tutors/:tutorId', tutorController.getTutorById);       // GET /api/tutors/:id
@@ -27,6 +28,11 @@ routerApi.put('/update-profile', checkAccessToken, profileController.updateProfi
 routerApi.patch("/bookings/:bookingId/cancel", checkAccessToken, bookingController.cancelBooking);
 routerApi.get('/bookings/:id', bookingController.getBookingById);
 
+// User review routes
+routerApi.get('/my-reviews', checkAccessToken, ReviewController.getUserReviews);
+
+// Public route for getting tutor reviews (for booking page)
+routerApi.get('/tutors/:tutorId/reviews', ReviewController.getReviewsByTutor);
 
 routerApi.get('/me/info', checkAccessToken,paymentController.getUserInfo); 
 

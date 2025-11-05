@@ -68,8 +68,8 @@ RouterTutor.get(
   tutorCtrl.getMaterials
 );
 RouterTutor.get("/students", checkAccessToken,checkTutorRole,getAllStudents);
-RouterTutor.get("/:tutorId/availability", checkAccessToken,checkTutorRole,tutorCtrl.getTutorAvailability);
-RouterTutor.get("/review/:tutorId", checkAccessToken,checkTutorRole,ReviewController.getReviewsByTutor);
+RouterTutor.get("/:tutorId/availability", checkAccessToken, tutorCtrl.getTutorAvailability); // Public route
+RouterTutor.get("/review/:tutorId", checkAccessToken, ReviewController.getReviewsByTutor); // Public route
 RouterTutor.get("/active-status", checkAccessToken, tutorCtrl.getActiveStatus);
 RouterTutor.put(
   "/active-status",

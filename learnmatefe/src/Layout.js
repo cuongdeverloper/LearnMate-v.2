@@ -41,6 +41,9 @@ import StudentQuizOverview from "./pages/User/StudentQuizOverview";
 import SubmitAssignment from "./pages/User/SubmitAssignment";
 import ViewAssignmentFeedback from "./pages/User/ViewAssignmentFeedback";
 import TutorManagement from "./components/Admin/TutorManagement";
+import ReviewManagement from "./components/Admin/ReviewManagement";
+import BookingManagement from "./components/Admin/BookingManagement";
+import ReportManagement from "./components/Admin/ReportManagement";
 
 const AppLayout = ({ children }) => {
   const location = useLocation();
@@ -127,6 +130,36 @@ const Layout = () => {
               <ProtectedRoute allowedRoles={["admin"]}>
                 <AdminLayout>
                   <TutorManagement />
+                </AdminLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/review-management"
+            element={
+              <ProtectedRoute allowedRoles={["admin"]}>
+                <AdminLayout>
+                  <ReviewManagement />
+                </AdminLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/booking-management"
+            element={
+              <ProtectedRoute allowedRoles={["admin"]}>
+                <AdminLayout>
+                  <BookingManagement />
+                </AdminLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/report-management"
+            element={
+              <ProtectedRoute allowedRoles={["admin"]}>
+                <AdminLayout>
+                  <ReportManagement />
                 </AdminLayout>
               </ProtectedRoute>
             }
