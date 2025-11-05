@@ -8,7 +8,9 @@ import {
     FileTextOutlined,
     LogoutOutlined,
     SettingOutlined,
-    CommentOutlined
+    CommentOutlined,
+    BookOutlined,
+    ExclamationCircleOutlined
 } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
@@ -49,6 +51,16 @@ const AdminLayout = ({ children }) => {
             key: '/admin/review-management',
             icon: <CommentOutlined />,
             label: 'Quản lý đánh giá',
+        },
+        {
+            key: '/admin/booking-management',
+            icon: <BookOutlined />,
+            label: 'Quản lý Booking',
+        },
+        {
+            key: '/admin/report-management',
+            icon: <ExclamationCircleOutlined />,
+            label: 'Quản lý Báo cáo',
         },
     ];
 

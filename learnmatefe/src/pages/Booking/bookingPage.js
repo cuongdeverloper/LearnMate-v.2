@@ -171,7 +171,7 @@ export default function BookingPage() {
     if (!tutorId || !weekStart) return;
     try {
       const params = { weekStart: weekStart.toISOString().split("T")[0] };
-      const res = await axios.get(`/api/tutor/${tutorId}/availability`, {
+       const res = await axios.get(`/api/tutor/${tutorId}/availability`, {
         params,
       });
       const body = res?.data ?? res;
