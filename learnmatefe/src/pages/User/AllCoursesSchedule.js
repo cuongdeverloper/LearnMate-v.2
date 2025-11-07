@@ -91,7 +91,7 @@ const ChangeScheduleModal = ({ isOpen, onClose, onSubmit, schedules }) => {
           onChange={(e) => setSelectedScheduleId(e.target.value)}
         >
           <option value="">-- Chọn buổi học --</option>
-          {(schedules || []).map((s) => (
+          {(schedules || []).filter((s) => s.status === "approved").map((s) => (
             <option key={s._id} value={s._id}>
               {new Date(s.date).toLocaleDateString("vi-VN")} ({s.startTime} -{" "}
               {s.endTime})
