@@ -4,7 +4,7 @@ const Schedule = require("../../modal/Schedule");
 const FinancialHistory = require("../../modal/FinancialHistory");
 const TutorAvailability = require("../../modal/TutorAvailability");
 const Tutor = require("../../modal/Tutor");
-
+const mongoose = require('mongoose');
 const Report = require("../../modal/Report");
 
 exports.getBookingById = async (req, res) => {
@@ -29,181 +29,192 @@ exports.getBookingById = async (req, res) => {
 // controllers/bookingController.js
 // ✅ Create Booking với cọc 30%
 exports.createBooking = async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
   try {
     const { tutorId } = req.params;
     const {
-      amount,
       numberOfMonths,
       note,
       subjectId,
       availabilityIds,
       addressDetail,
       province,
-      depositOption,
     } = req.body;
 
-    if (
-      !tutorId ||
-      !amount ||
-      !subjectId ||
-      !availabilityIds?.length ||
-      !numberOfMonths ||
-      !depositOption
-    ) {
+    if (!tutorId || !subjectId || !availabilityIds?.length || !numberOfMonths)
       return res
         .status(400)
-        .json({ success: false, message: "Missing required fields" });
-    }
+        .json({ success: false, message: "Thiếu dữ liệu bắt buộc." });
+
     if (!req.user)
       return res.status(401).json({ success: false, message: "Unauthorized" });
 
     const learnerId = req.user.id;
-    const tutorDoc = await Tutor.findById(tutorId);
-    if (!tutorDoc)
+
+    const tutor = await Tutor.findById(tutorId).session(session);
+    if (!tutor)
       return res
         .status(404)
-        .json({ success: false, message: "Tutor not found" });
-    if (learnerId === tutorDoc.user.toString()) {
+        .json({ success: false, message: "Không tìm thấy gia sư." });
+
+    if (learnerId === tutor.user.toString())
       return res.status(400).json({
         success: false,
         message: "Bạn không thể đặt lịch với chính mình.",
       });
-    }
 
-    const user = await User.findById(learnerId);
-    if (!user)
+    const learner = await User.findById(learnerId).session(session);
+    if (!learner)
       return res
         .status(404)
-        .json({ success: false, message: "User not found" });
+        .json({ success: false, message: "Không tìm thấy học viên." });
 
     const existingBooking = await Booking.findOne({
       learnerId,
       tutorId,
       subjectId,
       status: { $in: ["pending", "approve"] },
-    });
+    }).session(session);
+
     if (existingBooking)
-      return res
-        .status(400)
-        .json({ success: false, message: "Bạn đã có booking đang hoạt động." });
+      return res.status(400).json({
+        success: false,
+        message: "Bạn đã có booking đang hoạt động với gia sư này.",
+      });
 
-    const depositPercent = depositOption === 60 ? 60 : 30;
-
-    const baseSlots = await TutorAvailability.find({
+    const slots = await TutorAvailability.find({
       _id: { $in: availabilityIds },
       isBooked: false,
-    });
-    if (baseSlots.length !== availabilityIds.length) {
+    }).session(session);
+
+    if (slots.length !== availabilityIds.length)
       return res
         .status(400)
-        .json({ success: false, message: "Một số slot đã được đặt" });
-    }
+        .json({ success: false, message: "Một số lịch đã được đặt." });
 
-    const totalSessions = baseSlots.length * numberOfMonths * 4;
-    const totalAmount = tutorDoc.pricePerHour * totalSessions;
-    const deposit = Math.round(totalAmount * (depositPercent / 100));
-    const remaining = totalAmount - deposit;
-    const monthlyPayment = Math.round(remaining / numberOfMonths);
+    // --- Tính toán phí ---
+    const weeklySlots = slots.length; // số buổi mỗi tuần
+    const sessionsPerMonth = weeklySlots * 4; // 4 tuần/tháng (có thể nâng cấp chính xác)
+    const monthlyFee = tutor.pricePerHour * sessionsPerMonth;
+    const totalAmount = monthlyFee * numberOfMonths;
 
-    if (user.balance < deposit)
-      return res
-        .status(400)
-        .json({ success: false, message: "Số dư không đủ để đặt cọc." });
+    // Thanh toán tháng đầu
+    const initialPayment = monthlyFee;
+    // Cọc tháng cuối nếu > 1 tháng
+    const deposit = numberOfMonths > 1 ? monthlyFee : 0;
+    const depositStatus = deposit > 0 ? "held" : "none";
 
-    // Trừ tiền cọc
-    user.balance -= deposit;
-    await user.save();
-    await FinancialHistory.create({
-      userId: learnerId,
-      amount: deposit,
-      balanceChange: -deposit,
-      type: "spend",
-      status: "success",
-      description: `Đặt cọc ${depositPercent}% cho booking với gia sư ${tutorId.slice(
-        -6
-      )}`,
-      date: new Date(),
-    });
+    if (learner.balance < initialPayment)
+      return res.status(400).json({
+        success: false,
+        message: "Số dư không đủ để thanh toán tháng đầu.",
+      });
 
-    const fullAddress = `${addressDetail?.trim() || ""}, ${
-      province?.trim() || ""
-    }`;
+    // Trừ tiền tháng đầu
+    learner.balance -= initialPayment;
+    await learner.save({ session });
 
-    const booking = await Booking.create({
-      learnerId,
-      tutorId,
-      subjectId,
-      amount: totalAmount,
-      deposit,
-      depositPercent,
-      monthlyPayment,
-      numberOfMonths,
-      paidMonths: 0,
-      status: "pending",
-      note,
-      address: fullAddress,
-      numberOfSession: totalSessions,
-    });
+    // Lưu lịch sử tài chính
+    await FinancialHistory.create(
+      [
+        {
+          userId: learnerId,
+          amount: initialPayment,
+          balanceChange: -initialPayment,
+          type: "spend",
+          status: "success",
+          description:
+            numberOfMonths > 1
+              ? `Thanh toán tháng đầu cho booking với gia sư ${tutorId.slice(
+                  -6
+                )}, giữ cọc tháng cuối`
+              : `Thanh toán tháng đầu cho booking với gia sư ${tutorId.slice(
+                  -6
+                )}`,
+          date: new Date(),
+        },
+      ],
+      { session }
+    );
 
-    // Tạo lịch Schedule dựa trên dayOfWeek
-    const schedulesData = [];
+    // --- Tạo booking ---
+    const booking = await Booking.create(
+      [
+        {
+          learnerId,
+          tutorId,
+          subjectId,
+          numberOfMonths,
+          amount: totalAmount,
+          monthlyPayment: monthlyFee,
+          deposit,
+          depositStatus,
+          paidMonths: 1,
+          initialPayment,
+          status: "pending",
+          note,
+          address: `${addressDetail}, ${province}`,
+        },
+      ],
+      { session }
+    );
+
+    const bookingDoc = booking[0];
+
+    // --- Tạo lịch học ---
     const today = new Date();
-    today.setHours(0, 0, 0, 0); // reset giờ phút giây
+    today.setHours(0, 0, 0, 0);
+    const schedules = [];
 
-    for (const slot of baseSlots) {
-      // dayOfWeek: T2=1, ..., CN=0
-      let dayOffset = slot.dayOfWeek === 0 ? 0 : slot.dayOfWeek; // CN=0, T2=1,...
+    for (const slot of slots) {
+      let diff = (slot.dayOfWeek + 7 - today.getDay()) % 7;
+      const firstDate = new Date(today);
+      firstDate.setDate(today.getDate() + diff);
 
-      // tính ngày slot tuần hiện tại
-      const slotDate = new Date(today);
-      const diff = (dayOffset + 7 - today.getDay()) % 7;
-      slotDate.setDate(today.getDate() + diff);
-
-      // Nếu slot trong tuần này đã qua, bắt đầu từ tuần kế tiếp
-      let firstWeekOffset = 0;
-      if (slotDate < today) firstWeekOffset = 1;
-
-      for (
-        let weekOffset = firstWeekOffset;
-        weekOffset < numberOfMonths * 4;
-        weekOffset++
-      ) {
-        const scheduleDate = new Date(slotDate);
-        scheduleDate.setDate(slotDate.getDate() + weekOffset * 7);
-
-        schedulesData.push({
+      for (let i = 0; i < numberOfMonths * 4; i++) {
+        const date = new Date(firstDate);
+        date.setDate(firstDate.getDate() + i * 7);
+        schedules.push({
           tutorId,
           learnerId,
-          bookingId: booking._id,
-          date: scheduleDate,
+          bookingId: bookingDoc._id,
+          date,
           startTime: slot.startTime,
           endTime: slot.endTime,
           status: "pending",
         });
       }
     }
-    const insertedSchedules = await Schedule.insertMany(schedulesData);
-    booking.scheduleIds = insertedSchedules.map((s) => s._id);
-    await booking.save();
+
+    const createdSchedules = await Schedule.insertMany(schedules, { session });
+    bookingDoc.scheduleIds = createdSchedules.map((s) => s._id);
+    await bookingDoc.save({ session });
+
+    await session.commitTransaction();
+    session.endSession();
 
     res.status(201).json({
       success: true,
-      bookingId: booking._id,
-      deposit,
-      depositPercent,
-      monthlyPayment,
-      numberOfMonths,
-      totalSessions,
+      bookingId: bookingDoc._id,
       totalAmount,
+      monthlyFee,
+      deposit,
+      initialPayment,
+      message:
+        "Đặt lịch thành công. Tháng đầu đã thanh toán, cọc tháng cuối được giữ.",
     });
   } catch (error) {
-    console.error("Error creating booking:", error);
+    console.error(error);
+    await session.abortTransaction();
+    session.endSession();
     res.status(500).json({ success: false, message: error.message });
   }
 };
 
 exports.getUserBookingHistory = async (req, res) => {
   const userId = req.params.userId;
+
   try {
     const bookings = await Booking.find({ learnerId: userId })
       .populate({
@@ -213,14 +224,53 @@ exports.getUserBookingHistory = async (req, res) => {
           select: "username email image",
         },
       })
-      .sort({ createdAt: -1 });
+      .populate({
+        path: "subjectId",
+        select: "name pricePerMonth sessionsPerMonth",
+      })
+      .sort({ createdAt: -1 })
+      .lean(); // -> dữ liệu thuần để dễ xử lý
 
-    res.json({ bookings });
+    const enrichedBookings = bookings.map((b) => {
+      const totalPaid = (b.paidMonths || 0) * (b.monthlyPayment || 0);
+      const remainingAmount = (b.amount || 0) - totalPaid;
+
+      const depositInfo = (() => {
+        switch (b.depositStatus) {
+          case "held": return "Đang giữ cọc";
+          case "used": return "Đã dùng cọc";
+          case "refunded": return "Đã hoàn cọc";
+          case "forfeit": return "Mất cọc";
+          default: return "Không có cọc";
+        }
+      })();
+
+      // ✅ Tổng số buổi dựa vào scheduleIds
+      const totalSessions = Array.isArray(b.scheduleIds) ? b.scheduleIds.length : 0;
+
+      return {
+        ...b,
+        subjectName: b.subjectId?.name || "Không rõ",
+        depositInfo,
+        remainingAmount,
+        totalSessions, // ✅ Thêm trường này
+        display: {
+          total: `${b.amount?.toLocaleString()} VND`,
+          paid: `${totalPaid?.toLocaleString()} VND`,
+          remain: `${remainingAmount?.toLocaleString()} VND`,
+          deposit: `${b.deposit?.toLocaleString()} VND`,
+          monthly: `${b.monthlyPayment?.toLocaleString()} VND`,
+        },
+      };
+    });
+
+    res.status(200).json({ bookings: enrichedBookings });
   } catch (err) {
-    console.error("Lỗi getUserBookingHistory:", err);
+    console.error("❌ Lỗi getUserBookingHistory:", err);
     res.status(500).json({ error: "Lỗi khi lấy lịch sử đặt lịch." });
   }
 };
+
 
 exports.getApprovedBookingsForLearner = async (req, res) => {
   try {
@@ -265,59 +315,79 @@ exports.getApprovedBookingsForLearner = async (req, res) => {
   }
 };
 exports.cancelBooking = async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
   try {
     const { bookingId } = req.params;
     const userId = req.user.id || req.user._id;
 
-    const booking = await Booking.findById(bookingId);
-    if (!booking)
-      return res
-        .status(404)
-        .json({ success: false, message: "Booking not found." });
+    const booking = await Booking.findById(bookingId).session(session);
+    if (!booking) return res.status(404).json({ success: false, message: "Không tìm thấy booking." });
+
     if (booking.learnerId.toString() !== userId.toString())
-      return res.status(403).json({ success: false, message: "Unauthorized." });
-    if (booking.status !== "pending")
-      return res.status(400).json({
-        success: false,
-        message: "Only pending bookings can be cancelled.",
-      });
+      return res.status(403).json({ success: false, message: "Không có quyền hủy booking này." });
 
-    booking.status = "cancelled";
-    await booking.save();
+    const learner = await User.findById(userId).session(session);
+    if (!learner)
+      return res.status(404).json({ success: false, message: "Không tìm thấy học viên." });
 
-    const user = await User.findById(userId);
-    if (!user)
-      return res
-        .status(500)
-        .json({ success: false, message: "User not found." });
+    // --- Case 1: tutor chưa approve => hoàn toàn bộ thanh toán ---
+    if (booking.status === "pending") {
+      const refundAmount = booking.initialPayment;
+      learner.balance += refundAmount;
+      await learner.save({ session });
 
-    user.balance += booking.deposit;
-    await user.save();
+      await FinancialHistory.create([{
+        userId,
+        amount: refundAmount,
+        balanceChange: refundAmount,
+        type: "earning",
+        status: "success",
+        description: `Hoàn tiền booking chưa duyệt (${booking._id.toString().slice(-6)})`,
+        date: new Date(),
+      }], { session });
 
-    await FinancialHistory.create({
-      userId,
-      amount: booking.deposit,
-      balanceChange: booking.deposit,
-      type: "earning",
-      status: "success",
-      description: `Hoàn tiền cọc sau khi hủy khóa học (${booking._id
-        .toString()
-        .slice(-6)})`,
-      date: new Date(),
-    });
+      booking.status = "cancelled";
+      booking.depositStatus = booking.deposit > 0 ? "refunded" : "none";
+    }
+    // --- Case 2: tutor đã duyệt hoặc đã học -> cần xử lý riêng ---
+    else if (booking.status === "approve") {
+      // Tùy quy định, có thể chỉ hoàn cọc nếu chưa học buổi nào
+      booking.status = "cancelled";
+      booking.depositStatus = "forfeit";
+    }
+    else {
+      return res.status(400).json({ success: false, message: "Không thể hủy booking ở trạng thái này." });
+    }
 
-    // Reset TutorAvailability slots
-    await Schedule.deleteMany({ bookingId: booking._id });
+    await booking.save({ session });
+
+    // Reset slot
+    await TutorAvailability.updateMany(
+      { bookingId: booking._id },
+      { isBooked: false, bookingId: null },
+      { session }
+    );
+
+    // Xóa lịch
+    await Schedule.deleteMany({ bookingId: booking._id }).session(session);
+
+    await session.commitTransaction();
+    session.endSession();
+
     res.status(200).json({
       success: true,
-      message: "Booking cancelled and refunded successfully.",
+      message: "Đã hủy booking và hoàn tiền (nếu có).",
       bookingId: booking._id,
     });
   } catch (error) {
-    console.error("Error cancelling booking:", error);
+    await session.abortTransaction();
+    session.endSession();
+    console.error("❌ Error cancelling booking:", error);
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
 
 exports.finishBooking = async (req, res) => {
   try {

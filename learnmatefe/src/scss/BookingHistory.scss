@@ -129,7 +129,7 @@
 /* Thêm vào cuối file BookingHistory.scss */
 
 /* Styles cho Confirm Modal */
-.modal-overlay {
+.modal-overlay-cancel {
   position: fixed;
   top: 0;
   left: 0;
@@ -142,7 +142,7 @@
   z-index: 1000; /* Đảm bảo modal nằm trên cùng */
 }
 
-.modal-content {
+.modal-content-cancel {
   background: #fff;
   padding: 30px;
   border-radius: 8px;
