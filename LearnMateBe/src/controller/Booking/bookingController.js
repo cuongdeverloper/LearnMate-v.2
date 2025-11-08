@@ -362,12 +362,7 @@ exports.cancelBooking = async (req, res) => {
 
     await booking.save({ session });
 
-    // Reset slot
-    await TutorAvailability.updateMany(
-      { bookingId: booking._id },
-      { isBooked: false, bookingId: null },
-      { session }
-    );
+
 
     // Xóa lịch
     await Schedule.deleteMany({ bookingId: booking._id }).session(session);

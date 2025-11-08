@@ -92,6 +92,7 @@ socketHandler(io);
   try {
     await connection();
     doLoginWGoogle();
+    require("./cron/autoCancelPendingBookings");
     server.listen(port, () => {
       console.log(`Backend + Socket listening on port ${port}`);
     });
