@@ -6,15 +6,13 @@ import {
   deleteTutorAvailability,
   getTutorAvailability,
 } from "../ApiTutor";
+import './AvailableSchedule.scss'
 import Swal from "sweetalert2";
 
 const TutorManageAvailability = () => {
   const [availabilities, setAvailabilities] = useState([]);
+  const [schedules, setSchedules] = useState([]);
   const [selectedSlots, setSelectedSlots] = useState([]);
-  const [isAllBusy, setIsAllBusy] = useState(false);
-
-  const token = useSelector((state) => state.user.account.access_token);
-  const tutorId = useSelector((state) => state.user.account.id);
 
   const timeSlots = [
     "07:00 - 09:00",
@@ -25,15 +23,15 @@ const TutorManageAvailability = () => {
     "19:30 - 21:30",
   ];
 
-  const weekDays = [0, 1, 2, 3, 4, 5, 6]; // Sunday = 0, Monday = 1 ...
+  const weekDays = [0, 1, 2, 3, 4, 5, 6]; // CN - T7
 
   const fetchAvailabilities = async () => {
     const res = await getTutorAvailability();
-    console.log(res)
+    console.log(res.data)
     if (res.errorCode === 0) {
-      const data = res.data?.data || [];
-      setAvailabilities(data);
-      setIsAllBusy(data.length === 0);
+      const data = res.data?.data || {};
+      setAvailabilities(data.availabilities || []);
+      setSchedules(data.schedules || []);
     } else {
       toast.error(res.message);
     }
@@ -53,11 +51,6 @@ const TutorManageAvailability = () => {
         a.endTime === endTime
     );
 
-    if (existing) {
-      handleDelete(existing._id);
-      return;
-    }
-
     const found = selectedSlots.find(
       (s) =>
         s.dayOfWeek === dayOfWeek &&
@@ -65,13 +58,16 @@ const TutorManageAvailability = () => {
         s.endTime === endTime
     );
 
+    if (existing) {
+      handleDelete(existing._id);
+      return;
+    }
+
     if (found) {
       setSelectedSlots(selectedSlots.filter((s) => s !== found));
     } else {
       setSelectedSlots([...selectedSlots, { dayOfWeek, startTime, endTime }]);
     }
-
-    if (isAllBusy) setIsAllBusy(false);
   };
 
   const handleSave = async () => {
@@ -185,12 +181,21 @@ const TutorManageAvailability = () => {
             <div key={day} className="grid-day-column">
               {timeSlots.map((slot) => {
                 const [startTime, endTime] = slot.split(" - ");
+
+                const hasSchedule = schedules.find(
+                  (s) =>
+                    new Date(s.date).getDay() === day &&
+                    s.startTime === startTime &&
+                    s.endTime === endTime
+                );
+
                 const existing = availabilities.find(
                   (a) =>
                     a.dayOfWeek === day &&
                     a.startTime === startTime &&
                     a.endTime === endTime
                 );
+
                 const selected = selectedSlots.find(
                   (s) =>
                     s.dayOfWeek === day &&
@@ -198,30 +203,28 @@ const TutorManageAvailability = () => {
                     s.endTime === endTime
                 );
 
-                const cls = existing
-                  ? "available"
-                  : selected
-                  ? "selected"
-                  : isAllBusy
-                  ? "busy"
-                  : "empty";
+                let cls = "empty";
+                let label = "Trống";
+
+                if (hasSchedule) {
+                  cls = "busy";
+                  label = "Đã có lịch dạy";
+                } else if (existing) {
+                  cls = "available";
+                  label = "Đã mở (bấm để xoá)";
+                } else if (selected) {
+                  cls = "selected";
+                  label = "Sẽ thêm";
+                }
 
                 return (
                   <div
                     key={`${day}-${slot}`}
                     className={`schedule-slot ${cls}`}
-                    onClick={() => toggleSlot(day, slot)}
+                    onClick={() => !hasSchedule && toggleSlot(day, slot)}
                   >
                     <div className="slot-time">{slot}</div>
-                    <div className="slot-status">
-                      {existing
-                        ? "Đã mở (bấm để xoá)"
-                        : selected
-                        ? "Sẽ thêm"
-                        : isAllBusy
-                        ? "Bận"
-                        : "Trống"}
-                    </div>
+                    <div className="slot-status">{label}</div>
                   </div>
                 );
               })}

@@ -29,7 +29,7 @@ RouterTutor.post("/bookings/cancel", checkAccessToken, tutorCtrl.cancelBooking);
 RouterTutor.get("/bookings/pending/:tutorId", checkAccessToken, tutorCtrl.getPendingBookings);
 
 RouterTutor.post("/schedule",checkAccessToken, checkTutorRole,tutorCtrl.createSchedule);
-RouterTutor.get("/schedule/:tutorId",checkAccessToken,checkTutorRole, tutorCtrl.getSchedule);
+RouterTutor.get("/scheduleTutor",checkAccessToken,checkTutorRole, tutorCtrl.getSchedule);
 RouterTutor.put("/schedule/:id", checkAccessToken,checkTutorRole,tutorCtrl.updateSchedule);
 RouterTutor.delete("/schedule/:id",checkAccessToken ,checkTutorRole,tutorCtrl.deleteSchedule);
 

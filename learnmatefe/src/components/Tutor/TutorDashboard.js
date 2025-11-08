@@ -16,6 +16,9 @@ import AvailableSchedule from './view/AvailableSchedule';
 import TutorCreateQuiz from './view/TutorCreateQuiz';
 import TutorAssignmentManager from './view/TutorAssignmentManager';
 import TutorChangeRequests from './view/TutorChangeRequests';
+import TutorAssignQuiz from './view/TutorAssignQuiz';
+import TutorSchedule from './view/TutorSchedule';
+import TutorQuizManage from './view/TutorQuizManage';
 
 const TutorDashboard = () => {
   const [activeTab, setActiveTab] = useState('bookings');
@@ -38,7 +41,10 @@ const TutorDashboard = () => {
       case 'bookings': return <TutorBookingList />;
       case 'materials': return <MaterialUploader />;
       case 'availableSchedule': return <AvailableSchedule />;
+      case 'tutorschedule': return <TutorSchedule />;
       case 'createquiz': return <TutorCreateQuiz />;
+      case 'assignquiz': return <TutorAssignQuiz />;
+      case 'managequiz': return <TutorQuizManage />;
       case 'createassignment': return <TutorAssignmentManager />;
       case 'changerequestschedule': return <TutorChangeRequests />;
       default: return <TutorBookingList />;
@@ -65,10 +71,28 @@ const TutorDashboard = () => {
       description: 'Đặt lịch trống cho gia sư' 
     },
     { 
+      id: 'tutorschedule', 
+      icon: MaterialIcon, 
+      label: 'Lịch dạy', 
+      description: 'Lịch dạy của gia sư' 
+    },
+    { 
       id: 'createquiz', 
       icon: QuizIcon, 
       label: 'Tạo quiz', 
-      description: 'Tạo quiz cho từng lịch booking' 
+      description: 'Tạo quiz' 
+    },
+    { 
+      id: 'assignquiz', 
+      icon: QuizIcon, 
+      label: 'Quizz Assign management', 
+      description: 'Quản lý đóng mở quiz' 
+    },
+    { 
+      id: 'managequiz', 
+      icon: QuizIcon, 
+      label: 'Quizz management', 
+      description: 'Quản lý quiz của học sinh' 
     },
     { 
       id: 'createassignment', 

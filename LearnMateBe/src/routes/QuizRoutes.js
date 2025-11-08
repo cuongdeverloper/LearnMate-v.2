@@ -24,6 +24,8 @@ const {
   submitQuiz,
   getQuizResultById,
   getQuizDetailsById,
+  updateQuizTime,
+  getQuizzesByTutorWithStatus,
 } = require("../controller/quiz/quizController");
 
 // =========================
@@ -62,10 +64,14 @@ router.post(
 );
 router.post("/quiz-storage/create", checkAccessToken, createQuizStorage);
 router.put("/quiz-storage/:quizStorageId", checkAccessToken, updateQuizStorage);
-
+router.get(
+  "/tutor/quizzes-status",
+  checkAccessToken,
+  getQuizzesByTutorWithStatus
+);
 // ---------------------- LEARNER ----------------------
 router.post("/:quizId/submit", checkAccessToken, submitQuiz);
 router.get("/:quizId/result", checkAccessToken, getQuizResultById);
 router.get("/:quizId/details", checkAccessToken, getQuizDetailsById);
-
+router.post("/updateQuizTime", checkAccessToken ,updateQuizTime);
 module.exports = router;
