@@ -119,7 +119,7 @@ const AdminOverview = () => {
     const getStatusColor = (status) => {
         switch (status) {
             case 'pending': return 'orange';
-            case 'approved': return 'green';
+            case 'approve': return 'green';
             case 'rejected': return 'red';
             default: return 'default';
         }
@@ -128,7 +128,7 @@ const AdminOverview = () => {
     const getStatusText = (status) => {
         switch (status) {
             case 'pending': return 'Chờ duyệt';
-            case 'approved': return 'Đã duyệt';
+            case 'approve': return 'Đã duyệt';
             case 'rejected': return 'Đã từ chối';
             default: return status;
         }

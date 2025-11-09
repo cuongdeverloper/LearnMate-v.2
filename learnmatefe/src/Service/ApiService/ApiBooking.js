@@ -22,8 +22,7 @@ export const finishBooking = async (bookingId) => {
       return { success: false, message };
     }
   };
-
-export  const getMaterialsByBookingId = async (bookingId) => {
+  export const getMaterialsByBookingId = async (bookingId) => {
     try {
       const token = Cookies.get("accessToken");
   
@@ -37,13 +36,15 @@ export  const getMaterialsByBookingId = async (bookingId) => {
         },
       });
   
-      return { success: true, data: response };
+      // ✅ Lấy trực tiếp mảng data từ API
+      return { success: true, data: Array.isArray(response.data.data) ? response.data.data : [] };
     } catch (error) {
       console.error("Lỗi khi tải tài liệu học tập:", error);
-      const message = error.response?.message || "Không thể tải tài liệu học tập.";
+      const message = error.response?.data?.message || "Không thể tải tài liệu học tập.";
       return { success: false, message };
     }
   };
+  
 
 export const getMyBookings = async () => {
     try {
@@ -72,7 +73,7 @@ export const getMyBookings = async () => {
       const token = Cookies.get("accessToken"); 
   
       const response = await axios.post(
-        '/report', // URL
+        '/api/booking/report', // URL
         { 
           targetType: 'booking',
           targetId: bookingId,
@@ -181,21 +182,12 @@ export const requestChangeSchedule = async (bookingId, payload) => {
       throw error;
     }
   };
-  export const handlePayMonthly = async (bookingId) => {
-    try {
-      const res = await axios.post("/api/payment/payMonthly", { bookingId });
-      console.log("Kết quả trả về từ API:", res);
-  
-      if (res.success) {
-        getMyBookings();
-      } else {
-        toast.error(res.message);
-      }
-  
-      return res; // ✅ luôn trả về dữ liệu
-    } catch (error) {
-      console.error("Lỗi khi thanh toán:", error);
-      toast.error("Lỗi khi thanh toán.");
-      return { success: false, message: "Lỗi khi thanh toán." }; // ✅ vẫn trả về để không undefined
-    }
-  };
+ export const handlePayMonthly = async (bookingId) => {
+  try {
+    const res = await axios.post("/api/payment/payMonthly", { bookingId });
+    return res; // Trả về dữ liệu cho component
+  } catch (error) {
+    console.error("Lỗi khi thanh toán:", error);
+    return { success: false, message: "Lỗi khi thanh toán." };
+  }
+};

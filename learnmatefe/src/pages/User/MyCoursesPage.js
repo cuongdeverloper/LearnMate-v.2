@@ -46,15 +46,7 @@ const MyCoursesPage = () => {
       courses = courses.filter((course) => course.progress === 0);
     }
 
-    if (sort === "name-asc") {
-      courses.sort((a, b) => a.title.localeCompare(b.title));
-    } else if (sort === "name-desc") {
-      courses.sort((a, b) => b.title.localeCompare(a.title));
-    } else if (sort === "progress-asc") {
-      courses.sort((a, b) => a.progress - b.progress);
-    } else if (sort === "progress-desc") {
-      courses.sort((a, b) => b.progress - a.progress);
-    }
+
 
     return courses;
   }, [searchQuery, filter, sort]);

@@ -5,7 +5,15 @@ const Progress = require("../../modal/Progress");
 const TutorAvailability = require("../../modal/TutorAvailability");
 const Tutor = require("../../modal/Tutor");
 const User = require("../../modal/User");
-
+const mapMimeToType = (mime) => {
+  if (!mime) return 'other';
+  if (mime.includes('pdf')) return 'pdf';
+  if (mime.includes('word') || mime.includes('doc')) return 'document';
+  if (mime.includes('sheet') || mime.includes('excel')) return 'document';
+  if (mime.includes('image')) return 'image';
+  if (mime.includes('video')) return 'video';
+  return 'other';
+};
 const respondBooking = async (req, res) => {
   try {
     const { bookingId, action, learnerId } = req.body;
@@ -16,23 +24,36 @@ const respondBooking = async (req, res) => {
     const booking = await Booking.findById(bookingId);
     if (!booking) return res.status(404).json({ message: "Booking not found" });
 
-    // Update learnerId nếu có
+    // Cập nhật learnerId nếu có
     if (learnerId) booking.learnerId = learnerId;
 
-    // Update trạng thái
+    // Cập nhật trạng thái booking
     booking.status = action;
     await booking.save();
+
+    // 🔹 Nếu approve thì update tất cả Schedule liên quan
+    if (action === "approve") {
+      await Schedule.updateMany(
+        { bookingId },
+        { $set: { status: "approved" } }
+      );
+    }
+
+    // 🔹 Nếu reject hoặc cancel, bạn cũng có thể xoá schedule (tùy logic)
+    if (action === "rejected" || action === "cancelled") {
+      await Schedule.deleteMany({ bookingId });
+    }
 
     let msg = "";
     switch (action) {
       case "approve":
-        msg = "Booking has been approved ✅";
+        msg = "Booking has been approved ✅ (All schedules set to approved)";
         break;
       case "rejected":
-        msg = "Booking has been rejected ❌";
+        msg = "Booking has been rejected ❌ (Schedules removed)";
         break;
       case "cancelled":
-        msg = "Booking has been cancelled 🛑";
+        msg = "Booking has been cancelled 🛑 (Schedules removed)";
         break;
     }
 
@@ -135,16 +156,34 @@ const createSchedule = async (req, res) => {
 
 const getSchedule = async (req, res) => {
   try {
-    const tutorUserId = req.params.tutorId;
-    const schedule = await Schedule.find({ tutorId: tutorUserId }).populate(
-      "learnerId",
-      "username email"
-    );
-    res.status(200).json(schedule);
+    const tutor = await Tutor.findOne({ user: req.user.id });
+    if (!tutor) {
+      return res.status(404).json({ success: false, message: "Tutor không tồn tại." });
+    }
+
+    // Chỉ lấy các lịch đã được approve
+    const schedules = await Schedule.find({ tutorId: tutor._id, status: "approved" })
+      .populate({
+        path: "learnerId",
+        select: "username email phoneNumber",
+      })
+      .populate({
+        path: "bookingId",
+        select: "address status subjectId",
+        populate: {
+          path: "subjectId",
+          select: "name",
+        },
+      })
+      .sort({ date: 1, startTime: 1 });
+
+    res.status(200).json({ success: true, data: schedules });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err);
+    res.status(500).json({ success: false, message: err.message });
   }
 };
+
 
 const updateSchedule = async (req, res) => {
   try {
@@ -190,18 +229,9 @@ const getProgress = async (req, res) => {
 
 const uploadMaterial = async (req, res) => {
   try {
-    const {
-      bookingId,
-      title,
-      description,
-      fileType,
-      subjectId,
-      tutorId,
-      learnerId,
-    } = req.body;
+    const { bookingId, title, description } = req.body;
     const fileUrl = req.file?.path || req.file?.secure_url;
 
-    // ✅ Kiểm tra các field bắt buộc
     if (!bookingId || !title || !fileUrl) {
       return res.status(400).json({
         errorCode: 1,
@@ -209,36 +239,28 @@ const uploadMaterial = async (req, res) => {
       });
     }
 
-    let finalSubjectId = subjectId;
-    let finalTutorId = tutorId;
-    let finalLearnerId = learnerId;
+    const booking = await Booking.findById(bookingId)
+      .populate("subjectId", "_id name")
+      .populate("tutorId", "_id")
+      .populate("learnerId", "_id");
 
-    // ✅ Nếu không truyền subjectId, tự lấy từ booking (nếu có)
-    if (!finalSubjectId) {
-      const booking = await Booking.findById(bookingId);
-      if (booking) {
-        finalSubjectId = booking.subjectId;
-        finalTutorId = finalTutorId || booking.tutorId;
-        finalLearnerId = finalLearnerId || booking.learnerId;
-      }
-    }
-
-    // ✅ Kiểm tra lại subjectId cuối cùng
-    if (!finalSubjectId) {
-      return res.status(400).json({
+    if (!booking) {
+      return res.status(404).json({
         errorCode: 1,
-        message: "subjectId is required (hoặc không tìm thấy trong booking).",
+        message: "Không tìm thấy booking tương ứng.",
       });
     }
 
-    // ✅ Tạo document mới
+    const fileType = mapMimeToType(req.file?.mimetype);
+
     const newMaterial = new Material({
-      subjectId: finalSubjectId,
-      tutorId: finalTutorId,
-      learnerId: finalLearnerId,
+      bookingId,
+      subjectId: booking.subjectId?._id,
+      tutorId: booking.tutorId?._id,
+      learnerId: booking.learnerId?._id,
       title,
-      description,
-      fileType: fileType || "other",
+      description: description || "",
+      fileType,
       fileUrl,
     });
 
@@ -246,28 +268,47 @@ const uploadMaterial = async (req, res) => {
 
     return res.status(201).json({
       errorCode: 0,
-      message: "Material uploaded successfully",
-      material: newMaterial,
+      message: "✅ Upload tài liệu thành công",
+      data: newMaterial,
     });
   } catch (error) {
-    console.error("Save Material Error:", error);
+    console.error("❌ Lỗi khi upload material:", error);
     return res.status(500).json({
       errorCode: 1,
-      message: "Error saving material",
+      message: "Lỗi server khi lưu tài liệu.",
       error: error.message,
     });
   }
 };
 
-// Get materials by booking
+
 const getMaterials = async (req, res) => {
   try {
-    const list = await Material.find({ bookingId: req.params.bookingId });
-    res.status(200).json(list);
+    const { bookingId } = req.params;
+
+    if (!bookingId) {
+      return res.status(400).json({ errorCode: 1, message: "Thiếu bookingId" });
+    }
+
+    const list = await Material.find({ bookingId })
+      .populate("subjectId", "name classLevel")
+      .populate("tutorId", "name")
+      .populate("learnerId", "username email");
+
+    res.status(200).json({
+      errorCode: 0,
+      count: list.length,
+      data: list,
+    });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error("❌ Lỗi khi lấy danh sách tài liệu:", err);
+    res.status(500).json({
+      errorCode: 1,
+      message: err.message,
+    });
   }
 };
+
 
 const createAvailability = async (req, res) => {
   try {
@@ -329,25 +370,49 @@ const createAvailability = async (req, res) => {
   }
 };
 
-// Lấy danh sách khung giờ trống của tutor
 const getTutorAvailability = async (req, res) => {
   try {
     const { tutorId } = req.params;
 
+    if (!tutorId) {
+      return res.status(400).json({
+        success: false,
+        message: "Thiếu tutorId.",
+      });
+    }
+
+    // 🔹 Lấy các khung giờ trống (isBooked = false)
     const availabilities = await TutorAvailability.find({
       tutorId,
       isBooked: false,
     }).sort({ dayOfWeek: 1, startTime: 1 });
 
-    res.status(200).json({
+    // 🔹 Lấy các lịch dạy (đã được booking approve)
+    const schedules = await Schedule.find({
+      tutorId,
+      status: "approved",
+    })
+      .populate("learnerId", "fullName email")
+      .populate("bookingId", "status")
+      .sort({ date: 1, startTime: 1 });
+
+    // 🔹 Gộp kết quả trả về
+    return res.status(200).json({
       success: true,
-      data: availabilities,
+      data: {
+        availabilities,
+        schedules,
+      },
     });
   } catch (err) {
     console.error("Error fetching availability:", err);
-    res.status(500).json({ success: false, message: err.message });
+    return res.status(500).json({
+      success: false,
+      message: err.message,
+    });
   }
 };
+
 
 const deleteAvailability = async (req, res) => {
   try {

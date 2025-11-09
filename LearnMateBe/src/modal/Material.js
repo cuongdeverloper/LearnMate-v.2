@@ -1,9 +1,12 @@
-// modal/Material.js
-
+// models/Material.js
 const mongoose = require('mongoose');
 
 const materialSchema = new mongoose.Schema({
-  // Liên kết tài liệu này với một booking cụ thể
+  bookingId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Booking',
+    required: true
+  },
   subjectId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Subject',
@@ -14,7 +17,7 @@ const materialSchema = new mongoose.Schema({
     ref: 'Tutor',
     required: true
   },
-    learnerId: {
+  learnerId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     required: true
@@ -29,22 +32,19 @@ const materialSchema = new mongoose.Schema({
     trim: true,
     default: ''
   },
-  // Có thể là URL của file (PDF, Doc, Video) hoặc một liên kết bên ngoài
   fileUrl: {
     type: String,
     required: true,
     trim: true
   },
-  // Loại tài liệu (ví dụ: 'pdf', 'video', 'link', 'document')
   fileType: {
     type: String,
-    enum: ['pdf', 'video', 'link', 'document', 'image', 'other'],
-    default: 'link'
+    default: 'other'
   },
   uploadDate: {
     type: Date,
     default: Date.now
   }
-}, { timestamps: true }); // Tự động thêm createdAt và updatedAt
+}, { timestamps: true });
 
 module.exports = mongoose.model('Material', materialSchema);

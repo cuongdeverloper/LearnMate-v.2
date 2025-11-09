@@ -91,7 +91,7 @@ const ChangeScheduleModal = ({ isOpen, onClose, onSubmit, schedules }) => {
           onChange={(e) => setSelectedScheduleId(e.target.value)}
         >
           <option value="">-- Chọn buổi học --</option>
-          {(schedules || []).map((s) => (
+          {(schedules || []).filter((s) => s.status === "approved").map((s) => (
             <option key={s._id} value={s._id}>
               {new Date(s.date).toLocaleDateString("vi-VN")} ({s.startTime} -{" "}
               {s.endTime})
@@ -153,7 +153,7 @@ const MaterialsModal = ({ bookingTitle, materials, onClose }) => {
             </p>
           ) : (
             <ul className="materials-list">
-              {materials.map((material) => (
+              {materials?.map((material) => (
                 <li key={material._id} className="material-item">
                   <h4 className="material-title">{material.title}</h4>
                   {material.description && (
@@ -428,26 +428,39 @@ function AllCoursesSchedule() {
   const getNextPaymentStatus = (booking) => {
     if (booking.completed) return { showButton: false, message: "" };
 
-    const currentMonthIndex = booking.paidMonths + 1; // Tháng tiếp theo
-    if (currentMonthIndex > booking.numberOfMonths) {
-      return { showButton: false, message: "Đã thanh toán đủ." };
-    }
+    const totalMonths = booking.numberOfMonths;
+    const paidMonths = booking.paidMonths;
 
-    const today = new Date();
-    const startDate = new Date(booking.createdAt); // ngày booking
-    const dueDate = new Date(startDate);
-
-    // Payment is due **1 month after booking for the first month**
-    dueDate.setMonth(startDate.getMonth() + currentMonthIndex);
-
-    if (today >= dueDate) {
+    if (paidMonths >= totalMonths) {
+      // Đã thanh toán đủ
       return {
-        showButton: true,
-        message: `Tháng ${currentMonthIndex} cần thanh toán`,
+        showButton: false,
+        message: "Bạn đã thanh toán đủ số tháng.",
       };
     }
 
-    return { showButton: false, message: "" }; // Chưa tới hạn
+    const nextMonthIndex = paidMonths; // tháng tiếp theo cần thanh toán
+    const startDate = new Date(booking.createdAt);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const dueDate = new Date(startDate);
+    dueDate.setMonth(startDate.getMonth() + nextMonthIndex);
+    dueDate.setHours(0, 0, 0, 0);
+
+    // Nếu đây là tháng cuối và deposit đã giữ
+    let showButton = today >= dueDate;
+    let message = `Tháng ${
+      nextMonthIndex + 1
+    } sẽ thanh toán vào ngày ${dueDate.toLocaleDateString("vi-VN")}`;
+
+    if (today >= dueDate) {
+      message = `Tháng ${
+        nextMonthIndex + 1
+      } cần thanh toán từ ngày ${dueDate.toLocaleDateString("vi-VN")}`;
+    }
+
+    return { showButton, message };
   };
 
   const fetchAllWeeklySchedules = async () => {
@@ -781,7 +794,8 @@ function AllCoursesSchedule() {
                     {booking.tutorId?.user?.username || "N/A"}
                   </p>
                   <p>
-                    <strong>Số buổi học:</strong> {booking.numberOfSessions}
+                    <strong>Số buổi học:</strong>{" "}
+                    {booking.scheduleIds ? booking.scheduleIds.length : 0}
                   </p>
                   <p>
                     <strong>Chi phí mỗi buổi:</strong>{" "}
@@ -877,6 +891,13 @@ function AllCoursesSchedule() {
                           {(() => {
                             const { showButton, message } =
                               getNextPaymentStatus(booking);
+
+                            // Kiểm tra nếu là tháng cuối và dùng tiền cọc
+                            const nextMonthIndex = booking.paidMonths;
+                            const isLastMonth =
+                              nextMonthIndex === booking.numberOfMonths - 1 &&
+                              booking.depositStatus === "held";
+
                             return (
                               <>
                                 <button
@@ -886,9 +907,10 @@ function AllCoursesSchedule() {
                                     handleOpenPaymentConfirm(booking)
                                   }
                                 >
-                                  Thanh toán
+                                  {isLastMonth
+                                    ? "Thanh toán bằng tiền cọc"
+                                    : "Thanh toán"}
                                 </button>
-
                                 {message && (
                                   <span className="payment-warning">
                                     {" "}

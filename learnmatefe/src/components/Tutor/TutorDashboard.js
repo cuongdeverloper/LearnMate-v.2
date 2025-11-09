@@ -1,163 +1,137 @@
-import React, { useState } from 'react';
-import TutorBookingList from './view/TutorBookingList';
-import MaterialUploader from './view/MaterialUploader';
-import './TutorDashboard.scss';
-import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
-import { doLogout } from '../../redux/action/userAction';
+import React, { useState, useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  BookOpen,
+  FileText,
+  CalendarDays,
+  ClipboardList,
+  Edit3,
+  Layers,
+  ClipboardCheck,
+  RefreshCcw,
+  LogOut,
+  Sun,
+  Moon,
+} from "lucide-react";
+import { doLogout } from "../../redux/action/userAction";
+import TutorBookingList from "./view/TutorBookingList";
+import MaterialUploader from "./view/MaterialUploader";
+import AvailableSchedule from "./view/AvailableSchedule";
+import TutorSchedule from "./view/TutorSchedule";
 
-import BookingIcon from '../../asset/Booking.png';
-import ProgressIcon from '../../asset/Progress.png';
-import MaterialIcon from '../../asset/material.png';
-import LogoutIcon from '../../asset/logout.png';
-import QuizIcon from '../../asset/Quiz.png';
-import AssignmentIcon from '../../asset/Assignment.png';
-import AvailableSchedule from './view/AvailableSchedule';
-import TutorCreateQuiz from './view/TutorCreateQuiz';
-import TutorAssignmentManager from './view/TutorAssignmentManager';
-import TutorChangeRequests from './view/TutorChangeRequests';
+import TutorAssignmentManager from "./view/Tutor Assignment/TutorAssignmentManager";
+import TutorChangeRequests from "./view/TutorChangeRequests";
+import "./TutorDashboard.scss";
+import TutorQuizManager from "./view/Tutor Quiz/TutorQuizManager";
+
+const menuItems = [
+  { id: "bookings", label: "Quản lý Booking", icon: <BookOpen />, component: <TutorBookingList /> },
+  { id: "materials", label: "Tài liệu", icon: <FileText />, component: <MaterialUploader /> },
+  { id: "availableSchedule", label: "Lịch trống", icon: <CalendarDays />, component: <AvailableSchedule /> },
+  { id: "tutorschedule", label: "Lịch dạy", icon: <ClipboardList />, component: <TutorSchedule /> },
+  { id: "managequiz", label: "Quản lý Quiz", icon: <ClipboardCheck />, component: <TutorQuizManager /> },
+  { id: "createassignment", label: "Assignment", icon: <FileText />, component: <TutorAssignmentManager /> },
+  { id: "changerequestschedule", label: "Đổi lịch", icon: <RefreshCcw />, component: <TutorChangeRequests /> },
+];
 
 const TutorDashboard = () => {
-  const [activeTab, setActiveTab] = useState('bookings');
-  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState("bookings");
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [darkMode, setDarkMode] = useState(() => localStorage.getItem("theme") === "dark");
   const dispatch = useDispatch();
-  const isAuthenticated = useSelector(state => state.user.isAuthenticated);
-  const user = useSelector(state => state.user.account); 
+  const navigate = useNavigate();
+  const user = useSelector((state) => state.user.account);
 
-  const handleBackToHome = () => {
-    navigate("/");
-  };
+  useEffect(() => {
+    document.body.classList.toggle("dark-mode", darkMode);
+    localStorage.setItem("theme", darkMode ? "dark" : "light");
+  }, [darkMode]);
 
   const handleLogout = () => {
     dispatch(doLogout());
     navigate("/");
   };
 
-  const renderTab = () => {
-    switch (activeTab) {
-      case 'bookings': return <TutorBookingList />;
-      case 'materials': return <MaterialUploader />;
-      case 'availableSchedule': return <AvailableSchedule />;
-      case 'createquiz': return <TutorCreateQuiz />;
-      case 'createassignment': return <TutorAssignmentManager />;
-      case 'changerequestschedule': return <TutorChangeRequests />;
-      default: return <TutorBookingList />;
-    }
-  };
-
-  const menuItems = [
-    { 
-      id: 'bookings', 
-      icon: BookingIcon, 
-      label: 'Quản lý Booking', 
-      description: 'Duyệt và quản lý các yêu cầu học' 
-    },
-    { 
-      id: 'progress', 
-      icon: ProgressIcon, 
-      label: 'Tiến độ học tập', 
-      description: 'Theo dõi tiến bộ của học viên' 
-    },
-    { 
-      id: 'materials', 
-      icon: MaterialIcon, 
-      label: 'Tài liệu', 
-      description: 'Chia sẻ tài liệu học tập' 
-    },
-    { 
-      id: 'availableSchedule', 
-      icon: MaterialIcon, 
-      label: 'Lịch trống', 
-      description: 'Đặt lịch trống cho gia sư' 
-    },
-    { 
-      id: 'createquiz', 
-      icon: QuizIcon, 
-      label: 'Tạo quiz', 
-      description: 'Tạo quiz cho từng lịch booking' 
-    },
-    { 
-      id: 'createassignment', 
-      icon: AssignmentIcon, 
-      label: 'Tạo Assignment', 
-      description: 'Tạo assignment cho từng lịch booking' 
-    },
-    { 
-      id: 'changerequestschedule', 
-      icon: MaterialIcon, 
-      label: 'Đổi lịch', 
-      description: 'Quản lý đổi lịch' 
-    },
-  ];
-
-
-  const getActiveMenuLabel = () => {
-    const activeItem = menuItems.find(item => item.id === activeTab);
-    return activeItem ? activeItem.label : 'Dashboard';
-  };
+  const activeComponent =
+    menuItems.find((item) => item.id === activeTab)?.component || <TutorBookingList />;
 
   return (
-    <div className="tutor-dashboard">
-      {/* Header */}
-      <header className="dashboard-header">
-        <div className="logo" onClick={handleBackToHome}>
-          🎓 <span>LearnMate Tutor</span>
+    <div className="tutor-dashboard-container">
+      {/* Sidebar */}
+      <motion.aside
+        animate={{ width: sidebarOpen ? 250 : 80 }}
+        transition={{ duration: 0.3 }}
+        className="sidebar"
+      >
+        <div className="sidebar-header">
+          <span className="logo">🎓</span>
+          {sidebarOpen && <h2>LearnMate</h2>}
+          <button
+            className="toggle-btn"
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+          >
+            {sidebarOpen ? "⏪" : "⏩"}
+          </button>
         </div>
 
-        <div className="user-menu">
-          {isAuthenticated ? (
-            <>
-              <div className="user-info">
-                <div className="avatar">
-                  {user?.username?.charAt(0)?.toUpperCase() || "T"}
-                </div>
-                <div className="username">{user?.username || "Gia sư"}</div>
-              </div>
-              <button className="logout-btn" onClick={handleLogout}>
-                <img src={LogoutIcon} alt="Logout" />
-                <span>Đăng xuất</span>
-              </button>
-            </>
-          ) : (
-            <button className="login-btn" onClick={handleBackToHome}>
-              Đăng nhập
+        <div className="menu">
+          {menuItems.map((item) => (
+            <div
+              key={item.id}
+              className={`menu-item ${activeTab === item.id ? "active" : ""}`}
+              onClick={() => setActiveTab(item.id)}
+            >
+              <div className="icon">{item.icon}</div>
+              {sidebarOpen && <span>{item.label}</span>}
+            </div>
+          ))}
+        </div>
+
+        <div className="sidebar-footer">
+          <button className="logout" onClick={handleLogout}>
+            <LogOut size={18} />
+            {sidebarOpen && <span>Đăng xuất</span>}
+          </button>
+        </div>
+      </motion.aside>
+
+      {/* Main Content */}
+      <div className="main-content">
+        <header className="dashboard-header">
+          <h2>
+            {menuItems.find((m) => m.id === activeTab)?.label || "Dashboard"}
+          </h2>
+          <div className="header-right">
+            <button
+              className="theme-toggle"
+              onClick={() => setDarkMode(!darkMode)}
+            >
+              {darkMode ? <Sun size={20} /> : <Moon size={20} />}
             </button>
-          )}
-        </div>
-      </header>
-
-      {/* Body */}
-      <div className="dashboard-content">
-        <aside className="sidebar">
-          <h2 className="sidebar-title">📊 Chức năng</h2>
-          <div className="menu-grid">
-            {menuItems.map((item) => (
-              <div
-                key={item.id}
-                className={`menu-card ${
-                  activeTab === item.id ? "active" : ""
-                }`}
-                onClick={() => setActiveTab(item.id)}
-              >
-                <div className="icon">
-                  <img src={item.icon} alt={item.label} />
-                </div>
-                <div className="info">
-                  <h4>{item.label}</h4>
-                  <p>{item.description}</p>
-                </div>
+            <div className="user-info">
+              <div className="avatar">
+                {user?.username?.charAt(0)?.toUpperCase() || "T"}
               </div>
-            ))}
+              <span>{user?.username || "Tutor"}</span>
+            </div>
           </div>
-        </aside>
+        </header>
 
-        <main className="main-panel">
-          <div className="panel-header">
-            <h3>
-              {menuItems.find((m) => m.id === activeTab)?.label || "Dashboard"}
-            </h3>
-          </div>
-          <div className="panel-body">{renderTab()}</div>
+        <main className="dashboard-body">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeTab}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.3 }}
+              className="content-wrapper"
+            >
+              {activeComponent}
+            </motion.div>
+          </AnimatePresence>
         </main>
       </div>
     </div>

@@ -23,6 +23,7 @@ class AdminService {
             return response;
         } catch (error) {
             console.error('Error fetching users:', error.response?.data?.message || error.message);
+            console.error('Error fetching users:', error.response?.data?.message || error.message);
             return null;
         }
     }
@@ -467,6 +468,219 @@ class AdminService {
             return response;
         } catch (error) {
             console.error('Error marking review:', error);
+            throw error;
+        }
+    }
+
+    // ============ BOOKING MANAGEMENT ============
+    
+    // Get all bookings
+    static async getBookings(params = {}) {
+        try {
+            const token = Cookies.get("accessToken");
+            
+            if (!token) {
+                window.open("/signin", "_blank");
+                return null;
+            }
+
+            const response = await axios.get('/api/admin/bookings', {
+                params,
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+
+            return response;
+        } catch (error) {
+            console.error('Error fetching bookings:', error);
+            throw error;
+        }
+    }
+
+    // Get booking statistics
+    static async getBookingStats() {
+        try {
+            const token = Cookies.get("accessToken");
+            
+            if (!token) {
+                window.open("/signin", "_blank");
+                return null;
+            }
+
+            const response = await axios.get('/api/admin/bookings/stats', {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+
+            return response;
+        } catch (error) {
+            console.error('Error fetching booking stats:', error);
+            throw error;
+        }
+    }
+
+    // Get booking details
+    static async getBookingDetails(bookingId) {
+        try {
+            const token = Cookies.get("accessToken");
+            
+            if (!token) {
+                window.open("/signin", "_blank");
+                return null;
+            }
+
+            const response = await axios.get(`/api/admin/bookings/${bookingId}`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+
+            return response;
+        } catch (error) {
+            console.error('Error fetching booking details:', error);
+            throw error;
+        }
+    }
+
+    // Update booking status
+    static async updateBookingStatus(bookingId, data) {
+        try {
+            const token = Cookies.get("accessToken");
+            
+            if (!token) {
+                window.open("/signin", "_blank");
+                return null;
+            }
+
+            const response = await axios.patch(`/api/admin/bookings/${bookingId}/status`, data, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+
+            return response;
+        } catch (error) {
+            console.error('Error updating booking status:', error);
+            throw error;
+        }
+    }
+
+    // ============ REPORT MANAGEMENT ============
+    
+    // Get all reports
+    static async getReports(params = {}) {
+        try {
+            const token = Cookies.get("accessToken");
+            
+            if (!token) {
+                window.open("/signin", "_blank");
+                return null;
+            }
+
+            const response = await axios.get('/api/admin/reports', {
+                params,
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+
+            return response;
+        } catch (error) {
+            console.error('Error fetching reports:', error);
+            throw error;
+        }
+    }
+
+    // Get report statistics
+    static async getReportStats() {
+        try {
+            const token = Cookies.get("accessToken");
+            
+            if (!token) {
+                window.open("/signin", "_blank");
+                return null;
+            }
+
+            const response = await axios.get('/api/admin/reports/stats', {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+
+            return response;
+        } catch (error) {
+            console.error('Error fetching report stats:', error);
+            throw error;
+        }
+    }
+
+    // Get report details
+    static async getReportDetails(reportId) {
+        try {
+            const token = Cookies.get("accessToken");
+            
+            if (!token) {
+                window.open("/signin", "_blank");
+                return null;
+            }
+
+            const response = await axios.get(`/api/admin/reports/${reportId}`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+
+            return response;
+        } catch (error) {
+            console.error('Error fetching report details:', error);
+            throw error;
+        }
+    }
+
+    // Update report status
+    static async updateReportStatus(reportId, data) {
+        try {
+            const token = Cookies.get("accessToken");
+            
+            if (!token) {
+                window.open("/signin", "_blank");
+                return null;
+            }
+
+            const response = await axios.patch(`/api/admin/reports/${reportId}/status`, data, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+
+            return response;
+        } catch (error) {
+            console.error('Error updating report status:', error);
+            throw error;
+        }
+    }
+
+    // Bulk update reports
+    static async bulkUpdateReports(data) {
+        try {
+            const token = Cookies.get("accessToken");
+            
+            if (!token) {
+                window.open("/signin", "_blank");
+                return null;
+            }
+
+            const response = await axios.patch('/api/admin/reports/bulk-update', data, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+
+            return response;
+        } catch (error) {
+            console.error('Error bulk updating reports:', error);
             throw error;
         }
     }
