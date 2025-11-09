@@ -446,9 +446,19 @@ const ViewAssignmentFeedback = () => {
           <h3 className="text-lg font-semibold text-foreground mb-4">
             Bài nộp của bạn
           </h3>
-          <Button className="gap-2" variant="outline">
-            <Download className="w-4 h-4" />
-            Download your submission
+          <Button
+            variant="default"
+            size="sm"
+            onClick={() => {
+              const link = document.createElement("a");
+              link.href = assignment?.submitFileUrl;
+              link.download = getFileName(assignment?.submitFileUrl);
+              link.click();
+            }}
+            className="gap-2 text-white"
+          >
+            <Download className="w-4 h-4 text-white" />
+            Tải xuống bài nộp của bạn
           </Button>
         </Card>
       </div>
