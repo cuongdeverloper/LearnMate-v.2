@@ -39,12 +39,42 @@ const StudentQuizTake = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  const { quizzes, selectedQuiz, quizDetails, submitting, loading, error } =
-    useSelector((state) => state.courses);
+  const {
+    selectedCourse,
+    selectedQuiz,
+    quizDetails,
+    submitting,
+    loading,
+    error,
+  } = useSelector((state) => state.courses);
 
   useEffect(() => {
     dispatch(fetchQuizDetailsById(selectedQuiz));
   }, [dispatch, selectedQuiz]);
+
+  useEffect(() => {
+    if (!quizDetails) return;
+
+    const now = new Date();
+    const openTime = quizDetails.openTime
+      ? new Date(quizDetails.openTime)
+      : null;
+    const closeTime = quizDetails.closeTime
+      ? new Date(quizDetails.closeTime)
+      : null;
+
+    if (openTime && now < openTime) {
+      toast.warning("Quiz has not opened yet!");
+      navigate(`/user/my-courses/${selectedCourse}`); // hoặc một trang thông báo riêng
+      return;
+    }
+
+    if (closeTime && now > closeTime) {
+      toast.error("This quiz is already closed.");
+      navigate(`/user/my-courses/${selectedCourse}`);
+      return;
+    }
+  }, [quizDetails, navigate]);
 
   const storageKey = `quiz-${id}-state`;
   const [state, setState] = useState(() => {
@@ -181,6 +211,7 @@ const StudentQuizTake = () => {
             </div>
           </div>
         </div>
+        <div className="m-3">{quizDetails.description}</div>
         <div className="mt-6 grid grid-cols-1 lg:grid-cols-4 gap-6">
           <div className="lg:col-span-3 space-y-4">
             <Card className="p-6">

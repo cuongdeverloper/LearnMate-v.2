@@ -184,7 +184,7 @@ const CourseSchedule = () => {
                 })
               ) : (
                 <p className="text-sm text-muted-foreground">
-                  No upcoming events
+                  Không có nhiệm vụ sắp đến nào.
                 </p>
               )}
             </div>

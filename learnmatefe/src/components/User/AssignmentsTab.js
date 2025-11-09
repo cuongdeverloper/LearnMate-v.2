@@ -45,25 +45,29 @@ const AssignmentsTab = ({ courseTitle }) => {
 
   const getStatusBadge = (status) => {
     switch (status) {
-      case "graded":
+      case "Graded":
         return (
           <Badge variant="default" className="text-white">
             Graded
           </Badge>
         );
-      case "submitted":
+      case "Submitted":
         return <Badge variant="secondary">Submitted</Badge>;
       case "overdue":
         return (
-          <Badge variant="destructive" className="gap-1">
+          <Badge variant="overdue" className="gap-1">
             <AlertCircle className="w-3 h-3" />
             Overdue
           </Badge>
         );
-      case "not_submitted":
-        return <Badge variant="outline">Not submitted</Badge>;
-      default:
-        return <Badge>{status}</Badge>;
+      case "Upcoming":
+        return (
+          <Badge variant="upcoming" className="gap-1">
+            Upcoming
+          </Badge>
+        );
+      case "Active":
+        return <Badge variant="active">Active</Badge>;
     }
   };
 
@@ -88,7 +92,7 @@ const AssignmentsTab = ({ courseTitle }) => {
           <TableHeader>
             <TableRow className="bg-muted/50">
               <TableHead className="font-semibold">Tiêu đề</TableHead>
-              <TableHead className="font-semibold">Thời hạn</TableHead>
+              <TableHead className="font-semibold">Thời gian</TableHead>
               <TableHead className="font-semibold">Trạng thái</TableHead>
               <TableHead className="text-center font-semibold">
                 Điểm số
@@ -131,7 +135,10 @@ const AssignmentsTab = ({ courseTitle }) => {
                       </div>
                     </TableCell>
                     <TableCell className="text-muted-foreground">
-                      {formatDate(assignment.deadline)}
+                      <div className="flex flex-col gap-1">
+                        <span>Mở: {formatDate(assignment.openTime)} -</span>
+                        <span>Hạn: {formatDate(assignment.deadline)}</span>
+                      </div>
                     </TableCell>
                     <TableCell>{getStatusBadge(status)}</TableCell>
                     <TableCell className="text-center">
@@ -148,7 +155,7 @@ const AssignmentsTab = ({ courseTitle }) => {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => handleViewFeedback(assignment.id)}
+                          onClick={() => handleViewFeedback(assignment._id)}
                         >
                           Xem phản hồi
                         </Button>
@@ -157,7 +164,7 @@ const AssignmentsTab = ({ courseTitle }) => {
                       )}
                     </TableCell>
                     <TableCell className="text-center">
-                      {!assignment.submitted && status !== "graded" ? (
+                      {status == "Active" && (
                         <Button
                           className="text-white"
                           variant="default"
@@ -166,7 +173,9 @@ const AssignmentsTab = ({ courseTitle }) => {
                         >
                           Nộp bài
                         </Button>
-                      ) : (
+                      )}
+
+                      {status == "Submitted" && (
                         <Button
                           variant="outline"
                           size="sm"

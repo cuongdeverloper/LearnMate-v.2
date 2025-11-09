@@ -1,14 +1,17 @@
 export const calculateAssignmentStatus = (assignment, today = new Date()) => {
   if (assignment.grade !== undefined) {
-    return "graded";
+    return "Graded";
   }
   if (assignment.submitted) {
-    return "submitted";
+    return "Submitted";
   }
-  if (today > assignment.dueDate) {
-    return "overdue";
+  if (assignment.deadline && isOverdue(assignment.deadline)) {
+    return "Overdue";
   }
-  return "not_submitted";
+  if (assignment.openTime && today < new Date(assignment.openTime)) {
+    return "Upcoming";
+  }
+  return "Active";
 };
 
 export const formatDate = (date) => {

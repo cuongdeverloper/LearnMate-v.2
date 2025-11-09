@@ -525,6 +525,8 @@ const submitAssignment = async (req, res) => {
   try {
     const { assignmentId, note } = req.body;
 
+    console.log("Received data:", req.body);
+
     console.log("Assignment ID:", assignmentId);
 
     if (!assignmentId) {
@@ -549,6 +551,7 @@ const submitAssignment = async (req, res) => {
 
     // Chưa đến giờ mở
     if (openTime && now < openTime) {
+      console.log("Chưa đến giờ mở", openTime);
       return res.status(400).json({
         success: false,
         message: `Bài tập chưa mở để nộp.\nThời gian mở: ${openTime.toLocaleString(

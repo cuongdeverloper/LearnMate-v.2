@@ -155,13 +155,18 @@ export const submitAssignment = (formData) => async (dispatch) => {
 
     dispatch({ type: "ASSIGNMENT_SUBMIT_SUCCESS", payload: res.data });
   } catch (err) {
-    dispatch({ type: "ASSIGNMENT_SUBMIT_FAILURE", payload: err.message });
+    const message = err.response?.data?.message || err.message;
+    dispatch({
+      type: "ASSIGNMENT_SUBMIT_FAILURE",
+      payload: message,
+    });
+    throw new Error(message);
   }
 };
 
-export const selectAssignment = (assignment) => ({
+export const selectAssignment = (assignmentId) => ({
   type: "ASSIGNMENT_SELECT",
-  payload: assignment,
+  payload: assignmentId,
 });
 
 // -------------------------------- PROGRESS -------------------------------

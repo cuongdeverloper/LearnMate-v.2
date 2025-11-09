@@ -137,11 +137,11 @@ const SubmitAssignment = () => {
     setIsSubmitting(true);
 
     try {
-      dispatch(submitAssignment(formData));
+      await dispatch(submitAssignment(formData));
       toast.success("Assignment submitted successfully!");
       navigate(`/user/my-courses/${selectedCourse}`);
     } catch (err) {
-      toast.error(error);
+      toast.error(err?.message);
     } finally {
       setIsSubmitting(false);
     }
@@ -161,20 +161,32 @@ const SubmitAssignment = () => {
     return "unknown";
   };
 
-  const getFileName = (url) => {
-    return url.split("/").pop() || "assignment";
-  };
+  const getFileName = (url = "") => {
+    try {
+      const cleanUrl = url.split("?")[0];
+      const rawName = cleanUrl.split("/").pop() || "assignment";
 
-  console.log(assignment);
+      let decoded = "";
+      try {
+        decoded = decodeURIComponent(rawName);
+      } catch {
+        decoded = rawName;
+      }
+
+      const fixed = new TextDecoder("utf-8").decode(
+        new Uint8Array([...decoded].map((c) => c.charCodeAt(0)))
+      );
+
+      return fixed || "assignment";
+    } catch {
+      return "assignment";
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-secondary/10 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-2xl mx-auto">
-        <Button
-          variant="ghost"
-          onClick={handleCancel}
-          className="mb-6 gap-2 text-white"
-        >
+        <Button variant="ghost" onClick={handleCancel} className="mb-6 gap-2">
           <ArrowLeft className="w-4 h-4" />
           Quay trở lại khóa học
         </Button>

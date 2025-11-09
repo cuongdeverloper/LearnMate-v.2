@@ -16,10 +16,15 @@ import { useDispatch, useSelector } from "react-redux";
 import { fetchQuizzes, selectQuiz } from "../../redux/action/courseActions";
 import { getDaysUntilDue, isOverdue } from "../../lib/assignments";
 
-const statusFor = (now, deadline, attempted, maxAttempts) => {
-  if (attempted === 0 && now > deadline) return "Overdue";
-  if (attempted === maxAttempts || (attempted > 0 && now > deadline))
+const statusFor = (openTime, deadline, attempted, maxAttempts) => {
+  const now = new Date();
+
+  if (attempted === 0 && now > new Date(deadline)) return "Overdue";
+
+  if (attempted === maxAttempts || (attempted > 0 && now > new Date(deadline)))
     return "Completed";
+
+  if (openTime && now < new Date(openTime)) return "Upcoming";
 
   return "Active";
 };
@@ -56,7 +61,7 @@ const QuizzesTab = () => {
         <TableHeader>
           <TableRow>
             <TableHead>Tiêu đề</TableHead>
-            <TableHead>Thời hạn</TableHead>
+            <TableHead>Thời gian</TableHead>
             <TableHead>Trạng thái</TableHead>
             <TableHead>Các nỗ lực</TableHead>
             <TableHead>Điểm số</TableHead>
@@ -68,7 +73,7 @@ const QuizzesTab = () => {
             quizzes.length > 0 &&
             quizzes?.map((q) => {
               const status = statusFor(
-                now,
+                q.openTime,
                 q.closeTime,
                 q.attempted,
                 q.maxAttempts
@@ -96,10 +101,17 @@ const QuizzesTab = () => {
                         </p>
                       )}
                   </TableCell>
-                  <TableCell>{formatDate(q.closeTime)}</TableCell>
+                  <TableCell>
+                    <div className="flex flex-col gap-1">
+                      <span>Mở: {formatDate(q.openTime)} -</span>
+                      <span>Hạn: {formatDate(q.closeTime)}</span>
+                    </div>
+                  </TableCell>
                   <TableCell>
                     {status === "Upcoming" && (
-                      <Badge variant="secondary">Upcoming</Badge>
+                      <Badge variant="secondary" className="text-white">
+                        Upcoming
+                      </Badge>
                     )}
                     {status === "Active" && (
                       <Badge className="bg-emerald-600 hover:bg-emerald-600 text-white">
@@ -107,18 +119,15 @@ const QuizzesTab = () => {
                       </Badge>
                     )}
 
-                    {status === "Completed" ? (
-                      q.attempted > 0 ? (
-                        <Badge className="bg-slate-800 hover:bg-slate-800 text-white">
-                          Completed
-                        </Badge>
-                      ) : (
-                        <Badge className="bg-slate-800 hover:bg-slate-800 text-white">
-                          Overdue
-                        </Badge>
-                      )
-                    ) : (
-                      <></>
+                    {status === "Completed" && (
+                      <Badge className="bg-slate-800 hover:bg-slate-800 text-white">
+                        Completed
+                      </Badge>
+                    )}
+                    {status === "Overdue" && (
+                      <Badge className="bg-slate-800 hover:bg-slate-800 text-white">
+                        Overdue
+                      </Badge>
                     )}
                   </TableCell>
                   <TableCell>

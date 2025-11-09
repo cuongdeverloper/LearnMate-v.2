@@ -71,7 +71,7 @@ const StudentQuizResult = () => {
           <div className="space-y-2 mb-6">
             <Button
               variant="ghost"
-              onClick={() => navigate(`/user/my-courses/${selectedCourse._id}`)}
+              onClick={() => navigate(`/user/my-courses/${selectedCourse}`)}
               className="mb-6 gap-2"
             >
               <ArrowLeft className="w-4 h-4" />
