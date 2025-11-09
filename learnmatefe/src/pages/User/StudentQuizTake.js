@@ -116,9 +116,7 @@ const StudentQuizTake = () => {
     const startedAt = state.startedAt;
     const finishedAt = startedAt + (quizDetails.duration - state.timer) * 1000;
     try {
-      await dispatch(
-        submitQuiz(selectedQuiz, state.answers, startedAt, finishedAt)
-      ).unwrap();
+      dispatch(submitQuiz(selectedQuiz, state.answers, startedAt, finishedAt));
       if (!error) {
         localStorage.removeItem(storageKey);
         setState((s) => ({ currentIndex: 0, answers: {}, timer: 30 * 60 }));
