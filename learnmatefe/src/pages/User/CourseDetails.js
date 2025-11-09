@@ -87,19 +87,31 @@ const CourseDetails = () => {
         <div className="bg-card border border-border rounded-lg shadow-sm p-6">
           <Tabs defaultValue="schedule" className="w-full">
             <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 mb-6">
-              <TabsTrigger value="schedule" className="gap-2">
+              <TabsTrigger
+                value="schedule"
+                className="gap-2 data-[state=active]:bg-blue-500 data-[state=active]:text-white rounded-md"
+              >
                 <Calendar className="w-4 h-4" />
                 <span className="hidden sm:inline">Lịch học</span>
               </TabsTrigger>
-              <TabsTrigger value="assignments" className="gap-2">
+              <TabsTrigger
+                value="assignments"
+                className="gap-2 data-[state=active]:bg-blue-500 data-[state=active]:text-white rounded-md"
+              >
                 <BookOpen className="w-4 h-4" />
                 <span className="hidden sm:inline">Bài tập</span>
               </TabsTrigger>
-              <TabsTrigger value="quizzes" className="gap-2">
+              <TabsTrigger
+                value="quizzes"
+                className="gap-2 data-[state=active]:bg-blue-500 data-[state=active]:text-white rounded-md"
+              >
                 <CheckCircle2 className="w-4 h-4" />
                 <span className="hidden sm:inline">Câu đố</span>
               </TabsTrigger>
-              <TabsTrigger value="progress" className="gap-2">
+              <TabsTrigger
+                value="progress"
+                className="gap-2 data-[state=active]:bg-blue-500 data-[state=active]:text-white rounded-md"
+              >
                 <BarChart3 className="w-4 h-4" />
                 <span className="hidden sm:inline">Tiến độ</span>
               </TabsTrigger>

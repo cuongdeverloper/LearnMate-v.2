@@ -21,12 +21,21 @@ export const TASK_LABELS = {
   quiz: "Quiz",
 };
 
-const getTasksList = (assignments, quizzes) => {
+const formatDate = (date) =>
+  new Date(date).toLocaleDateString("vi-VN", {
+    weekday: "short",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+
+const getTasksList = (assignments = [], quizzes = []) => {
   const tasks = [
     ...assignments?.map((a) => ({
       id: a._id,
       title: a.title,
       type: "assignment",
+      openTime: a.openTime,
       deadline: a.deadline,
       description: a.description,
       createdAt: a.createdAt,
@@ -35,7 +44,8 @@ const getTasksList = (assignments, quizzes) => {
       id: q._id,
       title: q.title,
       type: "quiz",
-      deadline: q.deadline,
+      openTime: q.openTime,
+      deadline: q.closeTime,
       description: q.description,
       createdAt: q.createdAt,
     })),
@@ -128,16 +138,15 @@ const CourseSchedule = () => {
     });
   };
 
-  const upcomingTasks = useMemo(() => {
-    const now = new Date();
-    return tasks
-      .filter((t) => new Date(t.deadline) >= now)
-      .sort(
-        (a, b) =>
-          new Date(a.deadline).getTime() - new Date(b.deadline).getTime()
-      )
-      .slice(0, 5);
-  }, []);
+  const upcomingTasksRaw = myCourses.filter((c) => c.id === selectedCourse)[0]
+    .upcomingTasks;
+
+  console.log("Upcoming Tasks Raw", upcomingTasksRaw);
+
+  const upcomingTasks = getTasksList(
+    upcomingTasksRaw?.assignments,
+    upcomingTasksRaw?.quizzes
+  );
 
   const handleTaskClick = (task) => {
     setSelectedTask(task);
@@ -152,29 +161,24 @@ const CourseSchedule = () => {
         <div className="lg:col-span-1">
           <Card className="p-4">
             <h3 className="font-semibold text-foreground mb-4 text-lg">
-              📅 Nhiệm vụ sắp tới
+              📅 Nhiệm vụ sắp đến (chưa mở)
             </h3>
             <div className="space-y-3">
               {upcomingTasks.length > 0 ? (
                 upcomingTasks.map((task) => {
                   const taskColor = TASK_COLORS[task.type];
-                  const dateStr = new Date(task.deadline).toLocaleDateString(
-                    "en-US",
-                    {
-                      month: "short",
-                      day: "numeric",
-                    }
-                  );
                   return (
                     <button
                       key={task.id}
                       onClick={() => handleTaskClick(task)}
                       className={`w-full p-2 rounded-md border-l-4 hover:bg-accent transition-colors text-left ${taskColor}`}
                     >
-                      <p className="text-sm font-medium line-clamp-1">
+                      <p className="text-sm font-medium line-clamp-1 m-0">
                         {task.title}
                       </p>
-                      <p className="text-xs opacity-75 mt-1">{dateStr}</p>
+                      <p className="text-xs opacity-75 m-0">
+                        Mở lúc: {formatDate(task.openTime)}
+                      </p>
                     </button>
                   );
                 })

@@ -20,7 +20,9 @@ const createAssignmentStorage = async (req, res) => {
     const { title, description, subjectId, topic } = req.body;
 
     if (!title || !subjectId)
-      return res.status(400).json({ success: false, message: "Thiếu thông tin cần thiết" });
+      return res
+        .status(400)
+        .json({ success: false, message: "Thiếu thông tin cần thiết" });
 
     const newStorage = await AssignmentStorage.create({
       tutorId: tutor._id,
@@ -65,23 +67,38 @@ const assignAssignmentFromStorage = async (req, res) => {
   try {
     const tutor = await Tutor.findOne({ user: req.user.id });
     if (!tutor)
-      return res.status(404).json({ success: false, message: "Không tìm thấy tutor" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Không tìm thấy tutor" });
 
-    const { assignmentStorageId, bookingId, openTime, deadline, title, description } = req.body;
+    const {
+      assignmentStorageId,
+      bookingId,
+      openTime,
+      deadline,
+      title,
+      description,
+    } = req.body;
 
     if (!assignmentStorageId || !bookingId || !deadline || !title)
-      return res.status(400).json({ success: false, message: "Thiếu dữ liệu assign" });
+      return res
+        .status(400)
+        .json({ success: false, message: "Thiếu dữ liệu assign" });
 
     const booking = await Booking.findById(bookingId)
       .populate("learnerId", "_id")
       .populate("subjectId", "_id");
 
     if (!booking)
-      return res.status(404).json({ success: false, message: "Không tìm thấy booking" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Không tìm thấy booking" });
 
     const storage = await AssignmentStorage.findById(assignmentStorageId);
     if (!storage)
-      return res.status(404).json({ success: false, message: "Không tìm thấy Assignment Storage" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Không tìm thấy Assignment Storage" });
 
     const newAssignment = await Assignment.create({
       assignmentStorageId,
@@ -92,7 +109,7 @@ const assignAssignmentFromStorage = async (req, res) => {
       title,
       description,
       fileUrl: storage.fileUrl,
-      openTime: openTime || null, 
+      openTime: openTime || null,
       deadline,
       topic: storage.topic || "Chưa phân loại",
     });
@@ -119,7 +136,9 @@ const assignMultipleAssignments = async (req, res) => {
     // ✅ Tìm tutor từ userId trong token
     const tutor = await Tutor.findOne({ user: req.user.id });
     if (!tutor)
-      return res.status(404).json({ success: false, message: "Không tìm thấy tutor" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Không tìm thấy tutor" });
 
     const createdAssignments = [];
 
@@ -129,7 +148,9 @@ const assignMultipleAssignments = async (req, res) => {
 
       const created = await Promise.all(
         assignments.map(async (a) => {
-          const storage = await AssignmentStorage.findById(a.assignmentStorageId);
+          const storage = await AssignmentStorage.findById(
+            a.assignmentStorageId
+          );
           if (!storage) return null;
 
           return Assignment.create({
@@ -172,7 +193,9 @@ const assignAssignmentToMultipleBookings = async (req, res) => {
 
     const tutor = await Tutor.findOne({ user: req.user.id });
     if (!tutor)
-      return res.status(404).json({ success: false, message: "Không tìm thấy tutor" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Không tìm thấy tutor" });
 
     const createdAssignments = [];
 
@@ -182,12 +205,14 @@ const assignAssignmentToMultipleBookings = async (req, res) => {
 
       const created = await Promise.all(
         assignments.map(async (a) => {
-          const storage = await AssignmentStorage.findById(a.assignmentStorageId);
+          const storage = await AssignmentStorage.findById(
+            a.assignmentStorageId
+          );
           if (!storage) return null;
 
           return Assignment.create({
             assignmentStorageId: a.assignmentStorageId,
-            tutorId: tutor._id, 
+            tutorId: tutor._id,
             learnerId: booking.learnerId,
             subjectId: booking.subjectId,
             bookingId,
@@ -219,10 +244,14 @@ const getAssignmentStorageById = async (req, res) => {
   try {
     const { id } = req.params;
     const tutor = await Tutor.findOne({ user: req.user.id });
-    const storage = await AssignmentStorage.findOne({ _id: id, tutorId: tutor._id })
-      .populate("subjectId", "name topic");
+    const storage = await AssignmentStorage.findOne({
+      _id: id,
+      tutorId: tutor._id,
+    }).populate("subjectId", "name topic");
     if (!storage) {
-      return res.status(404).json({ success: false, message: "Không tìm thấy Assignment Storage" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Không tìm thấy Assignment Storage" });
     }
     res.status(200).json({ success: true, data: storage });
   } catch (error) {
@@ -244,7 +273,9 @@ const updateAssignmentStorage = async (req, res) => {
     );
 
     if (!updated)
-      return res.status(404).json({ success: false, message: "Không tìm thấy Assignment Storage" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Không tìm thấy Assignment Storage" });
 
     res.status(200).json({ success: true, data: updated });
   } catch (error) {
@@ -268,7 +299,9 @@ const updateAssignedAssignment = async (req, res) => {
     );
 
     if (!updated)
-      return res.status(404).json({ success: false, message: "Không tìm thấy assignment" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Không tìm thấy assignment" });
 
     res.status(200).json({ success: true, data: updated });
   } catch (error) {
@@ -312,9 +345,14 @@ const deleteAssignedAssignment = async (req, res) => {
     const tutor = await Tutor.findOne({ user: req.user.id });
     const { id } = req.params;
 
-    const assignment = await Assignment.findOne({ _id: id, tutorId: tutor._id });
+    const assignment = await Assignment.findOne({
+      _id: id,
+      tutorId: tutor._id,
+    });
     if (!assignment)
-      return res.status(404).json({ success: false, message: "Không tìm thấy assignment" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Không tìm thấy assignment" });
 
     // Check nếu học viên đã nộp
     const submission = await AssignmentSubmission.findOne({ assignment: id });
@@ -420,7 +458,7 @@ const viewSubmission = async (req, res) => {
 const gradeAssignment = async (req, res) => {
   try {
     const { assignmentId, grade, feedback } = req.body;
-    console.log('123',req.body)
+    console.log("123", req.body);
     if (!assignmentId) {
       return res.status(400).json({ error: "Missing required fields" });
     }
@@ -440,7 +478,6 @@ const gradeAssignment = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
-
 
 const getAssignmentById = async (req, res) => {
   try {
@@ -499,9 +536,44 @@ const submitAssignment = async (req, res) => {
       return res.status(404).json({ error: "Assignment not found" });
     }
 
-    const learner = await User.findById(req.user.id);
-    if (!learner) {
-      return res.status(404).json({ error: "Learner not found" });
+    if (assignment.learnerId.toString() !== req.user.id) {
+      return res.status(403).json({
+        success: false,
+        message: "Bạn không có quyền nộp bài tập này.",
+      });
+    }
+
+    const now = new Date();
+    const openTime = assignment.openTime ? new Date(assignment.openTime) : null;
+    const deadline = new Date(assignment.deadline);
+
+    // Chưa đến giờ mở
+    if (openTime && now < openTime) {
+      return res.status(400).json({
+        success: false,
+        message: `Bài tập chưa mở để nộp.\nThời gian mở: ${openTime.toLocaleString(
+          "vi-VN",
+          { dateStyle: "short", timeStyle: "short" }
+        )}`,
+      });
+    }
+
+    // Đã quá hạn
+    if (now > deadline) {
+      return res.status(400).json({
+        success: false,
+        message: `Đã quá hạn nộp bài!\nHạn cuối: ${deadline.toLocaleString(
+          "vi-VN",
+          { dateStyle: "short", timeStyle: "short" }
+        )}`,
+      });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: "Vui lòng tải lên file bài làm.",
+      });
     }
 
     const submittedAt = new Date();
@@ -562,5 +634,5 @@ module.exports = {
   gradeAssignment,
   getAssignmentsForCourse,
   submitAssignment,
-  viewGradeFeedback
+  viewGradeFeedback,
 };

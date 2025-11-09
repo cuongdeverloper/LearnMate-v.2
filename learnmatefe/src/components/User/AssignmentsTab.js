@@ -46,7 +46,11 @@ const AssignmentsTab = ({ courseTitle }) => {
   const getStatusBadge = (status) => {
     switch (status) {
       case "graded":
-        return <Badge variant="default">Graded</Badge>;
+        return (
+          <Badge variant="default" className="text-white">
+            Graded
+          </Badge>
+        );
       case "submitted":
         return <Badge variant="secondary">Submitted</Badge>;
       case "overdue":
@@ -84,7 +88,7 @@ const AssignmentsTab = ({ courseTitle }) => {
           <TableHeader>
             <TableRow className="bg-muted/50">
               <TableHead className="font-semibold">Tiêu đề</TableHead>
-              <TableHead className="font-semibold">Ngày đến hạn</TableHead>
+              <TableHead className="font-semibold">Thời hạn</TableHead>
               <TableHead className="font-semibold">Trạng thái</TableHead>
               <TableHead className="text-center font-semibold">
                 Điểm số
@@ -133,7 +137,7 @@ const AssignmentsTab = ({ courseTitle }) => {
                     <TableCell className="text-center">
                       {assignment.grade !== undefined ? (
                         <span className="font-semibold text-primary">
-                          {assignment.grade}/{assignment.maxGrade}
+                          {assignment.grade}/{assignment.maxGrade || 10}
                         </span>
                       ) : (
                         <span className="text-muted-foreground">-</span>

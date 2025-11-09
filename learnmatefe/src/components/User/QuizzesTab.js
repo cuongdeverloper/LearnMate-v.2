@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import { Card } from "../ui/Card";
-import { CheckCircle2 } from "lucide-react";
+import { CheckCircle2, Clock } from "lucide-react";
 import { Button } from "../ui/Button";
 import { Badge } from "../ui/Badge";
 import {
@@ -14,6 +14,7 @@ import {
 import { Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchQuizzes, selectQuiz } from "../../redux/action/courseActions";
+import { getDaysUntilDue, isOverdue } from "../../lib/assignments";
 
 const statusFor = (now, deadline, attempted, maxAttempts) => {
   if (attempted === 0 && now > deadline) return "Overdue";
@@ -41,7 +42,7 @@ const QuizzesTab = () => {
 
   useEffect(() => {
     if (selectedCourse) {
-      dispatch(fetchQuizzes(selectedCourse._id));
+      dispatch(fetchQuizzes(selectedCourse));
     }
   }, [dispatch, selectedCourse, submitting]);
 
@@ -68,15 +69,34 @@ const QuizzesTab = () => {
             quizzes?.map((q) => {
               const status = statusFor(
                 now,
-                q.deadline,
+                q.closeTime,
                 q.attempted,
                 q.maxAttempts
               );
 
+              const daysLeft = getDaysUntilDue(q.closeTime);
+              const showOverdueWarning =
+                isOverdue(q.closeTime) && q.attempted == 0;
+
               return (
                 <TableRow key={q._id}>
-                  <TableCell className="font-medium">{q.title}</TableCell>
-                  <TableCell>{formatDate(q.deadline)}</TableCell>
+                  <TableCell className="font-medium">
+                    {q.title}
+                    {showOverdueWarning && (
+                      <p className="text-xs text-destructive mt-1">
+                        ⚠️ Overdue
+                      </p>
+                    )}
+                    {!showOverdueWarning &&
+                      daysLeft > 0 &&
+                      q.attempted == 0 && (
+                        <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                          <Clock className="w-3 h-3" />
+                          {daysLeft} day{daysLeft !== 1 ? "s" : ""} left
+                        </p>
+                      )}
+                  </TableCell>
+                  <TableCell>{formatDate(q.closeTime)}</TableCell>
                   <TableCell>
                     {status === "Upcoming" && (
                       <Badge variant="secondary">Upcoming</Badge>
