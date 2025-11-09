@@ -55,6 +55,34 @@ const SubmitAssignment = () => {
   const assignment = assignments.find((a) => a._id === selectedAssignment);
 
   useEffect(() => {
+    if (!assignment) return;
+
+    const now = new Date();
+    const openTime = assignment.openTime ? new Date(assignment.openTime) : null;
+    const deadline = assignment.deadline ? new Date(assignment.deadline) : null;
+
+    if (openTime && now < openTime) {
+      toast.warning(
+        `Bài tập chưa mở để nộp.\nThời gian mở: ${openTime.toLocaleString(
+          "vi-VN",
+          {
+            dateStyle: "short",
+            timeStyle: "short",
+          }
+        )}`
+      );
+      navigate(`/user/my-courses/${selectedCourse}`);
+      return;
+    }
+
+    if (deadline && now > deadline) {
+      toast.error("Bài tập đã hết hạn nộp.");
+      navigate(`/user/my-courses/${selectedCourse}`);
+      return;
+    }
+  }, [assignment, navigate, selectedCourse]);
+
+  useEffect(() => {
     if (assignment) {
       setNotes(assignment?.note || "");
     }
