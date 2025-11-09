@@ -138,7 +138,7 @@ const QuizzesTab = () => {
                       ? Number(q.newestScore).toFixed(0) + "%"
                       : "-"}
                   </TableCell>
-                  <TableCell className="text-right">
+                  <TableCell className="text-right flex flex-col gap-2">
                     {status === "Active" && (
                       <Button
                         className="text-white"
@@ -168,6 +168,17 @@ const QuizzesTab = () => {
                         <Link to={`/user/quizzes/${q._id}/result`}>
                           {q.attempted < q.maxAttempts && "Thử lại"}
                           {q.attempted >= q.maxAttempts && "Xem kết quả"}
+                        </Link>
+                      </Button>
+                    )}
+                    {(status == "Active" || status == "Completed") && (
+                      <Button
+                        asChild
+                        variant="outline"
+                        onClick={() => handleSelectQuiz(q._id)}
+                      >
+                        <Link to={`/user/quizzes/${q._id}/result`}>
+                          Xem kết quả
                         </Link>
                       </Button>
                     )}
