@@ -20,6 +20,7 @@ const RouteMessage = require("./routes/messageRoutes");
 const quizRouter = require("./routes/quizRoutes");
 const assignmentRouter = require("./routes/assignmentRoutes");
 const courseRouter = require("./routes/courseRoutes");
+const aiRouter = require("./routes/aiRoutes");
 
 const RoutePayment = require("./routes/PaymentRoutes");
 
@@ -77,6 +78,7 @@ app.use("/api/admin", RouterAdmin);
 app.use("/api/quizzes", quizRouter);
 app.use("/api/assignments", assignmentRouter);
 app.use("/api/courses", courseRouter);
+app.use("/api/ai", aiRouter);
 // -----
 
 app.get("/", (req, res) => {

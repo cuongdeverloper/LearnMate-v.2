@@ -120,6 +120,28 @@ export const fetchQuizResult = (quizId) => async (dispatch) => {
   }
 };
 
+export const fetchQuizExplanations = (questions) => async (dispatch) => {
+  dispatch({ type: "QUIZ_EXPLANATION_REQUEST" });
+  try {
+    const res = await axios.post(
+      `/api/ai/explain-question`,
+      { questions },
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+    dispatch({ type: "QUIZ_EXPLANATION_SUCCESS", payload: res.explanations });
+  } catch (err) {
+    dispatch({
+      type: "QUIZ_EXPLANATION_FAILURE",
+      payload: err.response.data.message,
+    });
+  }
+};
+
 export const resetQuiz = () => ({
   type: "QUIZ_RESET",
 });

@@ -1,12 +1,15 @@
 import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { cn } from "../../lib/utils";
 import { Button } from "../../components/ui/Button";
 import { ArrowLeft } from "lucide-react";
 import { toast } from "react-toastify";
 
-import { fetchQuizResult } from "../../redux/action/courseActions";
+import {
+  fetchQuizResult,
+  fetchQuizExplanations,
+} from "../../redux/action/courseActions";
 
 const getTimeTaken = (startedAt, finishedAt) => {
   const timeTakenInSeconds =
@@ -42,11 +45,31 @@ const StudentQuizResult = () => {
     selectedQuiz,
     quizDetails,
     quizResult,
+    explanations,
+    loadingExplanations,
 
     submitting,
     loading,
     error,
   } = useSelector((state) => state.courses);
+
+  useEffect(() => {
+    if (!quizResult?.questions) return;
+
+    const questions = quizResult.questions.map((q) => ({
+      id: q._id,
+      text: q.text,
+      options: q.options,
+      correctAnswer: q.options[q.correctAnswer - 1],
+    }));
+
+    const getExplanations = async () => {
+      await dispatch(fetchQuizExplanations(questions));
+      console.log("Explanations: ", explanations);
+    };
+
+    getExplanations();
+  }, [quizResult]);
 
   const { id } = useParams();
 
@@ -58,7 +81,7 @@ const StudentQuizResult = () => {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
-        <p className="text-lg text-gray-600">Đang chấm bài... Vui lòng chờ</p>
+        <p className="text-lg text-gray-600">Đang tải... Vui lòng chờ</p>
       </div>
     );
 
@@ -179,6 +202,9 @@ const StudentQuizResult = () => {
           const isCorrect =
             Number.parseInt(answer?.selectedAnswer) === q.correctAnswer;
 
+          const explanation = explanations?.find((e) => e.questionId === q._id)
+            ?.explanation?.parts[0]?.text;
+
           return (
             <div
               key={q._id}
@@ -239,12 +265,15 @@ const StudentQuizResult = () => {
                   );
                 })}
               </div>
-              {q.explanation && (
-                <div className="mt-3 p-3">
-                  <strong>Giải thích: </strong>
-                  {q.explanation}
-                </div>
-              )}
+              <div className="pt-3">
+                <strong>Giải thích: </strong>
+                {loadingExplanations && (
+                  <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-green-600 ml-6 mt-3"></div>
+                )}
+                {!loadingExplanations && explanation && (
+                  <div className="mt-3 ml-6">{explanation}</div>
+                )}
+              </div>
             </div>
           );
         })}

@@ -7,6 +7,7 @@ const initialState = {
   selectedQuiz: null, // quizId
   quizDetails: null,
   quizResult: {},
+  explanations: [],
 
   assignments: [],
   selectedAssignment: null, // assignmentId
@@ -15,6 +16,7 @@ const initialState = {
 
   submitting: false,
   loading: false,
+  loadingExplanations: false,
   error: null,
 };
 
@@ -170,6 +172,27 @@ const courseReducer = (state = initialState, action) => {
       return {
         ...state,
         loading: false,
+        error: action.payload,
+      };
+
+    case "QUIZ_EXPLANATION_REQUEST":
+      return {
+        ...state,
+        loadingExplanations: true,
+        error: null,
+      };
+
+    case "QUIZ_EXPLANATION_SUCCESS":
+      return {
+        ...state,
+        loadingExplanations: false,
+        explanations: action.payload,
+      };
+
+    case "QUIZ_EXPLANATION_FAILURE":
+      return {
+        ...state,
+        loadingExplanations: false,
         error: action.payload,
       };
 
