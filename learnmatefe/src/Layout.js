@@ -44,6 +44,7 @@ import TutorManagement from "./components/Admin/TutorManagement";
 import ReviewManagement from "./components/Admin/ReviewManagement";
 import BookingManagement from "./components/Admin/BookingManagement";
 import ReportManagement from "./components/Admin/ReportManagement";
+import "./tailwind.css"
 
 const AppLayout = ({ children }) => {
   const location = useLocation();

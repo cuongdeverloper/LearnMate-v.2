@@ -8,7 +8,6 @@ import {
   getAssignmentStorage,
   assignMultipleAssignments,
 } from "../../ApiTutor";
-import "./TutorAssignment.scss";
 
 const TutorAssignAssignment = () => {
   const tutorId = useSelector((state) => state.user.account.id);
@@ -52,19 +51,19 @@ const TutorAssignAssignment = () => {
 
   const handleSelectAssignment = (id, checked) => {
     if (checked) {
-      setSelectedAssignments(prev => [
+      setSelectedAssignments((prev) => [
         ...prev,
         { assignmentStorageId: id, title: "", openTime: "", deadline: "" },
       ]);
     } else {
-      setSelectedAssignments(prev => prev.filter(a => a.assignmentStorageId !== id));
+      setSelectedAssignments((prev) => prev.filter((a) => a.assignmentStorageId !== id));
     }
   };
 
   const handleChangeAssignData = (id, field, value) => {
-    setSelectedAssignments(prev => prev.map(a =>
-      a.assignmentStorageId === id ? { ...a, [field]: value } : a
-    ));
+    setSelectedAssignments((prev) =>
+      prev.map((a) => (a.assignmentStorageId === id ? { ...a, [field]: value } : a))
+    );
   };
 
   const handleAssign = async () => {
@@ -82,7 +81,8 @@ const TutorAssignAssignment = () => {
         assignments: selectedAssignments,
       });
       toast.success("✅ Giao Assignment thành công!");
-      setSelectedBookings([]); setSelectedAssignments([]);
+      setSelectedBookings([]);
+      setSelectedAssignments([]);
     } catch {
       toast.error("❌ Lỗi khi giao Assignment");
     } finally {
@@ -90,27 +90,31 @@ const TutorAssignAssignment = () => {
     }
   };
 
-  const subjectOptions = subjects.map(s => ({ value: s._id, label: s.name }));
+  const subjectOptions = subjects.map((s) => ({ value: s._id, label: s.name }));
   const bookingOptions = bookings
-    .filter(b => b.status === "approve")
-    .map(b => ({
+    .filter((b) => b.status === "approve")
+    .map((b) => ({
       value: b._id,
       label: `${b.subject?.name || ""} - ${b.learner?.username || ""}`,
     }));
 
   return (
-    <div className="assignment-card">
-      <h3>🎯 Giao Assignment</h3>
+    <div className="max-w-4xl mx-auto bg-white p-6 rounded-lg shadow-md">
+      <h3 className="text-2xl font-semibold mb-6">🎯 Giao Assignment</h3>
 
-      <Select
-        isMulti
-        options={bookingOptions}
-        placeholder="Chọn học viên..."
-        value={bookingOptions.filter(b => selectedBookings.includes(b.value))}
-        onChange={(sel) => setSelectedBookings(sel.map(s => s.value))}
-      />
+      {/* Chọn học viên */}
+      <div className="mb-6">
+        <Select
+          isMulti
+          options={bookingOptions}
+          placeholder="Chọn học viên..."
+          value={bookingOptions.filter((b) => selectedBookings.includes(b.value))}
+          onChange={(sel) => setSelectedBookings(sel.map((s) => s.value))}
+        />
+      </div>
 
-      <div className="filter-row">
+      {/* Bộ lọc môn và topic */}
+      <div className="flex flex-col sm:flex-row gap-4 mb-6">
         <Select
           options={[{ value: "", label: "Tất cả môn" }, ...subjectOptions]}
           placeholder="Lọc theo môn"
@@ -118,6 +122,7 @@ const TutorAssignAssignment = () => {
             setSelectedSubject(sel?.value || "");
             handleFilter(sel?.value || "", topicFilter);
           }}
+          className="flex-1"
         />
         <input
           type="text"
@@ -127,44 +132,60 @@ const TutorAssignAssignment = () => {
             setTopicFilter(e.target.value);
             handleFilter(selectedSubject, e.target.value);
           }}
+          className="flex-1 border border-gray-300 rounded px-3 py-2"
         />
       </div>
 
-      <div className="storage-list">
-        {filteredStorage.length ? filteredStorage.map((a) => (
-          <label key={a._id} className="storage-item">
-            <input
-              type="checkbox"
-              checked={selectedAssignments.some(s => s.assignmentStorageId === a._id)}
-              onChange={(e) => handleSelectAssignment(a._id, e.target.checked)}
-            />
-            <span>{a.title} – {a.topic}</span>
-          </label>
-        )) : <p>Không có assignment phù hợp</p>}
+      {/* Danh sách storage */}
+      <div className="flex flex-col gap-2 mb-6 max-h-64 overflow-y-auto">
+        {filteredStorage.length ? (
+          filteredStorage.map((a) => (
+            <label key={a._id} className="flex items-center gap-2 p-2 border rounded hover:bg-gray-50">
+              <input
+                type="checkbox"
+                checked={selectedAssignments.some((s) => s.assignmentStorageId === a._id)}
+                onChange={(e) => handleSelectAssignment(a._id, e.target.checked)}
+                className="w-4 h-4"
+              />
+              <span>{a.title} – {a.topic}</span>
+            </label>
+          ))
+        ) : (
+          <p className="text-gray-500">Không có assignment phù hợp</p>
+        )}
       </div>
 
+      {/* Assignment chi tiết */}
       {selectedAssignments.map((a) => (
-        <div key={a.assignmentStorageId} className="assign-item">
+        <div key={a.assignmentStorageId} className="flex flex-col gap-3 mb-4 border p-4 rounded">
           <input
             type="text"
             placeholder="Tiêu đề assignment"
             value={a.title}
             onChange={(e) => handleChangeAssignData(a.assignmentStorageId, "title", e.target.value)}
+            className="border border-gray-300 rounded px-3 py-2"
           />
           <input
             type="datetime-local"
             value={a.openTime}
             onChange={(e) => handleChangeAssignData(a.assignmentStorageId, "openTime", e.target.value)}
+            className="border border-gray-300 rounded px-3 py-2"
           />
           <input
             type="datetime-local"
             value={a.deadline}
             onChange={(e) => handleChangeAssignData(a.assignmentStorageId, "deadline", e.target.value)}
+            className="border border-gray-300 rounded px-3 py-2"
           />
         </div>
       ))}
 
-      <button onClick={handleAssign} disabled={loading}>
+      {/* Button giao assignment */}
+      <button
+        onClick={handleAssign}
+        disabled={loading}
+        className="w-full bg-blue-500 text-white py-3 rounded hover:bg-blue-600 disabled:opacity-50 transition"
+      >
         {loading ? "Đang giao..." : "📝 Giao tất cả Assignment"}
       </button>
     </div>

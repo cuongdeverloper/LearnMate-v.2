@@ -1,9 +1,9 @@
 import React, { useState } from "react";
-import TutorCreateAssignment from "./Tutor Assignment/TutorCreateAssignment";
-import TutorAssignAssignment from "./Tutor Assignment/TutorAssignAssignment";
-import TutorManageAssignment from "./Tutor Assignment/TutorManageAssignment";
-import "./Tutor Assignment/TutorAssignment.scss";
-import TutorViewSubmissions from "./Tutor Assignment/TutorViewSubmissions";
+import TutorCreateAssignment from "./TutorCreateAssignment";
+import TutorAssignAssignment from "./TutorAssignAssignment";
+import TutorManageAssignment from "./TutorManageAssignment";
+import "./TutorAssignment.scss";
+import TutorViewSubmissions from "./TutorViewSubmissions";
 
 const TutorAssignmentManager = () => {
   const [tab, setTab] = useState("create");

@@ -584,7 +584,7 @@ export const createAssignmentStorage = async (formData) => {
     const token = Cookies.get("accessToken");
     if (!token) throw new Error("Unauthorized");
 
-    const res = await axios.post(`/api/assignments/storage/create`, formData, {
+    const res = await axios.post(`/api/assignments/storage`, formData, {
       headers: {
         Authorization: `Bearer ${token}`,
         "Content-Type": "multipart/form-data",
