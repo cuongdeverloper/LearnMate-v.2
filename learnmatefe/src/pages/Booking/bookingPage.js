@@ -29,7 +29,7 @@ export default function BookingPage() {
   const [selectedSlots, setSelectedSlots] = useState([]);
   const [addressDetail, setAddressDetail] = useState("");
   const [province, setProvince] = useState("");
-
+  const [schedules, setSchedules] = useState([]);
   const provinces = [
     "An Giang",
     "Bà Rịa - Vũng Tàu",
@@ -173,16 +173,15 @@ export default function BookingPage() {
       const res = await axios.get(`/api/tutor/${tutorId}/availability`, {
         params,
       });
-      const body = res?.data ?? res;
-      if (Array.isArray(body)) setAvailabilities(body);
-      else if (Array.isArray(body?.data)) setAvailabilities(body.data);
-      else if (Array.isArray(body?.availabilities))
-        setAvailabilities(body.availabilities);
-      else setAvailabilities([]);
+
+      const data = res?.data ?? res;
+      setAvailabilities(data.availabilities || []);
+      setSchedules(data.schedules || []);
       setSelectedSlots([]);
     } catch {
       toast.error("Lỗi khi tải lịch trống");
       setAvailabilities([]);
+      setSchedules([]);
     }
   };
 
@@ -286,8 +285,7 @@ export default function BookingPage() {
           <img
             src={
               user?.image ||
-              `https://i.pravatar.cc/150?img=${
-                Math.floor(Math.random() * 70) + 1
+              `https://i.pravatar.cc/150?img=${Math.floor(Math.random() * 70) + 1
               }`
             }
             alt={`Ảnh đại diện của ${user?.username || "Gia sư"}`}
@@ -461,59 +459,61 @@ export default function BookingPage() {
                 </div>
 
                 <div className="grid-body">
-                  {["T2", "T3", "T4", "T5", "T6", "T7", "CN"].map(
-                    (dayName, idx) => {
-                      const dayOfWeek = idx === 6 ? 0 : idx + 1;
-                      return (
-                        <div key={idx} className="grid-day-column">
-                          {timeSlots.map((slotStr) => {
-                            const [startTime, endTime] = slotStr
-                              .split(" - ")
-                              .map((s) => s.trim());
-                            const avail = availabilities.find(
-                              (a) =>
-                                a.dayOfWeek === dayOfWeek &&
-                                a.startTime === startTime &&
-                                a.endTime === endTime
-                            );
+                  {["T2", "T3", "T4", "T5", "T6", "T7", "CN"].map((dayName, idx) => {
+                    const dayOfWeek = idx === 6 ? 0 : idx + 1;
+                    return (
+                      <div key={idx} className="grid-day-column">
+                        {timeSlots.map((slotStr) => {
+                          const [startTime, endTime] = slotStr.split(" - ").map((s) => s.trim());
 
-                            const isSelected =
-                              avail && selectedSlots.includes(avail._id);
-                            const isBooked =
-                              avail && (avail.bookingId || avail.isBooked);
+                          const avail = availabilities.find(
+                            (a) =>
+                              a.dayOfWeek === dayOfWeek &&
+                              a.startTime === startTime &&
+                              a.endTime === endTime
+                          );
 
-                            const cls = !avail
-                              ? "not-available"
-                              : isBooked
-                              ? "booked"
-                              : isSelected
+                          const bookedSchedule = schedules.find(
+                            (s) =>
+                              new Date(s.date).getDay() === dayOfWeek &&
+                              s.startTime === startTime &&
+                              s.endTime === endTime
+                          );
+
+                          const isSelected = avail && selectedSlots.includes(avail._id);
+
+                          // Xác định class:
+                          // - available: slot trống
+                          // - selected: slot trống đã chọn
+                          // - no-slot: slot không có lịch trống hoặc đã book
+                          const cls = avail
+                            ? isSelected
                               ? "selected"
-                              : "available";
+                              : "available"
+                            : "no-slot"; // slot không trống hoặc đã book
 
-                            return (
-                              <div
-                                key={`${dayName}-${slotStr}`}
-                                className={`schedule-slot ${cls}`}
-                                onClick={() => {
-                                  if (!avail)
-                                    return toast.info(
-                                      "Khung giờ này gia sư bận."
-                                    );
-                                  if (isBooked)
-                                    return toast.info(
-                                      "Khung giờ này đã được đặt."
-                                    );
-                                  toggleSlot(avail._id);
-                                }}
-                              >
-                                <span className="slot-time">{slotStr}</span>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      );
-                    }
-                  )}
+                          // Nếu slot có avail nhưng đã book, cũng set class "no-slot"
+                          const finalCls = avail && (avail.isBooked || avail.bookingId || bookedSchedule)
+                            ? "no-slot"
+                            : cls;
+
+                          return (
+                            <div
+                              key={`${dayName}-${slotStr}`}
+                              className={`schedule-slot ${finalCls}`}
+                              onClick={() => {
+                                if (!avail || finalCls === "no-slot") return; // không click được
+                                toggleSlot(avail._id);
+                              }}
+                            >
+                              <span className="slot-time">{slotStr}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    );
+                  })}
+
                 </div>
               </div>
 
@@ -578,102 +578,102 @@ export default function BookingPage() {
         </div>
 
         <div className="side-panel right-panel">
-  <h3 className="panel-title">
-    <i className="fa fa-handshake"></i> Cam kết từ gia sư
-  </h3>
+          <h3 className="panel-title">
+            <i className="fa fa-handshake"></i> Cam kết từ gia sư
+          </h3>
 
 
 
-  <div className="guarantee-section">
-    {/* Nhóm 1: Cam kết chính */}
-    <div className="guarantee-item">
-      <div className="icon-wrapper punctual">
-        <i className="fa fa-clock"></i>
-      </div>
-      <div className="guarantee-text">
-        <h4>Đúng giờ & chuyên nghiệp</h4>
-        <p>
-          Gia sư luôn đảm bảo bắt đầu buổi học đúng giờ, duy trì thái độ chuyên nghiệp và
-          tôn trọng thời gian của học viên. Mọi thay đổi về lịch học đều được thông báo trước tối thiểu 24 giờ.
-        </p>
-      </div>
-    </div>
+          <div className="guarantee-section">
+            {/* Nhóm 1: Cam kết chính */}
+            <div className="guarantee-item">
+              <div className="icon-wrapper punctual">
+                <i className="fa fa-clock"></i>
+              </div>
+              <div className="guarantee-text">
+                <h4>Đúng giờ & chuyên nghiệp</h4>
+                <p>
+                  Gia sư luôn đảm bảo bắt đầu buổi học đúng giờ, duy trì thái độ chuyên nghiệp và
+                  tôn trọng thời gian của học viên. Mọi thay đổi về lịch học đều được thông báo trước tối thiểu 24 giờ.
+                </p>
+              </div>
+            </div>
 
-    <div className="guarantee-item">
-      <div className="icon-wrapper prepared">
-        <i className="fa fa-book-open"></i>
-      </div>
-      <div className="guarantee-text">
-        <h4>Chuẩn bị bài kỹ lưỡng</h4>
-        <p>
-          Trước mỗi buổi học, gia sư dành thời gian nghiên cứu chương trình, lựa chọn ví dụ thực tế,
-          và chuẩn bị bài tập phù hợp với năng lực từng học viên để đảm bảo buổi học hiệu quả nhất.
-        </p>
-      </div>
-    </div>
+            <div className="guarantee-item">
+              <div className="icon-wrapper prepared">
+                <i className="fa fa-book-open"></i>
+              </div>
+              <div className="guarantee-text">
+                <h4>Chuẩn bị bài kỹ lưỡng</h4>
+                <p>
+                  Trước mỗi buổi học, gia sư dành thời gian nghiên cứu chương trình, lựa chọn ví dụ thực tế,
+                  và chuẩn bị bài tập phù hợp với năng lực từng học viên để đảm bảo buổi học hiệu quả nhất.
+                </p>
+              </div>
+            </div>
 
-    <div className="guarantee-item">
-      <div className="icon-wrapper support">
-        <i className="fa fa-headset"></i>
-      </div>
-      <div className="guarantee-text">
-        <h4>Hỗ trợ tận tình ngoài giờ</h4>
-        <p>
-          Gia sư sẵn sàng hỗ trợ học viên giải đáp câu hỏi ngoài giờ học thông qua chat hoặc email.
-          Luôn đồng hành và động viên học viên trong quá trình đạt mục tiêu học tập dài hạn.
-        </p>
-      </div>
-    </div>
+            <div className="guarantee-item">
+              <div className="icon-wrapper support">
+                <i className="fa fa-headset"></i>
+              </div>
+              <div className="guarantee-text">
+                <h4>Hỗ trợ tận tình ngoài giờ</h4>
+                <p>
+                  Gia sư sẵn sàng hỗ trợ học viên giải đáp câu hỏi ngoài giờ học thông qua chat hoặc email.
+                  Luôn đồng hành và động viên học viên trong quá trình đạt mục tiêu học tập dài hạn.
+                </p>
+              </div>
+            </div>
 
-    {/* Nhóm 2: Cam kết bổ sung */}
-    <div className="guarantee-item">
-      <div className="icon-wrapper quality">
-        <i className="fa fa-graduation-cap"></i>
-      </div>
-      <div className="guarantee-text">
-        <h4>Cam kết chất lượng giảng dạy</h4>
-        <p>
-          Mỗi buổi học được thiết kế để mang lại kiến thức vững chắc, ứng dụng thực tế và
-          phát triển tư duy độc lập cho học viên. Học viên có thể yêu cầu điều chỉnh phương pháp nếu cần.
-        </p>
-      </div>
-    </div>
+            {/* Nhóm 2: Cam kết bổ sung */}
+            <div className="guarantee-item">
+              <div className="icon-wrapper quality">
+                <i className="fa fa-graduation-cap"></i>
+              </div>
+              <div className="guarantee-text">
+                <h4>Cam kết chất lượng giảng dạy</h4>
+                <p>
+                  Mỗi buổi học được thiết kế để mang lại kiến thức vững chắc, ứng dụng thực tế và
+                  phát triển tư duy độc lập cho học viên. Học viên có thể yêu cầu điều chỉnh phương pháp nếu cần.
+                </p>
+              </div>
+            </div>
 
-    <div className="guarantee-item">
-      <div className="icon-wrapper tracking">
-        <i className="fa fa-line-chart"></i>
-      </div>
-      <div className="guarantee-text">
-        <h4>Theo dõi tiến bộ học tập</h4>
-        <p>
-          Sau mỗi giai đoạn học, gia sư cung cấp nhận xét chi tiết về điểm mạnh, điểm cần cải thiện
-          và đề xuất phương pháp luyện tập phù hợp để học viên tiến bộ rõ rệt.
-        </p>
-      </div>
-    </div>
+            <div className="guarantee-item">
+              <div className="icon-wrapper tracking">
+                <i className="fa fa-line-chart"></i>
+              </div>
+              <div className="guarantee-text">
+                <h4>Theo dõi tiến bộ học tập</h4>
+                <p>
+                  Sau mỗi giai đoạn học, gia sư cung cấp nhận xét chi tiết về điểm mạnh, điểm cần cải thiện
+                  và đề xuất phương pháp luyện tập phù hợp để học viên tiến bộ rõ rệt.
+                </p>
+              </div>
+            </div>
 
-    <div className="guarantee-item">
-      <div className="icon-wrapper feedback">
-        <i className="fa fa-comments"></i>
-      </div>
-      <div className="guarantee-text">
-        <h4>Phản hồi nhanh & thân thiện</h4>
-        <p>
-          Gia sư phản hồi tin nhắn hoặc yêu cầu trong vòng 12 giờ. Luôn giữ thái độ tích cực,
-          hỗ trợ tận tâm và sẵn sàng lắng nghe ý kiến từ học viên và phụ huynh.
-        </p>
-      </div>
-    </div>
-  </div>
+            <div className="guarantee-item">
+              <div className="icon-wrapper feedback">
+                <i className="fa fa-comments"></i>
+              </div>
+              <div className="guarantee-text">
+                <h4>Phản hồi nhanh & thân thiện</h4>
+                <p>
+                  Gia sư phản hồi tin nhắn hoặc yêu cầu trong vòng 12 giờ. Luôn giữ thái độ tích cực,
+                  hỗ trợ tận tâm và sẵn sàng lắng nghe ý kiến từ học viên và phụ huynh.
+                </p>
+              </div>
+            </div>
+          </div>
 
-  {/* Phần tin tưởng */}
-  <div className="tutor-promise-footer">
-    <i className="fa fa-star"></i>
-    <p>
-      Với mỗi cam kết, gia sư hướng đến việc mang lại trải nghiệm học tập tốt nhất – nơi học viên cảm thấy được tôn trọng, được truyền cảm hứng và đạt được tiến bộ thực sự.
-    </p>
-  </div>
-</div>
+          {/* Phần tin tưởng */}
+          <div className="tutor-promise-footer">
+            <i className="fa fa-star"></i>
+            <p>
+              Với mỗi cam kết, gia sư hướng đến việc mang lại trải nghiệm học tập tốt nhất – nơi học viên cảm thấy được tôn trọng, được truyền cảm hứng và đạt được tiến bộ thực sự.
+            </p>
+          </div>
+        </div>
 
       </div>
 

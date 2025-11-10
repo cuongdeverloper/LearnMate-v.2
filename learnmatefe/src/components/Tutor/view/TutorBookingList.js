@@ -33,7 +33,7 @@ const TutorBookingList = () => {
       loadBookings();
       closeModal();
     } catch (error) {
-      toast.error(error.message || "Có lỗi xảy ra khi phản hồi booking");
+     toast.error(error?.message || error.message || "Có lỗi xảy ra khi phản hồi booking");
     }
   };
 

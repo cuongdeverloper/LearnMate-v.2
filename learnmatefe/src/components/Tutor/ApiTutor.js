@@ -184,10 +184,16 @@ export const respondBooking = async (bookingId, action, learnerId) => {
     );
     return res;
   } catch (error) {
-    console.error("Error responding booking:", error);
-    const msg = error.response?.message || "Error responding to booking";
-    throw new Error(msg);
-  }
+  console.error("Error responding booking:", error);
+
+  const msg =
+    error.response?.data?.message ||
+    error.response?.data?.error ||
+    error.message ||
+    "Error responding to booking";
+
+  throw new Error(msg);
+}
 };
 
 // ✅ Cancel a booking
