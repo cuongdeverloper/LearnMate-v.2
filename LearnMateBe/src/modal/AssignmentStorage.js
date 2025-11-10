@@ -14,6 +14,7 @@ const AssignmentStorageSchema = new mongoose.Schema({
   title: { type: String, required: true },
   description: { type: String },
   fileUrl: { type: String }, 
+  topic: { type: String, default: "Chưa phân loại" },
 }, { timestamps: true });
 
 module.exports = mongoose.model("AssignmentStorage", AssignmentStorageSchema);

@@ -89,24 +89,81 @@ const getMyAllCoursesDetails = async (req, res) => {
       Quiz.find({
         bookingId: { $in: bookingIds },
         attempted: 0,
-        deadline: { $gt: new Date() },
       }).sort({ deadline: 1 }),
 
       Assignment.find({
         bookingId: { $in: bookingIds },
         submitted: false,
-        deadline: { $gt: new Date() },
       }).sort({ deadline: 1 }),
     ]);
 
     const progressMap = await calculateProgressForManyCourses(bookingIds);
 
     const myCourses = bookings.map((b) => {
-      const quizzes = allQuizzes
-        .filter((q) => q.bookingId.toString() == b._id.toString())
+      const upcomingQuizzes = allQuizzes
+        .filter((q) => {
+          const openTime = q.openTime ? new Date(q.openTime) : null;
+
+          return (
+            q.bookingId.toString() == b._id.toString() &&
+            openTime &&
+            openTime > new Date()
+          );
+        })
+        .sort((a, b) => new Date(a.openTime) - new Date(b.openTime))
         .slice(0, 3);
-      const assignments = allAssignments
-        .filter((a) => a.bookingId.toString() == b._id.toString())
+
+      const upcomingAssignments = allAssignments
+        .filter((a) => {
+          const openTime = a.openTime ? new Date(a.openTime) : null;
+          return (
+            a.bookingId.toString() == b._id.toString() &&
+            openTime &&
+            openTime > new Date()
+          );
+        })
+        .sort((a, b) => new Date(a.openTime) - new Date(b.openTime))
+        .slice(0, 3);
+
+      const THREE_DAYS_MS = 3 * 24 * 60 * 60 * 1000;
+
+      const dueSoonQuizzes = allQuizzes
+        .filter((q) => {
+          const openTime = q.openTime ? new Date(q.openTime) : null;
+          const deadline = q.closeTime ? new Date(q.closeTime) : null;
+
+          const isOpened = !openTime || openTime <= new Date();
+          const timeLeft = deadline - new Date();
+
+          return (
+            q.bookingId.toString() == b._id.toString() &&
+            isOpened &&
+            timeLeft > 0 &&
+            timeLeft <= THREE_DAYS_MS
+          );
+        })
+        .sort((a, b) => {
+          const da = a.closeTime;
+          const db = b.closeTime;
+          return new Date(da) - new Date(db);
+        })
+        .slice(0, 3);
+
+      const dueSoonAssignments = allAssignments
+        .filter((a) => {
+          const openTime = a.openTime ? new Date(a.openTime) : null;
+          const deadline = a.deadline ? new Date(a.deadline) : null;
+
+          const isOpened = !openTime || openTime <= new Date();
+          const timeLeft = deadline - new Date();
+          return (
+            a.bookingId.toString() == b._id.toString() &&
+            isOpened &&
+            timeLeft > 0 &&
+            timeLeft <= THREE_DAYS_MS
+          );
+        })
+        .sort((a, b) => new Date(a.deadline) - new Date(b.deadline))
         .slice(0, 3);
 
       return {
@@ -124,8 +181,12 @@ const getMyAllCoursesDetails = async (req, res) => {
         },
         progress: progressMap[b._id.toString()],
         upcomingTasks: {
-          quizzes,
-          assignments,
+          quizzes: upcomingQuizzes,
+          assignments: upcomingAssignments,
+        },
+        dueSoonTasks: {
+          quizzes: dueSoonQuizzes,
+          assignments: dueSoonAssignments,
         },
       };
     });
@@ -165,9 +226,16 @@ const getScheduleForCourse = async (req, res) => {
 const getQuizzesForCourse = async (req, res) => {
   try {
     const { courseId } = req.params;
-    const quizzes = await Quiz.find({ bookingId: courseId }).sort({
-      createdAt: -1,
-    });
+    const now = new Date();
+
+    const quizzes = await Quiz.find({
+      bookingId: courseId,
+    })
+      .sort({
+        createdAt: -1,
+      })
+      .select("-__v")
+      .lean();
 
     res.status(200).json({ success: true, data: quizzes });
   } catch (error) {
@@ -178,9 +246,17 @@ const getQuizzesForCourse = async (req, res) => {
 const getAssignmentsForCourse = async (req, res) => {
   try {
     const { courseId } = req.params;
-    const assignments = await Assignment.find({ bookingId: courseId }).sort({
-      createdAt: -1,
-    });
+    const now = new Date();
+
+    const assignments = await Assignment.find({
+      bookingId: courseId,
+    })
+      .sort({
+        createdAt: -1,
+      })
+      .select("-__v")
+      .lean();
+
     res.status(200).json({ success: true, data: assignments });
   } catch (error) {
     console.error("GetMyCourseDetails Error:", error);

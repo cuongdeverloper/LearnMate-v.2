@@ -320,25 +320,40 @@ exports.getUserFinancialFlow = async (req, res) => {
 exports.payMonthly = async (req, res) => {
   try {
     const { bookingId } = req.body;
-    if (!bookingId) return res.status(400).json({ success: false, message: "Booking ID required." });
+    if (!bookingId)
+      return res.status(400).json({ success: false, message: "Booking ID required." });
 
-    const booking = await Booking.findById(bookingId)
-      .populate("tutorId")
-      .populate("learnerId");
 
-    if (!booking) return res.status(404).json({ success: false, message: "Booking not found." });
-    if (booking.completed) return res.status(400).json({ success: false, message: "Khóa học đã hoàn tất." });
+      const booking = await Booking.findById(bookingId)
+      .populate({ path: "tutorId", populate: { path: "user" } })
+        .populate("learnerId")
+        .populate("subjectId");
+
+
+    if (!booking)
+      return res.status(404).json({ success: false, message: "Booking not found." });
+    if (booking.completed)
+      return res.status(400).json({ success: false, message: "Khóa học đã hoàn tất." });
 
     const learner = booking.learnerId;
-    const tutor = await User.findById(booking.tutorId.user);
+    const tutor = booking.tutorId.user;
 
-    if (!learner || !tutor) return res.status(404).json({ success: false, message: "Không tìm thấy học viên hoặc gia sư." });
+    if (!learner || !tutor)
+      return res.status(404).json({ success: false, message: "Không tìm thấy học viên hoặc gia sư." });
 
     const nextMonthIndex = booking.paidMonths + 1;
+
     if (nextMonthIndex > booking.numberOfMonths)
       return res.status(400).json({ success: false, message: "Đã thanh toán đủ số tháng." });
 
-    const amountToPay = booking.monthlyPayment || 0;
+    let amountToPay = booking.monthlyPayment || 0;
+
+    // Nếu đây là tháng cuối và có deposit, trừ deposit thay vì thanh toán tháng
+    if (nextMonthIndex === booking.numberOfMonths && booking.depositStatus === "held") {
+      amountToPay = 0; // Hoặc nếu muốn trừ deposit riêng
+      booking.depositStatus = "used";
+    }
+
     if (learner.balance < amountToPay)
       return res.status(400).json({ success: false, message: "Số dư học viên không đủ." });
 
@@ -354,23 +369,24 @@ exports.payMonthly = async (req, res) => {
     booking.paidMonths = nextMonthIndex;
     await booking.save();
 
-    // Lưu FinancialHistory cho học viên
-    await FinancialHistory.create({
-      userId: learner._id,
-      amount: amountToPay,
-      balanceChange: -amountToPay,
-      type: "spend",
-      description: `Thanh toán tháng ${nextMonthIndex} cho khóa học ${booking.subjectId}`,
-    });
+    // Lưu lịch sử tài chính
+    if (amountToPay > 0) {
+      await FinancialHistory.create({
+        userId: learner._id,
+        amount: amountToPay,
+        balanceChange: -amountToPay,
+        type: "spend",
+        description: `Thanh toán tháng ${nextMonthIndex} cho khóa học ${booking.subjectId.name}`,
+      });
 
-    // Lưu FinancialHistory cho gia sư
-    await FinancialHistory.create({
-      userId: tutor._id,
-      amount: amountToPay,
-      balanceChange: amountToPay,
-      type: "earning",
-      description: `Nhận thanh toán tháng ${nextMonthIndex} từ học viên ${learner.username}`,
-    });
+      await FinancialHistory.create({
+        userId: tutor._id,
+        amount: amountToPay,
+        balanceChange: amountToPay,
+        type: "earning",
+        description: `Nhận thanh toán tháng ${nextMonthIndex} từ học viên ${learner.username}`,
+      });
+    }
 
     return res.json({ success: true, message: "Thanh toán thành công.", booking });
   } catch (error) {

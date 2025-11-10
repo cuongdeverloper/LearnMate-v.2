@@ -120,6 +120,28 @@ export const fetchQuizResult = (quizId) => async (dispatch) => {
   }
 };
 
+export const fetchQuizExplanations = (questions) => async (dispatch) => {
+  dispatch({ type: "QUIZ_EXPLANATION_REQUEST" });
+  try {
+    const res = await axios.post(
+      `/api/ai/explain-question`,
+      { questions },
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+    dispatch({ type: "QUIZ_EXPLANATION_SUCCESS", payload: res.explanations });
+  } catch (err) {
+    dispatch({
+      type: "QUIZ_EXPLANATION_FAILURE",
+      payload: err.response.data.message,
+    });
+  }
+};
+
 export const resetQuiz = () => ({
   type: "QUIZ_RESET",
 });
@@ -155,13 +177,18 @@ export const submitAssignment = (formData) => async (dispatch) => {
 
     dispatch({ type: "ASSIGNMENT_SUBMIT_SUCCESS", payload: res.data });
   } catch (err) {
-    dispatch({ type: "ASSIGNMENT_SUBMIT_FAILURE", payload: err.message });
+    const message = err.response?.data?.message || err.message;
+    dispatch({
+      type: "ASSIGNMENT_SUBMIT_FAILURE",
+      payload: message,
+    });
+    throw new Error(message);
   }
 };
 
-export const selectAssignment = (assignment) => ({
+export const selectAssignment = (assignmentId) => ({
   type: "ASSIGNMENT_SELECT",
-  payload: assignment,
+  payload: assignmentId,
 });
 
 // -------------------------------- PROGRESS -------------------------------

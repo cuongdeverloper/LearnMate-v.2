@@ -7,9 +7,8 @@ import 'bootstrap/dist/js/bootstrap.bundle.min'; // Import Bootstrap JS
 import { Provider } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
 import 'nprogress/nprogress.css';
-import './index.css'
 import { persistor, store } from './redux/store';
-
+import './tailwind.css'
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(

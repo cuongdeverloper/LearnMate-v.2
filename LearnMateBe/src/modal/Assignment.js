@@ -31,14 +31,20 @@ const AssignmentSchema = new mongoose.Schema(
     title: { type: String, required: true },
     description: { type: String },
     fileUrl: { type: String, required: true },
+    openTime: { type: Date },
     deadline: { type: Date, required: true },
 
-    // for learner
+    topic: { type: String, default: "Chưa phân loại" },
+
     submitted: { type: Boolean, default: false },
     submittedAt: { type: Date },
     submitFileUrl: { type: String },
     note: String,
     grade: Number,
+    maxGrade: {
+      type: Number,
+      default: 10,
+    },
     feedback: String,
   },
   { timestamps: true }

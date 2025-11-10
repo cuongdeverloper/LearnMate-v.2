@@ -19,7 +19,6 @@ export default function BookingPage() {
   const [tutor, setTutor] = useState(null);
   const [loading, setLoading] = useState(false);
   const [numberOfMonths, setNumberOfMonths] = useState(1);
-  const [depositOption, setDepositOption] = useState(30); // % cọc
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [balance, setBalance] = useState(null);
   const [note, setNote] = useState("");
@@ -171,7 +170,7 @@ export default function BookingPage() {
     if (!tutorId || !weekStart) return;
     try {
       const params = { weekStart: weekStart.toISOString().split("T")[0] };
-       const res = await axios.get(`/api/tutor/${tutorId}/availability`, {
+      const res = await axios.get(`/api/tutor/${tutorId}/availability`, {
         params,
       });
       const body = res?.data ?? res;
@@ -217,14 +216,20 @@ export default function BookingPage() {
       return toast.warn("Vui lòng nhập địa chỉ học");
     setLoading(true);
     try {
-      const totalSessions = selectedSlots.length * numberOfMonths * 4; // tự nhân 4 tuần/tháng
+      const totalSessions = selectedSlots.length * numberOfMonths * 4;
       const totalAmount = tutor.pricePerHour * totalSessions;
-      const deposit = Math.round(totalAmount * (depositOption / 100));
-      const remaining = totalAmount - deposit;
-      const monthlyPayment = Math.round(remaining / numberOfMonths);
 
-      if (balance < deposit) {
-        toast.error(`Số dư không đủ để đặt cọc (${depositOption}%)`);
+      // Tiền 1 tháng học
+      const monthlyPayment =
+        numberOfMonths > 0 ? Math.round(totalAmount / numberOfMonths) : 0;
+
+      // Nếu học > 1 tháng thì cọc = 1 tháng cuối, còn nếu chỉ học 1 tháng thì không cần cọc
+      const deposit = numberOfMonths > 1 ? monthlyPayment : 0;
+
+      // Tổng thanh toán ban đầu = tháng đầu + (cọc nếu có)
+      const initialPayment = monthlyPayment + deposit;
+      if (balance < initialPayment) {
+        toast.error("Số dư không đủ để thanh toán tháng đầu và tiền cọc.");
         setLoading(false);
         return;
       }
@@ -235,13 +240,15 @@ export default function BookingPage() {
         `/api/learner/bookings/${tutorId}`,
         {
           amount: totalAmount,
+          monthlyPayment,
+          deposit,
+          initialPayment,
           numberOfMonths,
           note,
           subjectId: selectedSubject,
           availabilityIds: selectedSlots,
           addressDetail,
           province,
-          depositOption,
         },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -250,7 +257,7 @@ export default function BookingPage() {
       if (body?.success || body?.bookingId) {
         toast.success("Đặt lịch thành công!");
         setBalance((prev) =>
-          typeof prev === "number" ? prev - deposit : prev
+          typeof prev === "number" ? prev - initialPayment : prev
         );
         await fetchAvailabilities();
         setSelectedSlots([]);
@@ -265,56 +272,112 @@ export default function BookingPage() {
 
   const renderTutorInfo = () => {
     const user = tutor?.user;
+
+    // Dữ liệu môn học
+    const subjectsList =
+      subjects && subjects.length > 0
+        ? subjects
+        : [{ name: "Đang cập nhật", classLevel: "" }];
+
     return (
-      <div className="tutor-confirm">
-        <img
-          src={
-            user?.image ||
-            `https://i.pravatar.cc/100?img=${
-              Math.floor(Math.random() * 70) + 1
-            }`
-          }
-          alt="avatar"
-          className="avatar"
-        />
-        <div className="tutor-details">
-          <h3>{user?.username || "Không rõ tên"}</h3>
-          <p>
-            <strong>Email:</strong> {user?.email || "Không rõ"}
+      <div className="tutor-card-elevated">
+        {/* Ảnh đại diện */}
+        <div className="tutor-avatar-wrapper">
+          <img
+            src={
+              user?.image ||
+              `https://i.pravatar.cc/150?img=${
+                Math.floor(Math.random() * 70) + 1
+              }`
+            }
+            alt={`Ảnh đại diện của ${user?.username || "Gia sư"}`}
+            className="tutor-avatar"
+          />
+        </div>
+
+        {/* Thông tin chi tiết */}
+        <div className="tutor-info-section">
+          <h2 className="tutor-name">
+            {user?.username || "Gia sư chuyên nghiệp"}
+          </h2>
+
+          {/* Môn học hiển thị dạng thẻ */}
+          <div className="tutor-subjects">
+            <i className="fa fa-book"></i>
+
+            <div className="subjects-list">
+              {subjectsList.map((s, index) => (
+                <div key={index} className="subject-card">
+                  {s.name}{" "}
+                  {s.classLevel && (
+                    <span className="class-tag">Lớp {s.classLevel}</span>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <p className="tutor-price">
+            <i className="fa fa-tag"></i>
+            <span className="label">Giá:</span>{" "}
+            <span className="highlight">
+              {tutor?.pricePerHour?.toLocaleString()} VND / giờ
+            </span>
           </p>
-          <p>
-            <strong>SĐT:</strong> {user?.phoneNumber || "Không rõ"}
+
+          <p className="tutor-description">
+            <i className="fa fa-info-circle"></i>
+            <span className="label">Mô tả:</span>{" "}
+            {tutor?.description ||
+              "Gia sư tận tâm, giàu kinh nghiệm, sẵn sàng hỗ trợ bạn đạt mục tiêu học tập."}
           </p>
-          <p>
-            <strong>Giới tính:</strong> {user?.gender || "Không rõ"}
-          </p>
-          <p>
-            <strong>Môn:</strong>{" "}
-            {subjects?.length
-              ? subjects.map((s) => `${s.name} (${s.classLevel})`).join(", ")
-              : "Không rõ"}
-          </p>
-          <p>
-            <strong>Giá:</strong> {tutor?.pricePerHour?.toLocaleString()} VND /
-            giờ
-          </p>
-          <p>
-            <strong>Mô tả:</strong> {tutor?.description || "Không có mô tả"}
-          </p>
-          <button className="btn btn-secondary" onClick={handleChatNow}>
-            Trò chuyện ngay
+
+          {/* Thông tin phụ */}
+          <div className="tutor-contact">
+            <div className="contact-item">
+              <i className="fa fa-envelope"></i>
+              <span className="contact-label">Email:</span>
+              <span className="contact-value">
+                {user?.email || "Liên hệ qua Chat"}
+              </span>
+            </div>
+            <div className="contact-item">
+              <i className="fa fa-phone"></i>
+              <span className="contact-label">SĐT:</span>
+              <span className="contact-value">
+                {user?.phoneNumber || "Đã ẩn"}
+              </span>
+            </div>
+            <div className="contact-item">
+              <i className="fa fa-user"></i>
+              <span className="contact-label">Giới tính:</span>
+              <span className="contact-value">
+                {user?.gender || "Không rõ"}
+              </span>
+            </div>
+          </div>
+
+          <button className="btn-chat-now" onClick={handleChatNow}>
+            <i className="fa fa-comment"></i> Trò chuyện ngay
           </button>
         </div>
       </div>
     );
   };
 
+  // --- Tính toán lại dựa theo mô hình thanh toán tháng đầu + cọc ---
   const totalSessions = selectedSlots.length * numberOfMonths * 4;
   const totalAmount = tutor ? tutor.pricePerHour * totalSessions : 0;
-  const deposit = Math.round(totalAmount * (depositOption / 100));
-  const remaining = totalAmount - deposit;
+
+  // Tiền 1 tháng học
   const monthlyPayment =
-    numberOfMonths > 0 ? Math.round(remaining / numberOfMonths) : 0;
+    numberOfMonths > 0 ? Math.round(totalAmount / numberOfMonths) : 0;
+
+  // Nếu học > 1 tháng thì cọc = 1 tháng cuối, còn nếu chỉ học 1 tháng thì không cần cọc
+  const deposit = numberOfMonths > 1 ? monthlyPayment : 0;
+
+  // Tổng thanh toán ban đầu = tháng đầu + (cọc nếu có)
+  const initialPayment = monthlyPayment + deposit;
 
   return (
     <>
@@ -349,7 +412,7 @@ export default function BookingPage() {
                 <option value="">--Chọn môn--</option>
                 {subjects.map((sub) => (
                   <option key={sub._id} value={sub._id}>
-                    {sub.name} ({sub.classLevel})
+                    {sub.name} lớp {sub.classLevel}
                   </option>
                 ))}
               </select>
@@ -366,18 +429,26 @@ export default function BookingPage() {
             </div>
 
             <div className="form-group">
-              <label>Chọn phần trăm cọc</label>
-              <select
-                value={depositOption}
-                onChange={(e) => setDepositOption(Number(e.target.value))}
-              >
-                <option value={30}>30%</option>
-                <option value={60}>60%</option>
-              </select>
+              <label>Hình thức thanh toán</label>
+              <p>
+                {numberOfMonths > 1 ? (
+                  <>
+                    Bạn sẽ thanh toán <strong>tháng đầu tiên</strong> và đặt cọc
+                    thêm <strong>1 tháng cuối</strong> (sẽ được trừ vào tháng
+                    học cuối cùng).
+                  </>
+                ) : (
+                  <>
+                    Bạn sẽ thanh toán <strong>tháng đầu tiên</strong> (không cần
+                    đặt cọc vì chỉ học 1 tháng).
+                  </>
+                )}
+              </p>
             </div>
 
             <div className="form-group">
-              <label>Chọn lịch trống</label>
+              <label className="schedule-title">Chọn lịch trống</label>
+
               <div className="weekly-schedule-grid">
                 <div className="grid-header">
                   {["T2", "T3", "T4", "T5", "T6", "T7", "CN"].map(
@@ -392,24 +463,25 @@ export default function BookingPage() {
                 <div className="grid-body">
                   {["T2", "T3", "T4", "T5", "T6", "T7", "CN"].map(
                     (dayName, idx) => {
+                      const dayOfWeek = idx === 6 ? 0 : idx + 1;
                       return (
                         <div key={idx} className="grid-day-column">
                           {timeSlots.map((slotStr) => {
                             const [startTime, endTime] = slotStr
                               .split(" - ")
                               .map((s) => s.trim());
-                            // map dayName sang dayOfWeek: T2->1, ..., CN->0
-                            const dayOfWeek = idx === 6 ? 0 : idx + 1;
                             const avail = availabilities.find(
                               (a) =>
                                 a.dayOfWeek === dayOfWeek &&
                                 a.startTime === startTime &&
                                 a.endTime === endTime
                             );
+
                             const isSelected =
                               avail && selectedSlots.includes(avail._id);
                             const isBooked =
                               avail && (avail.bookingId || avail.isBooked);
+
                             const cls = !avail
                               ? "not-available"
                               : isBooked
@@ -417,6 +489,7 @@ export default function BookingPage() {
                               : isSelected
                               ? "selected"
                               : "available";
+
                             return (
                               <div
                                 key={`${dayName}-${slotStr}`}
@@ -433,18 +506,7 @@ export default function BookingPage() {
                                   toggleSlot(avail._id);
                                 }}
                               >
-                                <div className="slot-time">{slotStr}</div>
-                                <div className="slot-status">
-                                  {!avail ? (
-                                    <small>Not available</small>
-                                  ) : isBooked ? (
-                                    <small>Đã đặt</small>
-                                  ) : isSelected ? (
-                                    <small>Đã chọn</small>
-                                  ) : (
-                                    <small>Trống</small>
-                                  )}
-                                </div>
+                                <span className="slot-time">{slotStr}</span>
                               </div>
                             );
                           })}
@@ -454,8 +516,9 @@ export default function BookingPage() {
                   )}
                 </div>
               </div>
-              <div style={{ marginTop: 12 }}>
-                <strong>Đã chọn:</strong> {selectedSlots.length} ô
+
+              <div className="selected-info">
+                <strong>Đã chọn:</strong> {selectedSlots.length} khung giờ
               </div>
             </div>
 
@@ -515,62 +578,179 @@ export default function BookingPage() {
         </div>
 
         <div className="side-panel right-panel">
-          <h3>Cam kết từ gia sư</h3>
-          <div className="guarantee-section">
-            <div className="guarantee-item">
-              <h4>Đúng giờ</h4>
-              <p>Gia sư luôn đến đúng giờ đã hẹn</p>
-            </div>
-            <div className="guarantee-item">
-              <h4>Chuẩn bị kỹ</h4>
-              <p>Chuẩn bị bài học cẩn thận, phù hợp trình độ</p>
-            </div>
-            <div className="guarantee-item">
-              <h4>Hỗ trợ tận tình</h4>
-              <p>Luôn sẵn sàng giải đáp và hỗ trợ học viên</p>
-            </div>
-          </div>
-        </div>
+  <h3 className="panel-title">
+    <i className="fa fa-handshake"></i> Cam kết từ gia sư
+  </h3>
+
+
+
+  <div className="guarantee-section">
+    {/* Nhóm 1: Cam kết chính */}
+    <div className="guarantee-item">
+      <div className="icon-wrapper punctual">
+        <i className="fa fa-clock"></i>
+      </div>
+      <div className="guarantee-text">
+        <h4>Đúng giờ & chuyên nghiệp</h4>
+        <p>
+          Gia sư luôn đảm bảo bắt đầu buổi học đúng giờ, duy trì thái độ chuyên nghiệp và
+          tôn trọng thời gian của học viên. Mọi thay đổi về lịch học đều được thông báo trước tối thiểu 24 giờ.
+        </p>
+      </div>
+    </div>
+
+    <div className="guarantee-item">
+      <div className="icon-wrapper prepared">
+        <i className="fa fa-book-open"></i>
+      </div>
+      <div className="guarantee-text">
+        <h4>Chuẩn bị bài kỹ lưỡng</h4>
+        <p>
+          Trước mỗi buổi học, gia sư dành thời gian nghiên cứu chương trình, lựa chọn ví dụ thực tế,
+          và chuẩn bị bài tập phù hợp với năng lực từng học viên để đảm bảo buổi học hiệu quả nhất.
+        </p>
+      </div>
+    </div>
+
+    <div className="guarantee-item">
+      <div className="icon-wrapper support">
+        <i className="fa fa-headset"></i>
+      </div>
+      <div className="guarantee-text">
+        <h4>Hỗ trợ tận tình ngoài giờ</h4>
+        <p>
+          Gia sư sẵn sàng hỗ trợ học viên giải đáp câu hỏi ngoài giờ học thông qua chat hoặc email.
+          Luôn đồng hành và động viên học viên trong quá trình đạt mục tiêu học tập dài hạn.
+        </p>
+      </div>
+    </div>
+
+    {/* Nhóm 2: Cam kết bổ sung */}
+    <div className="guarantee-item">
+      <div className="icon-wrapper quality">
+        <i className="fa fa-graduation-cap"></i>
+      </div>
+      <div className="guarantee-text">
+        <h4>Cam kết chất lượng giảng dạy</h4>
+        <p>
+          Mỗi buổi học được thiết kế để mang lại kiến thức vững chắc, ứng dụng thực tế và
+          phát triển tư duy độc lập cho học viên. Học viên có thể yêu cầu điều chỉnh phương pháp nếu cần.
+        </p>
+      </div>
+    </div>
+
+    <div className="guarantee-item">
+      <div className="icon-wrapper tracking">
+        <i className="fa fa-line-chart"></i>
+      </div>
+      <div className="guarantee-text">
+        <h4>Theo dõi tiến bộ học tập</h4>
+        <p>
+          Sau mỗi giai đoạn học, gia sư cung cấp nhận xét chi tiết về điểm mạnh, điểm cần cải thiện
+          và đề xuất phương pháp luyện tập phù hợp để học viên tiến bộ rõ rệt.
+        </p>
+      </div>
+    </div>
+
+    <div className="guarantee-item">
+      <div className="icon-wrapper feedback">
+        <i className="fa fa-comments"></i>
+      </div>
+      <div className="guarantee-text">
+        <h4>Phản hồi nhanh & thân thiện</h4>
+        <p>
+          Gia sư phản hồi tin nhắn hoặc yêu cầu trong vòng 12 giờ. Luôn giữ thái độ tích cực,
+          hỗ trợ tận tâm và sẵn sàng lắng nghe ý kiến từ học viên và phụ huynh.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  {/* Phần tin tưởng */}
+  <div className="tutor-promise-footer">
+    <i className="fa fa-star"></i>
+    <p>
+      Với mỗi cam kết, gia sư hướng đến việc mang lại trải nghiệm học tập tốt nhất – nơi học viên cảm thấy được tôn trọng, được truyền cảm hứng và đạt được tiến bộ thực sự.
+    </p>
+  </div>
+</div>
+
       </div>
 
       {showConfirmModal && (
         <div className="modal-overlay">
-          <div className="modal-content">
-            <h3>Xác nhận đặt lịch</h3>
-            <p>Bạn có chắc chắn muốn đặt lịch học với gia sư này?</p>
-            <p>
-              <strong>Số buổi học:</strong> {totalSessions}
+          <div className="modal-content-booking">
+            {" "}
+            {/* Đổi tên class trở lại là .modal-content để dễ áp dụng SCSS */}
+            <h3>XÁC NHẬN THANH TOÁN & ĐẶT LỊCH</h3>
+            {/* THÔNG BÁO QUAN TRỌNG VỀ THANH TOÁN */}
+            <p className="modal-intro-text">
+              Vui lòng kiểm tra kỹ chi tiết thanh toán. Sau khi xác nhận, số
+              tiền
+              <strong> {initialPayment.toLocaleString()} VND </strong> (gồm tiền
+              tháng đầu tiên và tiền cọc) sẽ được **trừ ngay lập tức** khỏi số
+              dư tài khoản của bạn.
             </p>
-            <p>
-              <strong>Số tháng học:</strong> {numberOfMonths}
-            </p>
-            <p>
-              <strong>Tổng tiền:</strong> {totalAmount.toLocaleString()} VND
-            </p>
-            <p>
-              <strong>Phần trăm cọc:</strong> {depositOption}%
-            </p>
-            <p>
-              <strong>Số tiền cọc:</strong> {deposit.toLocaleString()} VND
-            </p>
-            <p>
-              <strong>Tiền trả hàng tháng:</strong>{" "}
-              {monthlyPayment.toLocaleString()} VND
-            </p>
+            <div className="payment-details">
+              {/* DÒNG CHI TIẾT */}
+              <p>
+                <strong>Tổng thời hạn học:</strong>{" "}
+                <span>{numberOfMonths} tháng</span>
+              </p>
+              <p>
+                <strong>Số buổi/khung giờ đã chọn:</strong>{" "}
+                <span>{selectedSlots.length} buổi/tuần</span>
+              </p>
+              <p>
+                <strong>Tổng số buổi dự kiến (2h/buổi):</strong>{" "}
+                <span>{totalSessions} buổi</span>
+              </p>
+              <p className="line-item">
+                <strong>Tổng giá trị khóa học:</strong>{" "}
+                <span className="value-total">
+                  {totalAmount.toLocaleString()} VND
+                </span>
+              </p>
+              <p className="line-item">
+                <strong>Thanh toán hàng tháng:</strong>{" "}
+                <span className="value-monthly">
+                  {monthlyPayment.toLocaleString()} VND
+                </span>
+              </p>
+              {numberOfMonths > 1 && (
+                <p className="line-item">
+                  <strong>Tiền cọc (Tháng cuối):</strong>
+                  <span className="value-deposit">
+                    {deposit.toLocaleString()} VND
+                  </span>
+                </p>
+              )}
 
+              {/* DÒNG TỔNG THANH TOÁN BAN ĐẦU (NỔI BẬT) */}
+              <div className="initial-payment-total">
+                <p>
+                  <strong style={{ fontSize: "1.1em" }}>
+                    TỔNG THANH TOÁN BAN ĐẦU:
+                  </strong>
+                  <span className="value-initial">
+                    {initialPayment.toLocaleString()} VND
+                  </span>
+                </p>
+              </div>
+            </div>
             <div className="modal-actions">
               <button
                 onClick={() => setShowConfirmModal(false)}
                 className="btn btn-secondary"
               >
-                Hủy
+                HỦY BỎ
               </button>
               <button
                 onClick={handleBooking}
                 disabled={loading}
                 className="btn btn-primary"
               >
-                {loading ? "Đang xử lý..." : "Xác nhận"}
+                {loading ? "ĐANG XỬ LÝ..." : "XÁC NHẬN ĐẶT LỊCH"}
               </button>
             </div>
           </div>

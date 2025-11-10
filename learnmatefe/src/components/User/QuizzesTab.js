@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import { Card } from "../ui/Card";
-import { CheckCircle2 } from "lucide-react";
+import { CheckCircle2, Clock } from "lucide-react";
 import { Button } from "../ui/Button";
 import { Badge } from "../ui/Badge";
 import {
@@ -14,11 +14,17 @@ import {
 import { Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchQuizzes, selectQuiz } from "../../redux/action/courseActions";
+import { getDaysUntilDue, isOverdue } from "../../lib/assignments";
 
-const statusFor = (now, deadline, attempted, maxAttempts) => {
-  if (attempted === 0 && now > deadline) return "Overdue";
-  if (attempted === maxAttempts || (attempted > 0 && now > deadline))
+const statusFor = (openTime, deadline, attempted, maxAttempts) => {
+  const now = new Date();
+
+  if (attempted === 0 && now > new Date(deadline)) return "Overdue";
+
+  if (attempted === maxAttempts || (attempted > 0 && now > new Date(deadline)))
     return "Completed";
+
+  if (openTime && now < new Date(openTime)) return "Upcoming";
 
   return "Active";
 };
@@ -41,7 +47,7 @@ const QuizzesTab = () => {
 
   useEffect(() => {
     if (selectedCourse) {
-      dispatch(fetchQuizzes(selectedCourse._id));
+      dispatch(fetchQuizzes(selectedCourse));
     }
   }, [dispatch, selectedCourse, submitting]);
 
@@ -55,7 +61,7 @@ const QuizzesTab = () => {
         <TableHeader>
           <TableRow>
             <TableHead>Tiêu đề</TableHead>
-            <TableHead>Thời hạn</TableHead>
+            <TableHead>Thời gian</TableHead>
             <TableHead>Trạng thái</TableHead>
             <TableHead>Các nỗ lực</TableHead>
             <TableHead>Điểm số</TableHead>
@@ -67,19 +73,45 @@ const QuizzesTab = () => {
             quizzes.length > 0 &&
             quizzes?.map((q) => {
               const status = statusFor(
-                now,
-                q.deadline,
+                q.openTime,
+                q.closeTime,
                 q.attempted,
                 q.maxAttempts
               );
 
+              const daysLeft = getDaysUntilDue(q.closeTime);
+              const showOverdueWarning =
+                isOverdue(q.closeTime) && q.attempted == 0;
+
               return (
                 <TableRow key={q._id}>
-                  <TableCell className="font-medium">{q.title}</TableCell>
-                  <TableCell>{formatDate(q.deadline)}</TableCell>
+                  <TableCell className="font-medium">
+                    {q.title}
+                    {showOverdueWarning && (
+                      <p className="text-xs text-destructive mt-1">
+                        ⚠️ Overdue
+                      </p>
+                    )}
+                    {!showOverdueWarning &&
+                      daysLeft > 0 &&
+                      q.attempted == 0 && (
+                        <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                          <Clock className="w-3 h-3" />
+                          {daysLeft} day{daysLeft !== 1 ? "s" : ""} left
+                        </p>
+                      )}
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex flex-col gap-1">
+                      <span>Mở: {formatDate(q.openTime)} -</span>
+                      <span>Hạn: {formatDate(q.closeTime)}</span>
+                    </div>
+                  </TableCell>
                   <TableCell>
                     {status === "Upcoming" && (
-                      <Badge variant="secondary">Upcoming</Badge>
+                      <Badge variant="secondary" className="text-white">
+                        Upcoming
+                      </Badge>
                     )}
                     {status === "Active" && (
                       <Badge className="bg-emerald-600 hover:bg-emerald-600 text-white">
@@ -87,18 +119,15 @@ const QuizzesTab = () => {
                       </Badge>
                     )}
 
-                    {status === "Completed" ? (
-                      q.attempted > 0 ? (
-                        <Badge className="bg-slate-800 hover:bg-slate-800 text-white">
-                          Completed
-                        </Badge>
-                      ) : (
-                        <Badge className="bg-slate-800 hover:bg-slate-800 text-white">
-                          Overdue
-                        </Badge>
-                      )
-                    ) : (
-                      <></>
+                    {status === "Completed" && (
+                      <Badge className="bg-slate-800 hover:bg-slate-800 text-white">
+                        Completed
+                      </Badge>
+                    )}
+                    {status === "Overdue" && (
+                      <Badge className="bg-slate-800 hover:bg-slate-800 text-white">
+                        Overdue
+                      </Badge>
                     )}
                   </TableCell>
                   <TableCell>
@@ -109,7 +138,7 @@ const QuizzesTab = () => {
                       ? Number(q.newestScore).toFixed(0) + "%"
                       : "-"}
                   </TableCell>
-                  <TableCell className="text-right">
+                  <TableCell className="text-right flex flex-col gap-2">
                     {status === "Active" && (
                       <Button
                         className="text-white"
@@ -139,6 +168,17 @@ const QuizzesTab = () => {
                         <Link to={`/user/quizzes/${q._id}/result`}>
                           {q.attempted < q.maxAttempts && "Thử lại"}
                           {q.attempted >= q.maxAttempts && "Xem kết quả"}
+                        </Link>
+                      </Button>
+                    )}
+                    {(status == "Active" || status == "Completed") && (
+                      <Button
+                        asChild
+                        variant="outline"
+                        onClick={() => handleSelectQuiz(q._id)}
+                      >
+                        <Link to={`/user/quizzes/${q._id}/result`}>
+                          Xem kết quả
                         </Link>
                       </Button>
                     )}

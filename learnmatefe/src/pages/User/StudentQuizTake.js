@@ -39,12 +39,42 @@ const StudentQuizTake = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  const { quizzes, selectedQuiz, quizDetails, submitting, loading, error } =
-    useSelector((state) => state.courses);
+  const {
+    selectedCourse,
+    selectedQuiz,
+    quizDetails,
+    submitting,
+    loading,
+    error,
+  } = useSelector((state) => state.courses);
 
   useEffect(() => {
-    dispatch(fetchQuizDetailsById(selectedQuiz));
-  }, [dispatch, selectedQuiz]);
+    if (id) dispatch(fetchQuizDetailsById(id));
+  }, [dispatch, id]);
+
+  useEffect(() => {
+    if (!quizDetails) return;
+
+    const now = new Date();
+    const openTime = quizDetails.openTime
+      ? new Date(quizDetails.openTime)
+      : null;
+    const closeTime = quizDetails.closeTime
+      ? new Date(quizDetails.closeTime)
+      : null;
+
+    if (openTime && now < openTime) {
+      toast.warning("Quiz has not opened yet!");
+      navigate(`/user/my-courses/${selectedCourse}`); // hoặc một trang thông báo riêng
+      return;
+    }
+
+    if (closeTime && now > closeTime) {
+      toast.error("This quiz is already closed.");
+      navigate(`/user/my-courses/${selectedCourse}`);
+      return;
+    }
+  }, [quizDetails, navigate]);
 
   const storageKey = `quiz-${id}-state`;
   const [state, setState] = useState(() => {
@@ -53,7 +83,7 @@ const StudentQuizTake = () => {
     return {
       currentIndex: 0,
       answers: {},
-      timer: quizDetails.duration || 1800,
+      timer: quizDetails?.duration || 1800,
       startedAt: Date.now(),
     };
   });
@@ -116,9 +146,7 @@ const StudentQuizTake = () => {
     const startedAt = state.startedAt;
     const finishedAt = startedAt + (quizDetails.duration - state.timer) * 1000;
     try {
-      await dispatch(
-        submitQuiz(selectedQuiz, state.answers, startedAt, finishedAt)
-      ).unwrap();
+      dispatch(submitQuiz(selectedQuiz, state.answers, startedAt, finishedAt));
       if (!error) {
         localStorage.removeItem(storageKey);
         setState((s) => ({ currentIndex: 0, answers: {}, timer: 30 * 60 }));
@@ -133,8 +161,11 @@ const StudentQuizTake = () => {
   };
 
   console.log("selectedQuiz", selectedQuiz);
-
+  if (loading || !quizDetails) {
+    return <div className="p-6 text-center">Loading quiz details...</div>;
+  }
   return (
+    
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-secondary/10 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-5xl mx-auto">
         <div className="sticky top-16 z-30 border-b bg-gray-50/95 backdrop-blur">
@@ -183,23 +214,24 @@ const StudentQuizTake = () => {
             </div>
           </div>
         </div>
+        <div className="m-3">{quizDetails?.description}</div>
         <div className="mt-6 grid grid-cols-1 lg:grid-cols-4 gap-6">
           <div className="lg:col-span-3 space-y-4">
             <Card className="p-6">
               <div className="text-lg font-medium mb-4">
-                {currentQuestion.text}
+                {currentQuestion?.text}
               </div>
               <RadioGroup
-                value={state.answers[currentQuestion._id]?.toString() || ""}
-                onValueChange={(v) => selectAnswer(currentQuestion._id, v)}
+                value={state.answers[currentQuestion?._id]?.toString() || ""}
+                onValueChange={(v) => selectAnswer(currentQuestion?._id, v)}
                 className="space-y-3"
               >
-                {currentQuestion.options.map((opt, id) => (
+                {currentQuestion?.options.map((opt, id) => (
                   <div
                     key={id}
                     className={cn(
                       "flex items-center gap-3 rounded-md border p-3",
-                      state.answers[currentQuestion._id] === id &&
+                      state.answers[currentQuestion?._id] === id &&
                         "border-primary bg-blue-500/5 text-primary"
                     )}
                   >
@@ -254,7 +286,7 @@ const StudentQuizTake = () => {
             <Card className="p-4 w-full max-w-[240px] lg:max-w-none">
               <h3 className="font-semibold mb-3 text-xl">Question Navigator</h3>
               <div className="grid grid-cols-5 gap-2">
-                {quizDetails.questions.map((q, idx) => {
+                {quizDetails?.questions.map((q, idx) => {
                   const answered = state.answers[q._id] !== undefined;
                   const isCurrent = idx === state.currentIndex;
                   return (
@@ -289,7 +321,7 @@ const StudentQuizTake = () => {
               <AlertDialogTitle>Submit Quiz?</AlertDialogTitle>
               <AlertDialogDescription>
                 You have answered {answeredCount} of{" "}
-                {quizDetails.questions.length} questions. Once submitted, you
+                {quizDetails?.questions.length} questions. Once submitted, you
                 cannot change your answers.
               </AlertDialogDescription>
             </AlertDialogHeader>

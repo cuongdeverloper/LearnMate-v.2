@@ -38,12 +38,14 @@ const CourseCard = ({ course }) => {
         </div>
 
         <div className="bg-accent/50 rounded-md pt-2">
-          <p className="text-sm text-foreground m-0 ">Bài tập sắp đến hạn:</p>
+          <p className="text-sm text-foreground m-0 ">
+            Bài tập sắp đến hạn (trong 3 ngày):
+          </p>
           <div className="flex items-center gap-2">
             <p className="text-xs m-0">Trắc nghiệm:</p>
-            {course?.upcomingTasks?.quizzes?.length > 0 ? (
+            {course?.dueSoonTasks?.quizzes?.length > 0 ? (
               <p className="text-sm text-primary m-0">
-                {course?.upcomingTasks?.quizzes?.length}
+                {course?.dueSoonTasks?.quizzes?.length}
               </p>
             ) : (
               <p className="text-sm text-muted-foreground m-0">0</p>
@@ -51,9 +53,9 @@ const CourseCard = ({ course }) => {
           </div>
           <div className="flex items-center gap-2">
             <p className="text-xs m-0 ">Tự luận:</p>
-            {course?.upcomingTasks?.assignments?.length > 0 ? (
+            {course?.dueSoonTasks?.assignments?.length > 0 ? (
               <p className="text-sm text-primary m-0">
-                {course?.upcomingTasks?.assignments?.length}
+                {course?.dueSoonTasks?.assignments?.length}
               </p>
             ) : (
               <p className="text-sm text-muted-foreground m-0">0</p>

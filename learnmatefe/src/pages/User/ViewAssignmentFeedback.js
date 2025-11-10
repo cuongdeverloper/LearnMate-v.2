@@ -1,9 +1,9 @@
 import React, { useEffect } from "react";
 import { Button } from "../../components/ui/Button";
-import { ArrowLeft, CheckCircle2, Download } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Download, FileText } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Card } from "../../components/ui/Card";
-import { formatDate } from "../../lib/assignments";
+import { formatDate } from "../../lib/utils";
 
 import {
   RadarChart,
@@ -17,6 +17,38 @@ import {
 } from "recharts";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchAssignments } from "../../redux/action/courseActions";
+
+const getFileType = (url) => {
+  if (url.toLowerCase().endsWith(".pdf")) {
+    return "pdf";
+  }
+  if (url.toLowerCase().endsWith(".docx")) {
+    return "docx";
+  }
+  return "unknown";
+};
+
+const getFileName = (url = "") => {
+  try {
+    const cleanUrl = url.split("?")[0];
+    const rawName = cleanUrl.split("/").pop() || "assignment";
+
+    let decoded = "";
+    try {
+      decoded = decodeURIComponent(rawName);
+    } catch {
+      decoded = rawName;
+    }
+
+    const fixed = new TextDecoder("utf-8").decode(
+      new Uint8Array([...decoded].map((c) => c.charCodeAt(0)))
+    );
+
+    return fixed || "assignment";
+  } catch {
+    return "assignment";
+  }
+};
 
 const ViewAssignmentFeedback = () => {
   const navigate = useNavigate();
@@ -35,10 +67,11 @@ const ViewAssignmentFeedback = () => {
   } = useSelector((state) => state.courses);
 
   useEffect(() => {
-    dispatch(fetchAssignments(selectedAssignment));
+    dispatch(fetchAssignments(selectedCourse));
   }, [dispatch, selectedAssignment, submitting]);
 
   const assignment = assignments.find((a) => a._id === selectedAssignment);
+  console.log("Assignment:", assignment);
 
   if (!selectedAssignment) {
     return (
@@ -66,7 +99,7 @@ const ViewAssignmentFeedback = () => {
     );
   }
 
-  if (!assignment?.feedback) {
+  if (!assignment?.grade) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background via-background to-secondary/10 py-8 px-4 sm:px-6 lg:px-8">
         <div className="max-w-3xl mx-auto">
@@ -78,7 +111,7 @@ const ViewAssignmentFeedback = () => {
             <ArrowLeft className="w-4 h-4" />
             Trở lại
           </Button>
-          <div className="bg-card border border-border rounded-lg shadow-sm p-8 text-center relative">
+          <div className="bg-card border border-border rounded-lg shadow-sm p-8 relative">
             <Button
               onClick={() =>
                 navigate(`/user/assignments/${selectedAssignment}/submit`)
@@ -87,17 +120,164 @@ const ViewAssignmentFeedback = () => {
             >
               Nộp lại
             </Button>
-
-            <p className="text-foreground mb-4">
-              Chưa có phản hồi nào cho bài tập này.
+            <p className="text-lg text-muted-foreground mb-8">
+              {assignment?.title}
             </p>
 
-            <Button
-              onClick={() => navigate(`/user/my-courses/${selectedCourse}`)}
-              className="text-white "
-            >
-              Quay trở lại khóa học
-            </Button>
+            <div className="space-y-6">
+              <div className="border border-border rounded-lg p-3 bg-muted/30 ">
+                <h3 className="text-sm font-semibold text-foreground mb-2">
+                  Mô tả
+                </h3>
+                <p className="text-foreground bg-muted/30 p-2 rounded-lg">
+                  {assignment?.description}
+                </p>
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold text-foreground mb-2">
+                  Ngày hết hạn
+                </h3>
+                <p>{formatDate(assignment?.deadline, "yyyy-MM-dd")}</p>
+              </div>
+
+              {assignment?.fileUrl && (
+                <div>
+                  <h3 className="text-sm font-semibold text-foreground mb-2">
+                    File bài tập
+                  </h3>
+                  {getFileType(assignment?.fileUrl) === "pdf" ? (
+                    <div className="border border-border rounded-lg overflow-hidden bg-white">
+                      <div className="flex items-center justify-between p-4 bg-muted/30 border-b border-border">
+                        <div className="flex items-center gap-2">
+                          <FileText className="w-5 h-5 text-red-600" />
+                          <span className="text-sm font-medium text-foreground">
+                            {getFileName(assignment?.fileUrl)}
+                          </span>
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            const link = document.createElement("a");
+                            link.href = assignment?.fileUrl;
+                            link.download = getFileName(assignment?.fileUrl);
+                            link.click();
+                          }}
+                          className="gap-2 text-white"
+                        >
+                          <Download className="w-4 h-4" />
+                          Tải xuống
+                        </Button>
+                      </div>
+                      <iframe
+                        src={`${assignment?.fileUrl}#toolbar=0`}
+                        className="w-full h-96 border-none"
+                        title="Assignment PDF"
+                      />
+                    </div>
+                  ) : (
+                    <div className="border border-border rounded-lg p-4 bg-muted/30 flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <FileText className="w-6 h-6 text-blue-600" />
+                        <div>
+                          <p className="font-medium text-foreground">
+                            {getFileName(assignment?.fileUrl)}
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            DOCX file - Download to view
+                          </p>
+                        </div>
+                      </div>
+                      <Button
+                        variant="default"
+                        size="sm"
+                        onClick={() => {
+                          const link = document.createElement("a");
+                          link.href = assignment?.fileUrl;
+                          link.download = getFileName(assignment?.fileUrl);
+                          link.click();
+                        }}
+                        className="gap-2 text-white"
+                      >
+                        <Download className="w-4 h-4 text-white" />
+                        Tải xuống
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {assignment?.submitFileUrl && (
+                <div>
+                  <h3 className="text-sm font-semibold text-foreground mb-2">
+                    File đã nộp
+                  </h3>
+                  {getFileType(assignment?.submitFileUrl) === "pdf" ? (
+                    <div className="border border-border rounded-lg overflow-hidden bg-white">
+                      <div className="flex items-center justify-between p-4 bg-muted/30 border-b border-border">
+                        <div className="flex items-center gap-2">
+                          <FileText className="w-5 h-5 text-red-600" />
+                          <span className="text-sm font-medium text-foreground">
+                            {getFileName(assignment?.submitFileUrl)}
+                          </span>
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            const link = document.createElement("a");
+                            link.href = assignment?.submitFileUrl;
+                            link.download = getFileName(
+                              assignment?.submitFileUrl
+                            );
+                            link.click();
+                          }}
+                          className="gap-2"
+                        >
+                          <Download className="w-4 h-4" />
+                          Tải xuống
+                        </Button>
+                      </div>
+                      <iframe
+                        src={`${assignment?.submitFileUrl}#toolbar=0`}
+                        className="w-full h-96 border-none"
+                        title="Assignment PDF"
+                      />
+                    </div>
+                  ) : (
+                    <div className="border border-border rounded-lg p-4 bg-muted/30 flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <FileText className="w-6 h-6 text-blue-600" />
+                        <div>
+                          <p className="font-medium text-foreground">
+                            {getFileName(assignment?.submitFileUrl)}
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            DOCX file - Download to view
+                          </p>
+                        </div>
+                      </div>
+                      <Button
+                        variant="default"
+                        size="sm"
+                        onClick={() => {
+                          const link = document.createElement("a");
+                          link.href = assignment?.submitFileUrl;
+                          link.download = getFileName(
+                            assignment?.submitFileUrl
+                          );
+                          link.click();
+                        }}
+                        className="gap-2 text-white"
+                      >
+                        <Download className="w-4 h-4 text-white" />
+                        Tải xuống
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -113,7 +293,7 @@ const ViewAssignmentFeedback = () => {
     : [];
 
   const gradePercentage = assignment.grade
-    ? (assignment.grade / assignment.maxGrade) * 100
+    ? (assignment.grade / (assignment.maxGrade || 10)) * 100
     : 0;
 
   return (
@@ -138,7 +318,7 @@ const ViewAssignmentFeedback = () => {
             </h3>
             <div className="space-y-2">
               <p className="text-4xl font-bold text-primary">
-                {assignment.grade}/{assignment.maxGrade}
+                {assignment.grade}/{assignment.maxGrade || 10}
               </p>
               <div className="w-full bg-secondary rounded-full h-2">
                 <div
@@ -154,23 +334,23 @@ const ViewAssignmentFeedback = () => {
 
           <Card className="p-6 bg-green-50/30 border-green-200">
             <h3 className="text-sm font-semibold text-muted-foreground mb-2">
-              Status
+              Trạng thái
             </h3>
             <div className="flex items-center gap-2">
               <CheckCircle2 className="w-6 h-6 text-green-600" />
               <span className="text-lg font-semibold text-green-900">
-                Graded
+                Đã chấm
               </span>
             </div>
           </Card>
 
           <Card className="p-6">
             <h3 className="text-sm font-semibold text-muted-foreground mb-2">
-              Submitted
+              Đã nộp
             </h3>
             <p className="text-lg font-semibold text-foreground">
-              {assignment.submittedDate
-                ? formatDate(assignment.submittedDate)
+              {assignment.submittedAt
+                ? formatDate(assignment.submittedAt)
                 : "N/A"}
             </p>
           </Card>
@@ -264,11 +444,21 @@ const ViewAssignmentFeedback = () => {
         )}
         <Card className="p-8">
           <h3 className="text-lg font-semibold text-foreground mb-4">
-            Your Submission
+            Bài nộp của bạn
           </h3>
-          <Button className="gap-2" variant="outline">
-            <Download className="w-4 h-4" />
-            Download your submission
+          <Button
+            variant="default"
+            size="sm"
+            onClick={() => {
+              const link = document.createElement("a");
+              link.href = assignment?.submitFileUrl;
+              link.download = getFileName(assignment?.submitFileUrl);
+              link.click();
+            }}
+            className="gap-2 text-white"
+          >
+            <Download className="w-4 h-4 text-white" />
+            Tải xuống bài nộp của bạn
           </Button>
         </Card>
       </div>
