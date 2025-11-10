@@ -505,7 +505,7 @@ function AllCoursesSchedule() {
       );
 
       // Nếu có thông tin bookingId => refetch bookings
-      const bookingId = result.data?.schedule?.bookingId;
+      const bookingId = result?.schedule?.bookingId;
       if (bookingId) {
         fetchBookings();
       }
