@@ -35,6 +35,15 @@ const {
     bulkUpdateReports
 } = require('../controller/Admin/AdminReportController');
 
+const {
+    getAllWithdrawals,
+    getWithdrawalDetails,
+    updateWithdrawalStatus,
+    getTransactionHistory,
+    getFinancialAnalytics,
+    getWithdrawalStats
+} = require('../controller/Admin/AdminFinancialController');
+
 const RouterAdmin = express.Router();
 
 // Middleware: Kiểm tra access token và quyền admin
@@ -73,5 +82,13 @@ RouterAdmin.get('/reports/stats', getReportStats);
 RouterAdmin.get('/reports/:reportId', getReportDetails);
 RouterAdmin.patch('/reports/:reportId/status', updateReportStatus);
 RouterAdmin.patch('/reports/bulk-update', bulkUpdateReports);
+
+// Financial management routes
+RouterAdmin.get('/withdrawals', getAllWithdrawals);
+RouterAdmin.get('/withdrawals/stats', getWithdrawalStats);
+RouterAdmin.get('/withdrawals/:withdrawalId', getWithdrawalDetails);
+RouterAdmin.patch('/withdrawals/:withdrawalId/status', updateWithdrawalStatus);
+RouterAdmin.get('/transactions', getTransactionHistory);
+RouterAdmin.get('/analytics', getFinancialAnalytics);
 
 module.exports = RouterAdmin;

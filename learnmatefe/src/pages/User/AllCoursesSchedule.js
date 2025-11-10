@@ -154,6 +154,7 @@ const MaterialsModal = ({ bookingTitle, materials, onClose }) => {
           ) : (
             <ul className="materials-list">
               {materials.map((material) => (
+                console.log("material", material),
                 <li key={material._id} className="material-item">
                   <h4 className="material-title">{material.title}</h4>
                   {material.description && (
@@ -526,6 +527,7 @@ function AllCoursesSchedule() {
 
   // Handler để hiển thị modal tài liệu
   const handleViewMaterialsClick = async (bookingId, bookingTitle) => {
+    console.log("material",materialsData);
     setSelectedBookingTitle(bookingTitle);
     setMaterialsData([]); // Xoá tài liệu cũ
     setShowMaterialsModal(true); // Mở modal trước
@@ -781,7 +783,7 @@ function AllCoursesSchedule() {
                     {booking.tutorId?.user?.username || "N/A"}
                   </p>
                   <p>
-                    <strong>Số buổi học:</strong> {booking.numberOfSessions}
+                    <strong>Số buổi học:</strong> {booking.numberOfSession}
                   </p>
                   <p>
                     <strong>Chi phí mỗi buổi:</strong>{" "}

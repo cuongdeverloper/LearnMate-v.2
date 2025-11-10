@@ -684,6 +684,131 @@ class AdminService {
             throw error;
         }
     }
+
+    // ========== FINANCIAL MANAGEMENT ==========
+    
+    // Get all withdrawal requests
+    static async getAllWithdrawals(params = {}) {
+        try {
+            const token = Cookies.get("accessToken");
+            if (!token) {
+                window.open("/signin", "_blank");
+                return null;
+            }
+
+            const response = await axios.get('/api/admin/withdrawals', {
+                headers: { Authorization: `Bearer ${token}` },
+                params
+            });
+
+            return response;
+        } catch (error) {
+            console.error('Error fetching withdrawals:', error);
+            throw error;
+        }
+    }
+
+    // Get withdrawal statistics
+    static async getWithdrawalStats() {
+        try {
+            const token = Cookies.get("accessToken");
+            if (!token) {
+                window.open("/signin", "_blank");
+                return null;
+            }
+
+            const response = await axios.get('/api/admin/withdrawals/stats', {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+
+            return response;
+        } catch (error) {
+            console.error('Error fetching withdrawal stats:', error);
+            throw error;
+        }
+    }
+
+    // Get withdrawal details
+    static async getWithdrawalDetails(withdrawalId) {
+        try {
+            const token = Cookies.get("accessToken");
+            if (!token) {
+                window.open("/signin", "_blank");
+                return null;
+            }
+
+            const response = await axios.get(`/api/admin/withdrawals/${withdrawalId}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+
+            return response;
+        } catch (error) {
+            console.error('Error fetching withdrawal details:', error);
+            throw error;
+        }
+    }
+
+    // Update withdrawal status
+    static async updateWithdrawalStatus(withdrawalId, statusData) {
+        try {
+            const token = Cookies.get("accessToken");
+            if (!token) {
+                window.open("/signin", "_blank");
+                return null;
+            }
+
+            const response = await axios.patch(`/api/admin/withdrawals/${withdrawalId}/status`, statusData, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+
+            return response;
+        } catch (error) {
+            console.error('Error updating withdrawal status:', error);
+            throw error;
+        }
+    }
+
+    // Get transaction history
+    static async getTransactionHistory(params = {}) {
+        try {
+            const token = Cookies.get("accessToken");
+            if (!token) {
+                window.open("/signin", "_blank");
+                return null;
+            }
+
+            const response = await axios.get('/api/admin/transactions', {
+                headers: { Authorization: `Bearer ${token}` },
+                params
+            });
+
+            return response;
+        } catch (error) {
+            console.error('Error fetching transaction history:', error);
+            throw error;
+        }
+    }
+
+    // Get financial analytics
+    static async getFinancialAnalytics(params = {}) {
+        try {
+            const token = Cookies.get("accessToken");
+            if (!token) {
+                window.open("/signin", "_blank");
+                return null;
+            }
+
+            const response = await axios.get('/api/admin/analytics', {
+                headers: { Authorization: `Bearer ${token}` },
+                params
+            });
+
+            return response;
+        } catch (error) {
+            console.error('Error fetching financial analytics:', error);
+            throw error;
+        }
+    }
 }
 
 export default AdminService;

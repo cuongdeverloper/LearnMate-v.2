@@ -44,6 +44,8 @@ import TutorManagement from "./components/Admin/TutorManagement";
 import ReviewManagement from "./components/Admin/ReviewManagement";
 import BookingManagement from "./components/Admin/BookingManagement";
 import ReportManagement from "./components/Admin/ReportManagement";
+import WithdrawalManagement from "./components/Admin/WithdrawalManagement";
+import TransactionHistory from "./components/Admin/TransactionHistory";
 
 const AppLayout = ({ children }) => {
   const location = useLocation();
@@ -160,6 +162,26 @@ const Layout = () => {
               <ProtectedRoute allowedRoles={["admin"]}>
                 <AdminLayout>
                   <ReportManagement />
+                </AdminLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/withdrawal-management"
+            element={
+              <ProtectedRoute allowedRoles={["admin"]}>
+                <AdminLayout>
+                  <WithdrawalManagement />
+                </AdminLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/transaction-history"
+            element={
+              <ProtectedRoute allowedRoles={["admin"]}>
+                <AdminLayout>
+                  <TransactionHistory />
                 </AdminLayout>
               </ProtectedRoute>
             }
