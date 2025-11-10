@@ -10,7 +10,7 @@ const scheduleSchema = new mongoose.Schema({
   attended: { type: Boolean, default: false }, // NEW: Field to track attendance
   status: {
     type: String,
-    enum: ['pending', 'approved'],
+    enum: ['pending', 'approved','finished'],
     default: 'pending', // mặc định khi mới tạo
   },
 }, { timestamps: true });
