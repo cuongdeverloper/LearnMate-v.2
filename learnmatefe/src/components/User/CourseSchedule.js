@@ -57,11 +57,11 @@ const CourseSchedule = () => {
   const dispatch = useDispatch();
 
   const {
-    myCourses,
+    myCourses = [],
     selectedCourse,
-    quizzes,
-    assignments,
-    schedule,
+    quizzes = [],
+    assignments = [],
+    schedule = [],
     loading: error,
   } = useSelector((state) => state.courses);
 
@@ -70,7 +70,9 @@ const CourseSchedule = () => {
     dispatch(fetchQuizzes(selectedCourse));
     dispatch(fetchSchedule(selectedCourse));
   }, [dispatch, selectedCourse]);
-
+  useEffect(() => {
+    setTasks(getTasksList(assignments, quizzes));
+  }, [assignments, quizzes]);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedTask, setSelectedTask] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);

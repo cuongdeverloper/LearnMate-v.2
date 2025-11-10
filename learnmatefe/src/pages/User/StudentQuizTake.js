@@ -49,8 +49,8 @@ const StudentQuizTake = () => {
   } = useSelector((state) => state.courses);
 
   useEffect(() => {
-    dispatch(fetchQuizDetailsById(selectedQuiz));
-  }, [dispatch, selectedQuiz]);
+    if (id) dispatch(fetchQuizDetailsById(id));
+  }, [dispatch, id]);
 
   useEffect(() => {
     if (!quizDetails) return;
@@ -161,8 +161,11 @@ const StudentQuizTake = () => {
   };
 
   console.log("selectedQuiz", selectedQuiz);
-
+  if (loading || !quizDetails) {
+    return <div className="p-6 text-center">Loading quiz details...</div>;
+  }
   return (
+    
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-secondary/10 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-5xl mx-auto">
         <div className="sticky top-16 z-30 border-b bg-gray-50/95 backdrop-blur">
@@ -211,7 +214,7 @@ const StudentQuizTake = () => {
             </div>
           </div>
         </div>
-        <div className="m-3">{quizDetails.description}</div>
+        <div className="m-3">{quizDetails?.description}</div>
         <div className="mt-6 grid grid-cols-1 lg:grid-cols-4 gap-6">
           <div className="lg:col-span-3 space-y-4">
             <Card className="p-6">
