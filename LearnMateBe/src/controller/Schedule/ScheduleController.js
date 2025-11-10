@@ -321,80 +321,9 @@ exports.markAttendance = async (req, res) => {
     schedule.attended = attended;
     await schedule.save();
 
-    // ✅ Nếu buổi học được điểm danh thành công → trừ tiền
-    if (attended) {
-      const learner = await User.findById(booking.learnerId);
-
-      if (learner.balance < booking.sessionCost) {
-        return res
-          .status(400)
-          .json({ message: "Số dư không đủ để thanh toán cho buổi học này." });
-      }
-
-      learner.balance -= booking.sessionCost;
-      await learner.save();
-
-      await FinancialHistory.create({
-        userId: learner._id,
-        amount: booking.sessionCost,
-        balanceChange: -booking.sessionCost,
-        type: "spend",
-        status: "pending",
-        description: `Thanh toán buổi học #${
-          booking.paidSessions + 1
-        } cho booking ${booking._id.toString().slice(-6)}`,
-        date: new Date(),
-      });
-      // Cộng tiền tutor
-      tutorUser.balance = (tutorUser.balance || 0) + booking.sessionCost;
-      await tutorUser.save();
-
-      await FinancialHistory.create({
-        userId: tutorUser._id,
-        amount: booking.sessionCost,
-        balanceChange: +booking.sessionCost,
-        type: "earning",
-        status: "success",
-        description: `Nhận tiền từ học viên ${learner.username} cho buổi học ngày ${schedule.date}`,
-        date: new Date(),
-      });
-
-      booking.paidSessions += 1;
 
       await booking.save();
-    } else {
-      const learner = await User.findById(booking.learnerId);
-      // ✅ Hủy điểm danh → hoàn lại tiền
-      learner.balance += booking.sessionCost;
-      await learner.save();
-
-      await FinancialHistory.create({
-        userId: learner._id,
-        amount: booking.sessionCost,
-        balanceChange: booking.sessionCost,
-        type: "earning",
-        status: "success",
-        description: `Hoàn tiền buổi học #${
-          booking.paidSessions
-        } do hủy điểm danh (${booking._id.toString().slice(-6)})`,
-        date: new Date(),
-      });
-
-      if (tutorUser.balance >= booking.sessionCost) {
-        tutorUser.balance -= booking.sessionCost;
-        await tutorUser.save();
-
-        await FinancialHistory.create({
-          userId: tutorUser._id,
-          amount: booking.sessionCost,
-          balanceChange: -booking.sessionCost,
-          type: "withdraw",
-          status: "success",
-          description: `Hoàn lại tiền do học viên ${user.username} hủy điểm danh buổi học ngày ${schedule.date}`,
-        });
-      }
-      booking.paidSessions = Math.max(booking.paidSessions - 1, 0);
-    }
+    
 
     res.json({ message: "Điểm danh đã được cập nhật thành công", schedule });
   } catch (error) {

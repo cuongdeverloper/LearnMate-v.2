@@ -91,12 +91,14 @@ const ChangeScheduleModal = ({ isOpen, onClose, onSubmit, schedules }) => {
           onChange={(e) => setSelectedScheduleId(e.target.value)}
         >
           <option value="">-- Chọn buổi học --</option>
-          {(schedules || []).filter((s) => s.status === "approved").map((s) => (
-            <option key={s._id} value={s._id}>
-              {new Date(s.date).toLocaleDateString("vi-VN")} ({s.startTime} -{" "}
-              {s.endTime})
-            </option>
-          ))}
+          {(schedules || [])
+            .filter((s) => s.status === "approved")
+            .map((s) => (
+              <option key={s._id} value={s._id}>
+                {new Date(s.date).toLocaleDateString("vi-VN")} ({s.startTime} -{" "}
+                {s.endTime})
+              </option>
+            ))}
         </select>
 
         <label>Ngày mới:</label>
@@ -349,7 +351,6 @@ function AllCoursesSchedule() {
         reason,
       });
 
-
       if (res?.success) {
         toast.success(
           res.message || "Yêu cầu đổi lịch đã được gửi thành công."
@@ -505,7 +506,7 @@ function AllCoursesSchedule() {
       );
 
       // Nếu có thông tin bookingId => refetch bookings
-      const bookingId = result.data?.schedule?.bookingId;
+      const bookingId = result?.schedule?.bookingId;
       if (bookingId) {
         fetchBookings();
       }
@@ -534,7 +535,7 @@ function AllCoursesSchedule() {
 
   // Handler để hiển thị modal tài liệu
   const handleViewMaterialsClick = async (bookingId, bookingTitle) => {
-    console.log("material",materialsData);
+    console.log("material", materialsData);
     setSelectedBookingTitle(bookingTitle);
     setMaterialsData([]); // Xoá tài liệu cũ
     setShowMaterialsModal(true); // Mở modal trước
@@ -685,7 +686,11 @@ function AllCoursesSchedule() {
                         <div className={`status-label ${slot.status}`}>
                           {slot.status === "approved"
                             ? "Đã duyệt"
-                            : "Chờ duyệt"}
+                            : slot.status === "pending"
+                            ? "Chờ duyệt"
+                            : slot.status === "finished"
+                            ? "Đã hoàn thành"
+                            : ""}
                         </div>
 
                         {/* ✅ Chỉ hiển thị nút điểm danh nếu lịch đã duyệt */}
