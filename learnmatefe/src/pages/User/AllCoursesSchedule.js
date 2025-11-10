@@ -277,7 +277,6 @@ function AllCoursesSchedule() {
   const handlePayNextMonth = async (bookingId) => {
     try {
       const res = await handlePayMonthly(bookingId);
-      console.log("ket qua " + res);
       if (res.success) {
         toast.success(res.message || "Thanh toán tháng tiếp theo thành công!");
         fetchBookings(); // Refresh danh sách bookings để cập nhật paidMonths
@@ -326,7 +325,6 @@ function AllCoursesSchedule() {
     fetchChangeRequests();
     fetchBookings();
     fetchAllWeeklySchedules();
-    console.log("All bookings: ", bookings);
   }, [token, weekStart]);
 
   const handleCloseChangeModal = () => {
@@ -351,7 +349,6 @@ function AllCoursesSchedule() {
         reason,
       });
 
-      console.log("📨 Kết quả yêu cầu đổi lịch:", res);
 
       if (res?.success) {
         toast.success(
@@ -400,7 +397,6 @@ function AllCoursesSchedule() {
     setErrorBookings(null);
     try {
       const res = await getMyBookings();
-      console.log(res.data);
       setBookings(res.data);
     } catch (error) {
       console.error("Error fetching bookings:", error);
@@ -468,7 +464,6 @@ function AllCoursesSchedule() {
     setErrorSchedules(null);
 
     const result = await getMyWeeklySchedules();
-    console.log("result", result);
     if (result.success) {
       setAllWeeklySchedules(result.data);
     } else {

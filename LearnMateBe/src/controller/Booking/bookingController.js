@@ -283,7 +283,6 @@ exports.getApprovedBookingsForLearner = async (req, res) => {
 
     const learnerId = req.user.id || req.user._id;
 
-    console.log("Learner ID:", learnerId);
 
     const bookings = await Booking.find({
       learnerId,
@@ -303,7 +302,6 @@ exports.getApprovedBookingsForLearner = async (req, res) => {
       })
       .sort({ createdAt: -1 });
 
-    console.log(bookings);
 
     res.json(bookings);
   } catch (err) {
@@ -400,7 +398,6 @@ exports.finishBooking = async (req, res) => {
       });
     }
 
-    console.log("📦 booking chi tiết:", booking);
     if (!booking) {
       return res.status(404).json({ message: "Booking not found" });
     }

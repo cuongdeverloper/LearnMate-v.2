@@ -130,7 +130,6 @@ const StudentQuizTake = () => {
   const answeredCount = Object.values(state.answers).filter(Boolean).length;
 
   const selectAnswer = async (qid, value) => {
-    console.log("selectAnswer", qid, value);
     setState((s) => ({ ...s, answers: { ...s.answers, [qid]: value } }));
 
     try {
@@ -160,7 +159,6 @@ const StudentQuizTake = () => {
     }
   };
 
-  console.log("selectedQuiz", selectedQuiz);
   if (loading || !quizDetails) {
     return <div className="p-6 text-center">Loading quiz details...</div>;
   }

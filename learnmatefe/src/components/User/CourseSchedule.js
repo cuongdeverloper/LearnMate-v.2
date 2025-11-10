@@ -143,7 +143,6 @@ const CourseSchedule = () => {
   const upcomingTasksRaw = myCourses.filter((c) => c.id === selectedCourse)[0]
     .upcomingTasks;
 
-  console.log("Upcoming Tasks Raw", upcomingTasksRaw);
 
   const upcomingTasks = getTasksList(
     upcomingTasksRaw?.assignments,
@@ -155,7 +154,6 @@ const CourseSchedule = () => {
     setIsModalOpen(true);
   };
 
-  console.log("tasks", tasks);
 
   return (
     <div className="space-y-6">

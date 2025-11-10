@@ -81,7 +81,7 @@ const Header = () => {
           <Link to="/community">Cộng đồng</Link>
           {accessToken && (
             <Link to="/messenger">
-              <FaComments style={{ marginRight: 5 }} /> Chat
+               Trò chuyện
             </Link>
           )}
           {accessToken && <Link to="/user/my-courses">Khóa học</Link>}

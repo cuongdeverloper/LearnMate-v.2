@@ -75,14 +75,10 @@ const TutorManagement = () => {
             } else {
                 applicationList = [];
             }
-
-            console.log('Final applicationList:', applicationList);
-            console.log('applicationList is array?', Array.isArray(applicationList));
             
             if (applicationList.length > 0) {
                 setApplications(applicationList);
                 calculateStats(applicationList);
-                console.log('Tutor applications loaded:', applicationList.length);
             } else {
                 console.log('No applications found or empty response');
                 setApplications([]);

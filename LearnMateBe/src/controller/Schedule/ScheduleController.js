@@ -16,14 +16,6 @@ exports.requestChangeSchedule = async (req, res) => {
     const { bookingId } = req.params;
     const { scheduleId, newDate, newStartTime, newEndTime, reason } = req.body;
 
-    console.log("📩 Request change schedule:", {
-      bookingId,
-      scheduleId,
-      newDate,
-      newStartTime,
-      newEndTime,
-      reason,
-    });
 
     const booking = await Booking.findById(bookingId).populate(
       "tutorId learnerId"
@@ -96,7 +88,6 @@ exports.requestChangeSchedule = async (req, res) => {
     });
 
     await changeRequest.save();
-    console.log("✅ Change request saved:", changeRequest._id);
 
     return res.status(201).json({
       success: true,

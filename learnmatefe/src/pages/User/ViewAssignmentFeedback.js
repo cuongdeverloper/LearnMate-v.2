@@ -71,7 +71,6 @@ const ViewAssignmentFeedback = () => {
   }, [dispatch, selectedAssignment, submitting]);
 
   const assignment = assignments.find((a) => a._id === selectedAssignment);
-  console.log("Assignment:", assignment);
 
   if (!selectedAssignment) {
     return (

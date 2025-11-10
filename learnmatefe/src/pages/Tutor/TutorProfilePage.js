@@ -23,7 +23,6 @@ export default function TutorProfilePage() {
   const fetchTutor = async () => {
     try {
       const res = await axios.get(`/api/learner/tutors/${tutorId}`);
-      console.log(res);
       setTutor(res.tutor);
     } catch (error) {
       console.error("Lỗi khi lấy thông tin gia sư:", error);

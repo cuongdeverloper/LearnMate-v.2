@@ -2,32 +2,34 @@
   display: flex;
   height: 100vh;
   font-family: "Inter", sans-serif;
-  color: #333;
   background-color: #f5f7fb;
-  transition: background-color 0.3s ease;
 
   .sidebar {
     background: #fff;
-    border-right: 1px solid #e0e0e0;
     display: flex;
     flex-direction: column;
-    transition: width 0.3s ease;
-    overflow: hidden;
+    transition: all 0.3s;
+    border-right: 1px solid #e0e0e0;
+
+    &.dark {
+      background: #1f1f1f;
+      border-color: #333;
+      color: #eee;
+    }
 
     .sidebar-header {
       display: flex;
-      align-items: center;
       justify-content: space-between;
+      align-items: center;
       padding: 15px;
-      border-bottom: 1px solid #e0e0e0;
       font-weight: 600;
       color: #0b57d0;
 
       .toggle-btn {
         border: none;
         background: none;
-        font-size: 18px;
         cursor: pointer;
+        font-size: 16px;
         color: #555;
       }
     }
@@ -40,11 +42,12 @@
         display: flex;
         align-items: center;
         gap: 12px;
-        padding: 10px 15px;
-        border-radius: 8px;
-        margin-bottom: 5px;
+        padding: 12px;
+        border-radius: 10px;
+        margin-bottom: 8px;
         cursor: pointer;
-        transition: background 0.2s ease, transform 0.1s ease;
+        font-weight: 500;
+        transition: all 0.2s ease;
 
         &:hover {
           background: #eaf1ff;
@@ -66,7 +69,6 @@
 
     .sidebar-footer {
       padding: 15px;
-      border-top: 1px solid #e0e0e0;
 
       .logout {
         display: flex;
@@ -74,13 +76,12 @@
         gap: 10px;
         width: 100%;
         background: #ff4b4b;
-        border: none;
-        color: #fff;
+        border-radius: 8px;
         padding: 10px;
-        border-radius: 6px;
-        cursor: pointer;
+        color: #fff;
         font-weight: 500;
-        transition: background 0.2s;
+        cursor: pointer;
+        transition: all 0.2s;
 
         &:hover {
           background: #e63b3b;
@@ -99,10 +100,9 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      background: #fff;
       padding: 15px 25px;
-      border-bottom: 1px solid #e0e0e0;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+      background: #fff;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
 
       .header-right {
         display: flex;
@@ -111,27 +111,24 @@
 
         .theme-toggle {
           background: #eef3ff;
-          border: none;
           border-radius: 50%;
           padding: 8px;
           cursor: pointer;
-          transition: background 0.2s ease;
-
-          &:hover {
-            background: #dbe8ff;
-          }
+          border: none;
+          &:hover { background: #dbe8ff; }
         }
 
         .user-info {
           display: flex;
           align-items: center;
-          gap: 8px;
+          gap: 10px;
+
           .avatar {
-            background: #0b57d0;
-            color: #fff;
-            border-radius: 50%;
             width: 36px;
             height: 36px;
+            border-radius: 50%;
+            background: #0b57d0;
+            color: #fff;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -142,16 +139,17 @@
     }
 
     .dashboard-body {
-      padding: 20px;
-      overflow-y: auto;
       flex: 1;
+      padding: 20px;
       background: #f5f7fb;
+      overflow-y: auto;
 
       .content-wrapper {
         background: #fff;
-        padding: 20px;
-        border-radius: 12px;
-        box-shadow: 0 3px 8px rgba(0, 0, 0, 0.05);
+        padding: 25px;
+        border-radius: 15px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        transition: all 0.3s;
       }
     }
   }
@@ -160,40 +158,24 @@
   &.dark-mode,
   body.dark-mode & {
     background: #1e1e1e;
-    color: #eee;
 
     .sidebar {
       background: #242424;
-      border-color: #333;
+      color: #eee;
 
       .menu-item {
-        &:hover {
-          background: #2f2f2f;
-        }
-        &.active {
-          background: #3a3a3a;
-          color: #70a5ff;
-        }
+        &:hover { background: #2f2f2f; }
+        &.active { background: #3a3a3a; color: #70a5ff; }
       }
 
-      .logout {
-        background: #c53030;
-        &:hover {
-          background: #a72626;
-        }
-      }
+      .logout { background: #c53030; &:hover { background: #a72626; } }
     }
 
     .main-content {
-      .dashboard-header {
-        background: #242424;
-        border-color: #333;
-      }
+      .dashboard-header { background: #242424; }
       .dashboard-body {
         background: #1e1e1e;
-        .content-wrapper {
-          background: #2a2a2a;
-        }
+        .content-wrapper { background: #2a2a2a; }
       }
     }
   }

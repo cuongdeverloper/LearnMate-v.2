@@ -89,17 +89,17 @@ const Layout = () => {
           <Route
             path="/messenger"
             element={
-              // <ProtectedRoute allowedRoles={['tutor', 'student', 'admin']}>
+              <ProtectedRoute allowedRoles={['tutor', 'student', 'admin']}>
               <Messenger />
-              // </ProtectedRoute>
+              </ProtectedRoute>
             }
           />
           <Route
             path="/messenger/:conversationId"
             element={
-              // <ProtectedRoute allowedRoles={['tutor', 'student', 'admin']}>
+              <ProtectedRoute allowedRoles={['tutor', 'student', 'admin']}>
               <Messenger />
-              // </ProtectedRoute>
+              </ProtectedRoute>
             }
           />
           <Route path="/forgot-password" element={<RequestPasswordReset />} />
@@ -168,9 +168,9 @@ const Layout = () => {
           <Route
             path="/TutorDashboard"
             element={
-              // <ProtectedRoute allowedRoles={['tutor']}>
+            <ProtectedRoute allowedRoles={['tutor']}>
               <TutorDashboard />
-              // </ProtectedRoute>
+            </ProtectedRoute>
             }
           />
           <Route />

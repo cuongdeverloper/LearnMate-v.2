@@ -570,7 +570,6 @@ export const getQuizzesByTutorWithStatus = async (subjectId = "", topic = "") =>
     const res = await axios.get(`/api/quizzes/tutor/quizzes-status?${params.toString()}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
-    console.log(res)
     return { success: true, data: res.data };
   } catch (error) {
     console.error("❌ Lỗi khi lấy quiz của tutor:", error);
@@ -663,7 +662,6 @@ export const assignMultipleAssignments = async ({ bookingIds, assignments }) => 
       { bookingIds, assignments },
       { headers: { Authorization: `Bearer ${token}` } }
     );
-    console.log(res)
     return res;
   } catch (error) {
     console.error("❌ Lỗi giao nhiều Assignment:", error);

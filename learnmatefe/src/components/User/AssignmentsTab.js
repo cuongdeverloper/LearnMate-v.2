@@ -83,7 +83,6 @@ const AssignmentsTab = ({ courseTitle }) => {
 
   if (!courseId) return null;
 
-  console.log("Assignments: ", assignments);
 
   return (
     <div className="space-y-4">

@@ -17,7 +17,6 @@ const TutorSchedule = () => {
   const fetchSchedule = async () => {
     setLoading(true);
     const res = await getTutorSchedule();
-    console.log(res.data)
     if (res.errorCode === 0) {
       setSchedules(res.data);
     } else {

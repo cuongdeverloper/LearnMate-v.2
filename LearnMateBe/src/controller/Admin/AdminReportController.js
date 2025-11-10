@@ -128,7 +128,6 @@ const updateReportStatus = async (req, res) => {
     const { status, action, adminNotes } = req.body;
     const adminId = req.user.id;
     
-    console.log('Updating report status:', { reportId, status, action, adminNotes, adminId });
     
     // Validate reportId
     if (!mongoose.Types.ObjectId.isValid(reportId)) {
@@ -161,22 +160,18 @@ const updateReportStatus = async (req, res) => {
     
     // Handle booking-related actions
     if (report.targetType === 'booking' && action) {
-      console.log('Processing booking action:', action, 'for targetId:', report.targetId);
       
       try {
         const booking = await Booking.findById(report.targetId);
         if (booking) {
-          console.log('Booking found, current status:', booking.status);
           
           if (action === 'cancel_booking') {
             booking.status = 'cancelled';
             booking.reported = true;
             await booking.save();
-            console.log('Booking cancelled and marked as reported');
           } else if (action === 'mark_reported') {
             booking.reported = true;
             await booking.save();
-            console.log('Booking marked as reported');
           }
         } else {
           console.log('Booking not found for targetId:', report.targetId);
@@ -198,13 +193,11 @@ const updateReportStatus = async (req, res) => {
         relatedModel: 'Report',
         relatedId: report._id
       });
-      console.log('Notification sent to reporter');
     } catch (notificationError) {
       console.error('Error sending notification:', notificationError);
       // Continue execution even if notification fails
     }
     
-    console.log('Report status updated successfully');
     return res.status(200).json({
       success: true,
       message: `Report status updated from ${oldStatus} to ${status} successfully`

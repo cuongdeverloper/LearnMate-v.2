@@ -9,11 +9,9 @@ mongoose.connect('mongodb://localhost:27017/LearnMate', {
 
 async function fixReviewData() {
   try {
-    console.log('Starting to fix review data...');
     
     // Get all reviews
     const reviews = await Review.find({});
-    console.log(`Found ${reviews.length} reviews`);
     
     let updatedCount = 0;
     
@@ -45,11 +43,9 @@ async function fixReviewData() {
       if (needUpdate) {
         await Review.findByIdAndUpdate(review._id, updateData);
         updatedCount++;
-        console.log(`Updated review ${review._id}: ${JSON.stringify(updateData)}`);
       }
     }
     
-    console.log(`Fixed ${updatedCount} reviews`);
     
     // Verify the stats after fix
     const totalReviews = await Review.countDocuments();
@@ -65,16 +61,7 @@ async function fixReviewData() {
     const spamReviews = await Review.countDocuments({ isSpam: true });
     const offensiveReviews = await Review.countDocuments({ isOffensive: true });
     
-    console.log('After fix stats:', {
-      totalReviews,
-      activeReviews,
-      hiddenReviews,
-      deletedReviews,
-      spamReviews,
-      offensiveReviews
-    });
     
-    console.log('Review data fix completed!');
     process.exit(0);
   } catch (error) {
     console.error('Error fixing review data:', error);

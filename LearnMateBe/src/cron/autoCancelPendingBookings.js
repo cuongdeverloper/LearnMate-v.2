@@ -8,7 +8,6 @@ const TutorAvailability = require("../modal/TutorAvailability");
 const Schedule = require("../modal/Schedule");
 
 async function autoCancelPendingBookings() {
-  console.log("🕒 [CRON] Đang kiểm tra booking pending quá hạn...");
 
   const session = await mongoose.startSession();
   session.startTransaction();
@@ -25,13 +24,11 @@ async function autoCancelPendingBookings() {
     }).session(session);
 
     if (expiredBookings.length === 0) {
-      console.log("✅ Không có booking pending quá hạn.");
       await session.commitTransaction();
       session.endSession();
       return;
     }
 
-    console.log(`⚠️ Tìm thấy ${expiredBookings.length} booking pending quá hạn.`);
 
     for (const booking of expiredBookings) {
       const learner = await User.findById(booking.learnerId).session(session);
@@ -69,13 +66,11 @@ async function autoCancelPendingBookings() {
       // Xóa schedule liên quan
       await Schedule.deleteMany({ bookingId: booking._id }).session(session);
 
-      console.log(`🚫 Booking ${booking._id} đã bị hủy tự động và hoàn tiền.`);
     }
 
     await session.commitTransaction();
     session.endSession();
 
-    console.log("✅ Hoàn tất cron hủy booking pending quá hạn.");
   } catch (error) {
     await session.abortTransaction();
     session.endSession();

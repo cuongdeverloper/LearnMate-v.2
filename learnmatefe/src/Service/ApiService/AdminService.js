@@ -142,7 +142,6 @@ class AdminService {
                 return null;
             }
 
-            console.log('Making API call to /api/admin/tutor-applications');
 
             const response = await axios.get('/api/admin/tutor-applications', {
                 headers: {

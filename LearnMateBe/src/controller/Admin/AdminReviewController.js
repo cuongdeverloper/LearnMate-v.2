@@ -255,17 +255,6 @@ const getReviewStats = async (req, res) => {
     // Vi phạm
     const offensiveReviews = await Review.countDocuments({ isOffensive: true });
 
-    // Debug log để kiểm tra
-    console.log('Review Stats Calculation:', {
-      totalReviews,
-      deletedReviews,
-      hiddenReviews,
-      activeReviews,
-      spamReviews,
-      offensiveReviews,
-      formula: `Active = Total(${totalReviews}) - Deleted(${deletedReviews}) - Hidden(${hiddenReviews}) = ${activeReviews}`
-    });
-
     return res.status(200).json({
       errorCode: 0,
       message: 'Get review stats successfully',

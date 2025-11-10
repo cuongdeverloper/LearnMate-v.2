@@ -6,10 +6,6 @@ const { createTutorApplicationNotification } = require('../Notification/Notifica
 
   const submitApplication = async (req, res) => {
     try {
-      console.log('=== TUTOR APPLICATION SUBMISSION ===');
-      console.log('Request body:', req.body);
-      console.log('Request file:', req.file);
-      console.log('User ID:', req.user?.id);
       
       const {
         experience,
@@ -24,19 +20,7 @@ const { createTutorApplicationNotification } = require('../Notification/Notifica
 
       const tutorId = req.user?.id; // Đây là userId
       const cvFile = req.file?.path;
-      
-      console.log('Parsed data:', {
-        tutorId,
-        cvFile,
-        experience,
-        education,
-        subjects,
-        bio,
-        pricePerHour,
-        location,
-        languages,
-        certificates
-      });
+
 
       if (!tutorId) {
         return res.status(401).json({
@@ -129,7 +113,6 @@ const { createTutorApplicationNotification } = require('../Notification/Notifica
       try {
         if (typeof createTutorApplicationNotification === 'function') {
           await createTutorApplicationNotification(newApplication);
-          console.log('Notification sent successfully');
         } else {
           console.log('createTutorApplicationNotification function not available');
         }

@@ -17,7 +17,6 @@ const TutorBookingList = () => {
   const loadBookings = async () => {
   try {
     const res = await fetchPendingBookings(tutorId);
-    console.log(res); 
     const bookingList = Array.isArray(res.bookings) ? res.bookings : [];
     setBookings(bookingList);
   } catch (error) {

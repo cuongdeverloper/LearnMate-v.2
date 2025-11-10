@@ -13,7 +13,6 @@ const TutorViewSubmissions = () => {
   const fetchData = async () => {
     try {
       const res = await getAssignmentSubmissions();
-      console.log(res)
       setSubmissions(res || []);
     } catch {
       toast.error("❌ Lỗi tải bài nộp!");

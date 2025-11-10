@@ -128,7 +128,6 @@ const assignAssignmentFromStorage = async (req, res) => {
 const assignMultipleAssignments = async (req, res) => {
   try {
     const { assignments, bookingIds } = req.body;
-    console.log("assignMultipleAssignments:", assignments, bookingIds);
 
     if (!assignments?.length || !bookingIds?.length)
       return res.status(400).json({ success: false, message: "Thiếu dữ liệu" });
@@ -458,7 +457,6 @@ const viewSubmission = async (req, res) => {
 const gradeAssignment = async (req, res) => {
   try {
     const { assignmentId, grade, feedback } = req.body;
-    console.log("123", req.body);
     if (!assignmentId) {
       return res.status(400).json({ error: "Missing required fields" });
     }
@@ -525,10 +523,6 @@ const submitAssignment = async (req, res) => {
   try {
     const { assignmentId, note } = req.body;
 
-    console.log("Received data:", req.body);
-
-    console.log("Assignment ID:", assignmentId);
-
     if (!assignmentId) {
       return res.status(400).json({ error: "Missing required fields" });
     }
@@ -551,7 +545,6 @@ const submitAssignment = async (req, res) => {
 
     // Chưa đến giờ mở
     if (openTime && now < openTime) {
-      console.log("Chưa đến giờ mở", openTime);
       return res.status(400).json({
         success: false,
         message: `Bài tập chưa mở để nộp.\nThời gian mở: ${openTime.toLocaleString(

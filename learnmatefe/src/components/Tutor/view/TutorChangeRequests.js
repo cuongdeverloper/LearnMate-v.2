@@ -19,7 +19,6 @@ const TutorChangeRequests = () => {
     try {
       setLoading(true);
       const res = await getTutorChangeRequests();
-      console.log(res)
       setRequests(res.data.changeRequests || []);
     } catch (err) {
       console.error(err);

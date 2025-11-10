@@ -332,10 +332,6 @@ const approveTutorApplication = async (req, res) => {
 
 const rejectTutorApplication = async (req, res) => {
   try {
-    console.log('Reject application request received');
-    console.log('Application ID:', req.params.applicationId);
-    console.log('Reason:', req.body.reason);
-    console.log('Admin user:', req.user);
     
     const { applicationId } = req.params;
     const { reason } = req.body;

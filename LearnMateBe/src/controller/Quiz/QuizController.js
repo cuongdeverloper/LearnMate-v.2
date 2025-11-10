@@ -380,7 +380,6 @@ exports.getAllQuizzesByLearnerId = async (req, res) => {
     }
 
     const joinedCourse = await Booking.find({ learnerId: learner._id });
-    console.log(joinedCourse);
 
     if (!joinedCourse) {
       return res.status(200).json({ success: true, quizzes: [] });
@@ -630,7 +629,6 @@ exports.getQuizDetailsById = async (req, res) => {
     quizDetails.questions = questions;
     quizDetails.attempts = quizAttempts;
 
-    console.log(quizDetails);
 
     res.status(200).json({ success: true, data: quizDetails });
   } catch (error) {
@@ -643,8 +641,6 @@ exports.submitQuiz = async (req, res) => {
   try {
     const { quizId } = req.params;
     const { answers, startedAt, finishedAt } = req.body;
-    console.log("Answers: ", answers);
-    console.log("started at: ", startedAt, "finished at: ", finishedAt);
 
     const quiz = await Quiz.findById(quizId);
 

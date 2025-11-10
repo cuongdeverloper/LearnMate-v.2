@@ -20,11 +20,10 @@ import TutorBookingList from "./view/TutorBookingList";
 import MaterialUploader from "./view/MaterialUploader";
 import AvailableSchedule from "./view/AvailableSchedule";
 import TutorSchedule from "./view/TutorSchedule";
-
 import TutorAssignmentManager from "./view/Tutor Assignment/TutorAssignmentManager";
 import TutorChangeRequests from "./view/TutorChangeRequests";
-import "./TutorDashboard.scss";
 import TutorQuizManager from "./view/Tutor Quiz/TutorQuizManager";
+import "./TutorDashboard.scss";
 
 const menuItems = [
   { id: "bookings", label: "Quản lý Booking", icon: <BookOpen />, component: <TutorBookingList /> },
@@ -54,38 +53,34 @@ const TutorDashboard = () => {
     navigate("/");
   };
 
-  const activeComponent =
-    menuItems.find((item) => item.id === activeTab)?.component || <TutorBookingList />;
+  const activeComponent = menuItems.find((item) => item.id === activeTab)?.component || <TutorBookingList />;
 
   return (
     <div className="tutor-dashboard-container">
       {/* Sidebar */}
       <motion.aside
-        animate={{ width: sidebarOpen ? 250 : 80 }}
+        animate={{ width: sidebarOpen ? 220 : 70 }}
         transition={{ duration: 0.3 }}
-        className="sidebar"
+        className={`sidebar ${darkMode ? "dark" : ""}`}
       >
         <div className="sidebar-header">
-          <span className="logo">🎓</span>
-          {sidebarOpen && <h2>LearnMate</h2>}
-          <button
-            className="toggle-btn"
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-          >
-            {sidebarOpen ? "⏪" : "⏩"}
+          <div className="logo">{sidebarOpen ? "🎓 LearnMate" : "🎓"}</div>
+          <button className="toggle-btn" onClick={() => setSidebarOpen(!sidebarOpen)}>
+            {sidebarOpen ? "<" : ">"}
           </button>
         </div>
 
         <div className="menu">
           {menuItems.map((item) => (
-            <div
+            <motion.div
               key={item.id}
               className={`menu-item ${activeTab === item.id ? "active" : ""}`}
               onClick={() => setActiveTab(item.id)}
+              whileHover={{ scale: 1.05 }}
             >
               <div className="icon">{item.icon}</div>
               {sidebarOpen && <span>{item.label}</span>}
-            </div>
+            </motion.div>
           ))}
         </div>
 
@@ -100,20 +95,13 @@ const TutorDashboard = () => {
       {/* Main Content */}
       <div className="main-content">
         <header className="dashboard-header">
-          <h2>
-            {menuItems.find((m) => m.id === activeTab)?.label || "Dashboard"}
-          </h2>
+          <h2>{menuItems.find((m) => m.id === activeTab)?.label || "Dashboard"}</h2>
           <div className="header-right">
-            <button
-              className="theme-toggle"
-              onClick={() => setDarkMode(!darkMode)}
-            >
+            <button className="theme-toggle" onClick={() => setDarkMode(!darkMode)}>
               {darkMode ? <Sun size={20} /> : <Moon size={20} />}
             </button>
             <div className="user-info">
-              <div className="avatar">
-                {user?.username?.charAt(0)?.toUpperCase() || "T"}
-              </div>
+              <div className="avatar">{user?.username?.charAt(0)?.toUpperCase() || "T"}</div>
               <span>{user?.username || "Tutor"}</span>
             </div>
           </div>
@@ -123,10 +111,10 @@ const TutorDashboard = () => {
           <AnimatePresence mode="wait">
             <motion.div
               key={activeTab}
-              initial={{ opacity: 0, y: 10 }}
+              initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.3 }}
+              exit={{ opacity: 0, y: -15 }}
+              transition={{ duration: 0.25 }}
               className="content-wrapper"
             >
               {activeComponent}

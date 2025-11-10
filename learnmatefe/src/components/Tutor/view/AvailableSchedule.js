@@ -27,7 +27,6 @@ const TutorManageAvailability = () => {
 
   const fetchAvailabilities = async () => {
     const res = await getTutorAvailability();
-    console.log(res.data)
     if (res.errorCode === 0) {
       const data = res.data?.data || {};
       setAvailabilities(data.availabilities || []);
