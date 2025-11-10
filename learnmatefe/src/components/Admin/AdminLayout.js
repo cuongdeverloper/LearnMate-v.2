@@ -10,7 +10,9 @@ import {
     SettingOutlined,
     CommentOutlined,
     BookOutlined,
-    ExclamationCircleOutlined
+    ExclamationCircleOutlined,
+    DollarOutlined,
+    HistoryOutlined
 } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
@@ -61,6 +63,16 @@ const AdminLayout = ({ children }) => {
             key: '/admin/report-management',
             icon: <ExclamationCircleOutlined />,
             label: 'Quản lý Báo cáo',
+        },
+        {
+            key: '/admin/withdrawal-management',
+            icon: <DollarOutlined />,
+            label: 'Quản lý Rút tiền',
+        },
+        {
+            key: '/admin/transaction-history',
+            icon: <HistoryOutlined />,
+            label: 'Lịch sử Giao dịch',
         },
     ];
 
