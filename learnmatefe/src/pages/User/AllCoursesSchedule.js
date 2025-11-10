@@ -534,6 +534,7 @@ function AllCoursesSchedule() {
 
   // Handler để hiển thị modal tài liệu
   const handleViewMaterialsClick = async (bookingId, bookingTitle) => {
+    console.log("material",materialsData);
     setSelectedBookingTitle(bookingTitle);
     setMaterialsData([]); // Xoá tài liệu cũ
     setShowMaterialsModal(true); // Mở modal trước
