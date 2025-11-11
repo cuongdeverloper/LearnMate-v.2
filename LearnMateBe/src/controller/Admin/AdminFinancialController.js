@@ -132,8 +132,8 @@ const updateWithdrawalStatus = async (req, res) => {
             userId: withdrawal.userId,
             amount: withdrawal.amount,
             balanceChange: withdrawal.amount,
-            type: 'topup',
-            description: `Refund for rejected withdrawal request - ${adminNotes || 'Withdrawal rejected by admin'}`,
+            type: 'refund',
+            description: `Hoàn tiền yêu cầu rút bị từ chối - ${adminNotes || 'Yêu cầu rút tiền bị từ chối bởi admin'}`,
             status: 'success'
           });
         }
@@ -171,35 +171,83 @@ const getTransactionHistory = async (req, res) => {
   try {
     const { page = 1, limit = 10, type, userId, startDate, endDate } = req.query;
     
-    let filter = {};
+    let allTransactions = [];
     
-    if (type && type !== 'all') {
-      filter.type = type;
-    }
-    
-    if (userId) {
-      filter.userId = userId;
-    }
-    
+    // Date filter for both queries
+    let dateFilter = {};
     if (startDate && endDate) {
-      filter.date = {
+      dateFilter = {
         $gte: new Date(startDate),
         $lte: new Date(endDate)
       };
     }
-    
+
+    // User filter
+    let userFilter = {};
+    if (userId) {
+      userFilter = { userId: userId };
+    }
+
+    // Get FinancialHistory transactions
+    if (!type || type === 'all' || ['topup', 'earning', 'spend', 'refund'].includes(type)) {
+      let financialFilter = { ...userFilter };
+      
+      if (type && type !== 'all' && type !== 'withdraw') {
+        financialFilter.type = type;
+      }
+      
+      if (startDate && endDate) {
+        financialFilter.date = dateFilter;
+      }
+      
+      const financialTransactions = await FinancialHistory.find(financialFilter)
+        .populate('userId', 'username email phoneNumber image')
+        .sort({ date: -1 });
+      
+      allTransactions = [...allTransactions, ...financialTransactions];
+    }
+
+    // Get Withdrawal transactions (convert to FinancialHistory format)
+    if (!type || type === 'all' || type === 'withdraw') {
+      let withdrawalFilter = { ...userFilter };
+      withdrawalFilter.status = 'approved'; // Only show approved withdrawals
+      
+      if (startDate && endDate) {
+        withdrawalFilter.processedAt = dateFilter;
+      }
+      
+      const withdrawals = await Withdrawal.find(withdrawalFilter)
+        .populate('userId', 'username email phoneNumber image')
+        .sort({ processedAt: -1 });
+      
+      // Convert withdrawals to transaction format
+      const withdrawalTransactions = withdrawals.map(withdrawal => ({
+        _id: withdrawal._id,
+        userId: withdrawal.userId,
+        amount: withdrawal.amount,
+        balanceChange: -withdrawal.amount, // Withdrawal decreases balance
+        type: 'withdraw',
+        status: 'success', // Approved withdrawals are successful
+        description: `Rút tiền về ${withdrawal.bankAccount.bankName} - ${withdrawal.bankAccount.accountNumber}`,
+        date: withdrawal.processedAt || withdrawal.createdAt,
+        createdAt: withdrawal.createdAt,
+        updatedAt: withdrawal.updatedAt
+      }));
+      
+      allTransactions = [...allTransactions, ...withdrawalTransactions];
+    }
+
+    // Sort all transactions by date (newest first)
+    allTransactions.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+    // Apply pagination
     const skip = (page - 1) * limit;
-    const total = await FinancialHistory.countDocuments(filter);
-    
-    const transactions = await FinancialHistory.find(filter)
-      .populate('userId', 'username email phoneNumber image')
-      .sort({ date: -1 })
-      .skip(skip)
-      .limit(parseInt(limit));
+    const total = allTransactions.length;
+    const paginatedTransactions = allTransactions.slice(skip, skip + parseInt(limit));
     
     return res.status(200).json({
       success: true,
-      data: transactions,
+      data: paginatedTransactions,
       pagination: {
         currentPage: parseInt(page),
         totalPages: Math.ceil(total / limit),
