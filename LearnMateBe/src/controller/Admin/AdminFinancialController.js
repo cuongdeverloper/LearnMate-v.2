@@ -102,7 +102,7 @@ const updateWithdrawalStatus = async (req, res) => {
       });
     }
     
-    if (!['pending', 'approved', 'rejected', 'completed'].includes(status)) {
+    if (!['pending', 'approved', 'rejected'].includes(status)) {
       return res.status(400).json({
         success: false,
         message: 'Invalid status'
@@ -390,7 +390,6 @@ const getWithdrawalStats = async (req, res) => {
     const pendingWithdrawals = await Withdrawal.countDocuments({ status: 'pending' });
     const approvedWithdrawals = await Withdrawal.countDocuments({ status: 'approved' });
     const rejectedWithdrawals = await Withdrawal.countDocuments({ status: 'rejected' });
-    const completedWithdrawals = await Withdrawal.countDocuments({ status: 'completed' });
     
     // Total withdrawal amounts
     const totalWithdrawalAmount = await Withdrawal.aggregate([
@@ -409,7 +408,6 @@ const getWithdrawalStats = async (req, res) => {
         pendingWithdrawals,
         approvedWithdrawals,
         rejectedWithdrawals,
-        completedWithdrawals,
         totalWithdrawalAmount: totalWithdrawalAmount[0]?.total || 0,
         pendingWithdrawalAmount: pendingWithdrawalAmount[0]?.total || 0
       }

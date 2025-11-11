@@ -178,8 +178,7 @@ const WithdrawalManagement = () => {
     const colors = {
       pending: 'orange',
       approved: 'blue',
-      rejected: 'red',
-      completed: 'green'
+      rejected: 'red'
     };
     return colors[status] || 'default';
   };
@@ -188,8 +187,7 @@ const WithdrawalManagement = () => {
     const texts = {
       pending: 'Chờ xử lý',
       approved: 'Đã duyệt',
-      rejected: 'Từ chối',
-      completed: 'Hoàn thành'
+      rejected: 'Từ chối'
     };
     return texts[status] || status;
   };
@@ -336,8 +334,8 @@ const WithdrawalManagement = () => {
         <Col xs={24} sm={12} lg={6}>
           <Card>
             <Statistic
-              title="Đã hoàn thành"
-              value={statistics.completedWithdrawals || 0}
+              title="Đã xử lý"
+              value={statistics.approvedWithdrawals || 0}
               prefix={<Badge status="success" />}
               valueStyle={{ color: '#52c41a' }}
             />
@@ -378,7 +376,6 @@ const WithdrawalManagement = () => {
               <Option value="pending">Chờ xử lý</Option>
               <Option value="approved">Đã duyệt</Option>
               <Option value="rejected">Từ chối</Option>
-              <Option value="completed">Hoàn thành</Option>
             </Select>
           </Col>
           <Col xs={24} sm={8} md={6}>
@@ -486,9 +483,9 @@ const WithdrawalManagement = () => {
             </Descriptions.Item>
             <Descriptions.Item label="Thông tin ngân hàng" span={2}>
               <div>
-                <div><strong>Tên ngân hàng:</strong> {selectedWithdrawal.bankName}</div>
-                <div><strong>Số tài khoản:</strong> {selectedWithdrawal.accountNumber}</div>
-                <div><strong>Tên tài khoản:</strong> {selectedWithdrawal.accountName}</div>
+                <div><strong>Tên ngân hàng:</strong> {selectedWithdrawal.bankAccount?.bankName || 'Không có thông tin'}</div>
+                <div><strong>Số tài khoản:</strong> {selectedWithdrawal.bankAccount?.accountNumber || 'Không có thông tin'}</div>
+                <div><strong>Tên tài khoản:</strong> {selectedWithdrawal.bankAccount?.accountHolderName || 'Không có thông tin'}</div>
               </div>
             </Descriptions.Item>
             <Descriptions.Item label="Ngày tạo">
@@ -536,7 +533,6 @@ const WithdrawalManagement = () => {
             <Select placeholder="Chọn trạng thái">
               <Option value="approved">Duyệt</Option>
               <Option value="rejected">Từ chối</Option>
-              <Option value="completed">Hoàn thành</Option>
             </Select>
           </Form.Item>
           
