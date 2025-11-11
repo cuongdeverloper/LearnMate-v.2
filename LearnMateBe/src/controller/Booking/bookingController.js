@@ -339,7 +339,7 @@ exports.cancelBooking = async (req, res) => {
         userId,
         amount: refundAmount,
         balanceChange: refundAmount,
-        type: "earning",
+        type: "refund",
         status: "success",
         description: `Hoàn tiền booking chưa duyệt (${booking._id.toString().slice(-6)})`,
         date: new Date(),
