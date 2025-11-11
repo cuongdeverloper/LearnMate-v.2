@@ -249,28 +249,7 @@ class AdminService {
         }
     }
 
-    // Get review stats
-    static async getReviewStats() {
-        try {
-            const token = Cookies.get("accessToken");
-
-            if (!token) {
-                window.open("/signin", "_blank");
-                return null;
-            }
-
-            const response = await axios.get('/api/admin/reviews/stats', {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            });
-
-            return response.data;
-        } catch (error) {
-            console.error('Error fetching review stats:', error);
-            throw error;
-        }
-    }
+   
 
     // Toggle hide review
     static async toggleHideReview(reviewId) {
