@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -7,13 +7,12 @@ import {
   FileText,
   CalendarDays,
   ClipboardList,
-  Edit3,
-  Layers,
   ClipboardCheck,
   RefreshCcw,
   LogOut,
   Sun,
   Moon,
+  ChevronDown,
 } from "lucide-react";
 import { doLogout } from "../../redux/action/userAction";
 import TutorBookingList from "./view/TutorBookingList";
@@ -23,7 +22,6 @@ import TutorSchedule from "./view/TutorSchedule";
 import TutorAssignmentManager from "./view/Tutor Assignment/TutorAssignmentManager";
 import TutorChangeRequests from "./view/TutorChangeRequests";
 import TutorQuizManager from "./view/Tutor Quiz/TutorQuizManager";
-import "./TutorDashboard.scss";
 
 const menuItems = [
   { id: "bookings", label: "Quản lý Booking", icon: <BookOpen />, component: <TutorBookingList /> },
@@ -39,14 +37,29 @@ const TutorDashboard = () => {
   const [activeTab, setActiveTab] = useState("bookings");
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [darkMode, setDarkMode] = useState(() => localStorage.getItem("theme") === "dark");
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+
+  const dropdownRef = useRef(null);
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const user = useSelector((state) => state.user.account);
 
+  // Toggle dark mode
   useEffect(() => {
-    document.body.classList.toggle("dark-mode", darkMode);
+    document.body.classList.toggle("dark", darkMode);
     localStorage.setItem("theme", darkMode ? "dark" : "light");
   }, [darkMode]);
+
+  // Close dropdown when click outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const handleLogout = () => {
     dispatch(doLogout());
@@ -56,36 +69,47 @@ const TutorDashboard = () => {
   const activeComponent = menuItems.find((item) => item.id === activeTab)?.component || <TutorBookingList />;
 
   return (
-    <div className="tutor-dashboard-container">
+    <div className={`flex h-screen ${darkMode ? "bg-gray-900 text-gray-100" : "bg-gray-100 text-gray-900"}`}>
       {/* Sidebar */}
       <motion.aside
-        animate={{ width: sidebarOpen ? 220 : 70 }}
+        animate={{ width: sidebarOpen ? 194 : 80 }}
         transition={{ duration: 0.3 }}
-        className={`sidebar ${darkMode ? "dark" : ""}`}
+        className={`flex flex-col bg-indigo-600 dark:bg-gray-800 text-white`}
       >
-        <div className="sidebar-header">
-          <div className="logo">{sidebarOpen ? "🎓 LearnMate" : "🎓"}</div>
-          <button className="toggle-btn" onClick={() => setSidebarOpen(!sidebarOpen)}>
+        {/* Logo & toggle */}
+        <div className="flex items-center justify-between p-4">
+          {sidebarOpen && <span className="font-bold text-lg">🎓 LearnMate</span>}
+          <button
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className="text-white focus:outline-none"
+          >
             {sidebarOpen ? "<" : ">"}
           </button>
         </div>
 
-        <div className="menu">
+        {/* Menu */}
+        <div className="flex-1 mt-4">
           {menuItems.map((item) => (
             <motion.div
               key={item.id}
-              className={`menu-item ${activeTab === item.id ? "active" : ""}`}
               onClick={() => setActiveTab(item.id)}
               whileHover={{ scale: 1.05 }}
+              className={`flex items-center gap-3 p-3 cursor-pointer rounded-md mx-2 my-1 transition-colors ${
+                activeTab === item.id ? "bg-indigo-500" : "hover:bg-indigo-400"
+              }`}
             >
-              <div className="icon">{item.icon}</div>
-              {sidebarOpen && <span>{item.label}</span>}
+              <div className="text-lg">{item.icon}</div>
+              {sidebarOpen && <span className="text-sm font-medium">{item.label}</span>}
             </motion.div>
           ))}
         </div>
 
-        <div className="sidebar-footer">
-          <button className="logout" onClick={handleLogout}>
+        {/* Footer */}
+        <div className="p-4 border-t border-indigo-500">
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-2 w-full p-2 rounded-md hover:bg-red-500 transition-colors"
+          >
             <LogOut size={18} />
             {sidebarOpen && <span>Đăng xuất</span>}
           </button>
@@ -93,21 +117,67 @@ const TutorDashboard = () => {
       </motion.aside>
 
       {/* Main Content */}
-      <div className="main-content">
-        <header className="dashboard-header">
-          <h2>{menuItems.find((m) => m.id === activeTab)?.label || "Dashboard"}</h2>
-          <div className="header-right">
-            <button className="theme-toggle" onClick={() => setDarkMode(!darkMode)}>
+      <div className="flex-1 flex flex-col">
+        {/* Header */}
+        <header className="flex justify-between items-center p-4 border-b border-gray-300 dark:border-gray-700">
+          <h2 className="font-semibold text-xl">{menuItems.find((m) => m.id === activeTab)?.label}</h2>
+          <div className="flex items-center gap-4 relative">
+            {/* Dark mode toggle */}
+            <button
+              onClick={() => setDarkMode(!darkMode)}
+              className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+            >
               {darkMode ? <Sun size={20} /> : <Moon size={20} />}
             </button>
-            <div className="user-info">
-              <div className="avatar">{user?.username?.charAt(0)?.toUpperCase() || "T"}</div>
-              <span>{user?.username || "Tutor"}</span>
+
+            {/* User dropdown */}
+            <div ref={dropdownRef} className="relative">
+              <button
+                onClick={() => setDropdownOpen(!dropdownOpen)}
+                className="flex items-center gap-2 focus:outline-none"
+              >
+                <div className="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center font-bold">
+                  {user?.username?.charAt(0)?.toUpperCase() || "T"}
+                </div>
+                <span>{user?.username || "Tutor"}</span>
+                <ChevronDown size={16} />
+              </button>
+
+              <AnimatePresence>
+                {dropdownOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg z-50"
+                  >
+                    <button
+                      onClick={() => navigate('/profile')}
+                      className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                    >
+                      Profile
+                    </button>
+                    <button
+                      onClick={() => alert("Settings clicked")}
+                      className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                    >
+                      Settings
+                    </button>
+                    <button
+                      onClick={handleLogout}
+                      className="w-full text-left px-4 py-2 hover:bg-red-500 hover:text-white dark:hover:bg-red-600 transition-colors"
+                    >
+                      Logout
+                    </button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           </div>
         </header>
 
-        <main className="dashboard-body">
+        {/* Content */}
+        <main className="flex-1 overflow-auto p-4">
           <AnimatePresence mode="wait">
             <motion.div
               key={activeTab}
@@ -115,7 +185,6 @@ const TutorDashboard = () => {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -15 }}
               transition={{ duration: 0.25 }}
-              className="content-wrapper"
             >
               {activeComponent}
             </motion.div>

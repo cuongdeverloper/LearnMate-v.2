@@ -24,6 +24,38 @@ const respondBooking = async (req, res) => {
     const booking = await Booking.findById(bookingId);
     if (!booking) return res.status(404).json({ message: "Booking not found" });
 
+    // Lấy tutorId để check lịch
+    const tutorId = booking.tutorId;
+
+    // 🔹 Nếu tutor muốn approve → kiểm tra trùng lịch
+    if (action === "approve") {
+      // Lấy tất cả schedule của booking này
+      const bookingSchedules = await Schedule.find({ bookingId });
+
+      for (const sch of bookingSchedules) {
+        const conflict = await Schedule.findOne({
+          tutorId,
+          date: sch.date,
+          status: "approved", // chỉ check lịch đã approved
+          $or: [
+            {
+              $and: [
+                { startTime: { $lt: sch.endTime } },
+                { endTime: { $gt: sch.startTime } },
+              ],
+            },
+          ],
+        });
+
+        if (conflict) {
+          return res.status(400).json({
+            message:
+              "Tutor already has an approved schedule during this time. Cannot approve this booking.",
+          });
+        }
+      }
+    }
+
     // Cập nhật learnerId nếu có
     if (learnerId) booking.learnerId = learnerId;
 
@@ -33,13 +65,10 @@ const respondBooking = async (req, res) => {
 
     // 🔹 Nếu approve thì update tất cả Schedule liên quan
     if (action === "approve") {
-      await Schedule.updateMany(
-        { bookingId },
-        { $set: { status: "approved" } }
-      );
+      await Schedule.updateMany({ bookingId }, { $set: { status: "approved" } });
     }
 
-    // 🔹 Nếu reject hoặc cancel, bạn cũng có thể xoá schedule (tùy logic)
+    // 🔹 Nếu reject hoặc cancel, xoá schedule
     if (action === "rejected" || action === "cancelled") {
       await Schedule.deleteMany({ bookingId });
     }
@@ -60,9 +89,13 @@ const respondBooking = async (req, res) => {
     return res.status(200).json({ message: msg, booking });
   } catch (error) {
     console.error("respondBooking Error:", error);
-    return res.status(500).json({ message: "Server error", error: error.message });
+    return res.status(500).json({
+      message: "Server error",
+      error: error.message,
+    });
   }
 };
+
 
 // 👌 Cancel Booking by learner
 const cancelBooking = async (req, res) => {

@@ -41,7 +41,7 @@ export const getMyWeeklySchedules = async (weekStartDate) => {
         }
       );
   
-      return { success: true, data: response.data };
+      return { success: true, data: response };
     } catch (error) {
       console.error("Lỗi khi điểm danh:", error);
       const message = error.response?.data?.message || "Lỗi không xác định khi điểm danh.";
