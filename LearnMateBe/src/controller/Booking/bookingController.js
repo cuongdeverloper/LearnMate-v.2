@@ -6,6 +6,8 @@ const TutorAvailability = require("../../modal/TutorAvailability");
 const Tutor = require("../../modal/Tutor");
 const mongoose = require('mongoose');
 const Report = require("../../modal/Report");
+const { createNotification } = require("../Notification/NotificationController");
+const { getUser } = require("../../utils/socketUser");
 
 exports.getBookingById = async (req, res) => {
   try {
@@ -127,11 +129,11 @@ exports.createBooking = async (req, res) => {
           description:
             numberOfMonths > 1
               ? `Thanh toán tháng đầu cho booking với gia sư ${tutorId.slice(
-                  -6
-                )}, giữ cọc tháng cuối`
+                -6
+              )}, giữ cọc tháng cuối`
               : `Thanh toán tháng đầu cho booking với gia sư ${tutorId.slice(
-                  -6
-                )}`,
+                -6
+              )}`,
           date: new Date(),
         },
       ],
@@ -193,6 +195,23 @@ exports.createBooking = async (req, res) => {
 
     await session.commitTransaction();
     session.endSession();
+
+    const notification = await createNotification({
+      title: "Bạn có booking mới!",
+      message: `${learner.username} vừa đặt lịch học với bạn.`,
+      type: "booking",
+      recipient: tutor.user, // chính là userId của tutor
+      sender: learnerId,
+      relatedId: bookingDoc._id,
+      relatedModel: "Booking",
+    });
+
+    // 🔥 Gửi realtime nếu tutor đang online
+    const io = req.app.get("io"); // đảm bảo bạn đã set io vào app (xem bước 3)
+    const user = getUser(tutor.user.toString());
+    if (user && io) {
+      io.to(user.socketId).emit("getNotification", notification);
+    }
 
     res.status(201).json({
       success: true,
@@ -540,7 +559,7 @@ exports.getAllBookingsByTutorId = async (req, res) => {
         },
         subject: {
           name: subject.name,
-          classLevel: subject.classLevel, 
+          classLevel: subject.classLevel,
         },
       };
     });

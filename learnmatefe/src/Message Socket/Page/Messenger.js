@@ -9,6 +9,7 @@ import { useParams } from "react-router-dom";
 import Header from "../../components/Layout/Header/Header";
 import { ApiGetUserByUserId } from "../../Service/ApiService/ApiUser";
 import { ApiGetMessageByConversationId, ApiSendMessage, getConversationApi } from "../../Service/ApiService/ApiMessage";
+import { toast } from "react-toastify";
 
 
 const Messenger = () => {
@@ -65,6 +66,7 @@ const Messenger = () => {
         text: data.text,
         createdAt: Date.now(),
         conversationId: data.conversationId,
+        textPreview: data.text
       });
     });
 
@@ -84,7 +86,16 @@ const Messenger = () => {
     }
   }, [arrivalMessage, currentChat]);
 
+useEffect(() => {
+  if (!arrivalMessage) return;
 
+  if (!currentChat || arrivalMessage.conversationId !== currentChat._id) {
+    toast.info(`💬 Bạn có tin nhắn mới: "${arrivalMessage.textPreview}"`, {
+      position: "bottom-right",
+      autoClose: 3000,
+    });
+  }
+}, [arrivalMessage, currentChat]);
 
   useEffect(() => {
     socket.current.emit("addUser", user.account.id);

@@ -9,6 +9,7 @@ import {
   updateTutorActiveStatus,
 } from "../../../Service/ApiService/ApiTutor";
 import { Button } from "antd";
+import NotificationBell from "../../Notification/NotificationBell";
 
 const Header = () => {
   const navigate = useNavigate();
@@ -78,7 +79,7 @@ const Header = () => {
 
         <nav className="nav-links">
           <Link to="/tutor">Tìm gia sư</Link>
-          <Link to="/community">Cộng đồng</Link>
+          {/* <Link to="/community">Cộng đồng</Link> */}
           {accessToken && (
             <Link to="/messenger">
                Trò chuyện
@@ -93,6 +94,7 @@ const Header = () => {
         </nav>
 
         <div className="header-right">
+          <NotificationBell />
           {accessToken ? (
             <>
               <div
