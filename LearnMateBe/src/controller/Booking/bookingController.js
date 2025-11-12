@@ -4,7 +4,7 @@ const Schedule = require("../../modal/Schedule");
 const FinancialHistory = require("../../modal/FinancialHistory");
 const TutorAvailability = require("../../modal/TutorAvailability");
 const Tutor = require("../../modal/Tutor");
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 const Report = require("../../modal/Report");
 
 exports.getBookingById = async (req, res) => {
@@ -40,6 +40,7 @@ exports.createBooking = async (req, res) => {
       availabilityIds,
       addressDetail,
       province,
+      startDate,
     } = req.body;
 
     if (!tutorId || !subjectId || !availabilityIds?.length || !numberOfMonths)
@@ -155,6 +156,7 @@ exports.createBooking = async (req, res) => {
           status: "pending",
           note,
           address: `${addressDetail}, ${province}`,
+          startDate,
         },
       ],
       { session }
@@ -163,14 +165,15 @@ exports.createBooking = async (req, res) => {
     const bookingDoc = booking[0];
 
     // --- Tạo lịch học ---
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const baseDate = startDate ? new Date(startDate) : new Date();
+    baseDate.setHours(0, 0, 0, 0);
+
     const schedules = [];
 
     for (const slot of slots) {
-      let diff = (slot.dayOfWeek + 7 - today.getDay()) % 7;
-      const firstDate = new Date(today);
-      firstDate.setDate(today.getDate() + diff);
+      let diff = (slot.dayOfWeek + 7 - baseDate.getDay()) % 7;
+      const firstDate = new Date(baseDate);
+      firstDate.setDate(baseDate.getDate() + diff);
 
       for (let i = 0; i < numberOfMonths * 4; i++) {
         const date = new Date(firstDate);
@@ -189,6 +192,7 @@ exports.createBooking = async (req, res) => {
 
     const createdSchedules = await Schedule.insertMany(schedules, { session });
     bookingDoc.scheduleIds = createdSchedules.map((s) => s._id);
+    bookingDoc.startDate = baseDate; // 👈 Lưu lại startDate
     await bookingDoc.save({ session });
 
     await session.commitTransaction();
@@ -237,16 +241,23 @@ exports.getUserBookingHistory = async (req, res) => {
 
       const depositInfo = (() => {
         switch (b.depositStatus) {
-          case "held": return "Đang giữ cọc";
-          case "used": return "Đã dùng cọc";
-          case "refunded": return "Đã hoàn cọc";
-          case "forfeit": return "Mất cọc";
-          default: return "Không có cọc";
+          case "held":
+            return "Đang giữ cọc";
+          case "used":
+            return "Đã dùng cọc";
+          case "refunded":
+            return "Đã hoàn cọc";
+          case "forfeit":
+            return "Mất cọc";
+          default:
+            return "Không có cọc";
         }
       })();
 
       // ✅ Tổng số buổi dựa vào scheduleIds
-      const totalSessions = Array.isArray(b.scheduleIds) ? b.scheduleIds.length : 0;
+      const totalSessions = Array.isArray(b.scheduleIds)
+        ? b.scheduleIds.length
+        : 0;
 
       return {
         ...b,
@@ -271,7 +282,6 @@ exports.getUserBookingHistory = async (req, res) => {
   }
 };
 
-
 exports.getApprovedBookingsForLearner = async (req, res) => {
   try {
     if (!req.user) {
@@ -282,7 +292,6 @@ exports.getApprovedBookingsForLearner = async (req, res) => {
     }
 
     const learnerId = req.user.id || req.user._id;
-
 
     const bookings = await Booking.find({
       learnerId,
@@ -302,7 +311,6 @@ exports.getApprovedBookingsForLearner = async (req, res) => {
       })
       .sort({ createdAt: -1 });
 
-
     res.json(bookings);
   } catch (err) {
     console.error("Lỗi khi lấy các khóa học đã duyệt:", err);
@@ -320,14 +328,21 @@ exports.cancelBooking = async (req, res) => {
     const userId = req.user.id || req.user._id;
 
     const booking = await Booking.findById(bookingId).session(session);
-    if (!booking) return res.status(404).json({ success: false, message: "Không tìm thấy booking." });
+    if (!booking)
+      return res
+        .status(404)
+        .json({ success: false, message: "Không tìm thấy booking." });
 
     if (booking.learnerId.toString() !== userId.toString())
-      return res.status(403).json({ success: false, message: "Không có quyền hủy booking này." });
+      return res
+        .status(403)
+        .json({ success: false, message: "Không có quyền hủy booking này." });
 
     const learner = await User.findById(userId).session(session);
     if (!learner)
-      return res.status(404).json({ success: false, message: "Không tìm thấy học viên." });
+      return res
+        .status(404)
+        .json({ success: false, message: "Không tìm thấy học viên." });
 
     // --- Case 1: tutor chưa approve => hoàn toàn bộ thanh toán ---
     if (booking.status === "pending") {
@@ -335,15 +350,22 @@ exports.cancelBooking = async (req, res) => {
       learner.balance += refundAmount;
       await learner.save({ session });
 
-      await FinancialHistory.create([{
-        userId,
-        amount: refundAmount,
-        balanceChange: refundAmount,
-        type: "earning",
-        status: "success",
-        description: `Hoàn tiền booking chưa duyệt (${booking._id.toString().slice(-6)})`,
-        date: new Date(),
-      }], { session });
+      await FinancialHistory.create(
+        [
+          {
+            userId,
+            amount: refundAmount,
+            balanceChange: refundAmount,
+            type: "earning",
+            status: "success",
+            description: `Hoàn tiền booking chưa duyệt (${booking._id
+              .toString()
+              .slice(-6)})`,
+            date: new Date(),
+          },
+        ],
+        { session }
+      );
 
       booking.status = "cancelled";
       booking.depositStatus = booking.deposit > 0 ? "refunded" : "none";
@@ -353,14 +375,16 @@ exports.cancelBooking = async (req, res) => {
       // Tùy quy định, có thể chỉ hoàn cọc nếu chưa học buổi nào
       booking.status = "cancelled";
       booking.depositStatus = "forfeit";
-    }
-    else {
-      return res.status(400).json({ success: false, message: "Không thể hủy booking ở trạng thái này." });
+    } else {
+      return res
+        .status(400)
+        .json({
+          success: false,
+          message: "Không thể hủy booking ở trạng thái này.",
+        });
     }
 
     await booking.save({ session });
-
-
 
     // Xóa lịch
     await Schedule.deleteMany({ bookingId: booking._id }).session(session);
@@ -380,7 +404,6 @@ exports.cancelBooking = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
-
 
 exports.finishBooking = async (req, res) => {
   try {
@@ -540,7 +563,7 @@ exports.getAllBookingsByTutorId = async (req, res) => {
         },
         subject: {
           name: subject.name,
-          classLevel: subject.classLevel, 
+          classLevel: subject.classLevel,
         },
       };
     });
@@ -558,7 +581,6 @@ exports.getAllBookingsByTutorId = async (req, res) => {
     });
   }
 };
-
 
 exports.createReport = async (req, res) => {
   const { targetType, targetId, reason } = req.body;
