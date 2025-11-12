@@ -356,7 +356,7 @@ exports.cancelBooking = async (req, res) => {
             userId,
             amount: refundAmount,
             balanceChange: refundAmount,
-            type: "earning",
+            type: "refund",
             status: "success",
             description: `Hoàn tiền booking chưa duyệt (${booking._id
               .toString()
@@ -366,6 +366,7 @@ exports.cancelBooking = async (req, res) => {
         ],
         { session }
       );
+
 
       booking.status = "cancelled";
       booking.depositStatus = booking.deposit > 0 ? "refunded" : "none";
