@@ -150,44 +150,43 @@ exports.getUserInfo = async (req, res) => {
 // Tạo yêu cầu rút tiền (Withdrawal Request)
 exports.createWithdrawalRequest = async (req, res) => {
   try {
-      // Lấy userId từ token thay vì req.body
       const userId = req.user.id || req.user._id;
       const { amount, bankAccount } = req.body;
-
-      if (!userId) {
-          return res.status(400).json({ message: 'Thiếu userId trong token.' });
-      }
-      if (!amount || amount <= 0) {
-          return res.status(400).json({ message: 'Số tiền rút không hợp lệ.' });
-      }
+      const MIN_WITHDRAWAL_AMOUNT = 100000;
+      if (!amount || amount < MIN_WITHDRAWAL_AMOUNT) {
+        return res.status(400).json({ message: `Số tiền rút tối thiểu là ${MIN_WITHDRAWAL_AMOUNT.toLocaleString()} VND.` });
+    }
+      if (!userId) return res.status(400).json({ message: 'Thiếu userId trong token.' });
+      if (!amount || amount <= 0) return res.status(400).json({ message: 'Số tiền rút không hợp lệ.' });
       if (!bankAccount || !bankAccount.bankName || !bankAccount.accountNumber || !bankAccount.accountHolderName) {
           return res.status(400).json({ message: 'Thông tin tài khoản ngân hàng không đầy đủ.' });
       }
 
       const user = await User.findById(userId);
-      if (!user) {
-          return res.status(404).json({ message: 'Người dùng không tồn tại.' });
-      }
+      if (!user) return res.status(404).json({ message: 'Người dùng không tồn tại.' });
+      if (user.balance < amount) return res.status(400).json({ message: 'Số dư không đủ.' });
 
-      if (user.balance < amount) {
-          return res.status(400).json({ message: 'Số dư không đủ.' });
-      }
+      // Tính phí 15%
+      const fee = Math.floor(amount * 0.15);
+      const actualWithdrawal = amount - fee;
 
       // Tạo yêu cầu rút tiền
       const newWithdrawal = new Withdrawal({
           userId,
-          amount,
+          amount,               // số tiền user yêu cầu
+          actualWithdrawal,     // số tiền thực nhận
           bankAccount,
-          status: 'pending' // Mặc định là đang chờ xử lý
+          status: 'pending',
+          note: `Phí rút 15%: ${fee.toLocaleString()} VND`
       });
       await newWithdrawal.save();
 
-      // Giảm số dư của người dùng ngay lập tức
+      // Giảm số dư của user theo số tiền gốc
       user.balance -= amount;
       await user.save();
 
       res.status(201).json({
-          message: 'Yêu cầu rút tiền đã được gửi thành công.',
+          message: `Yêu cầu rút tiền đã gửi thành công. Số tiền thực nhận: ${actualWithdrawal.toLocaleString()} VND`,
           withdrawal: newWithdrawal
       });
 

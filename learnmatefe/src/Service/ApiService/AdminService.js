@@ -23,7 +23,6 @@ class AdminService {
             return response;
         } catch (error) {
             console.error('Error fetching users:', error.response?.data?.message || error.message);
-            console.error('Error fetching users:', error.response?.data?.message || error.message);
             return null;
         }
     }
@@ -215,118 +214,9 @@ class AdminService {
 
     // ========== REVIEW MANAGEMENT FUNCTIONS ==========
     
+
+
     // Get all reviews
-    static async getAllReviews(page = 1, limit = 10, status = '', search = '') {
-        try {
-            const token = Cookies.get("accessToken");
-
-            if (!token) {
-                console.error('No access token found');
-                window.open("/signin", "_blank");
-                return null;
-            }
-
-            const params = new URLSearchParams({
-                page: page.toString(),
-                limit: limit.toString(),
-                ...(status && { status }),
-                ...(search && { search })
-            });
-
-            const response = await axios.get(`/api/admin/reviews?${params}`, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            });
-
-            return response.data;
-        } catch (error) {
-            console.error('Error fetching reviews - Full error:', error);
-            console.error('Error response:', error.response);
-            console.error('Error status:', error.response?.status);
-            console.error('Error data:', error.response?.data);
-            throw error;
-        }
-    }
-
-   
-
-    // Toggle hide review
-    static async toggleHideReview(reviewId) {
-        try {
-            const token = Cookies.get("accessToken");
-
-            if (!token) {
-                window.open("/signin", "_blank");
-                return null;
-            }
-
-            const response = await axios.patch(
-                `/api/admin/reviews/${reviewId}/toggle-hide`,
-                {},
-                {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
-                }
-            );
-            return true;
-        } catch (error) {
-            throw error;
-        }
-    }
-
-    // Delete review
-    static async deleteReview(reviewId, reason) {
-        try {
-            const token = Cookies.get("accessToken");
-
-            if (!token) {
-                window.open("/signin", "_blank");
-                return null;
-            }
-
-            const response = await axios.delete(
-                `/api/admin/reviews/${reviewId}`,
-                {
-                    data: { reason },
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
-                }
-            );
-            return true;
-        } catch (error) {
-            throw error;
-        }
-    }
-
-    // Mark review as spam/offensive
-    static async markReview(reviewId, type) {
-        try {
-            const token = Cookies.get("accessToken");
-
-            if (!token) {
-                window.open("/signin", "_blank");
-                return null;
-            }
-
-            const response = await axios.patch(
-                `/api/admin/reviews/${reviewId}/mark`,
-                { type },
-                {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
-                }
-            );
-            return true;
-        } catch (error) {
-            throw error;
-        }
-    }
-
-    // Review Management APIs
     static async getAllReviews(page = 1, pageSize = 10, status = '', search = '') {
         try {
             const token = Cookies.get("accessToken");
@@ -415,7 +305,7 @@ class AdminService {
                     Authorization: `Bearer ${token}`,
                 },
                 data: {
-                    deleteReason: reason
+                    reason: reason
                 }
             });
 
@@ -426,7 +316,7 @@ class AdminService {
         }
     }
 
-    static async markReview(reviewId, markType) {
+    static async markReview(reviewId, type) {
         try {
             const token = Cookies.get("accessToken");
             
@@ -436,7 +326,7 @@ class AdminService {
             }
 
             const response = await axios.patch(`/api/admin/reviews/${reviewId}/mark`, {
-                markType: markType
+                type: type
             }, {
                 headers: {
                     Authorization: `Bearer ${token}`,
@@ -446,101 +336,6 @@ class AdminService {
             return response;
         } catch (error) {
             console.error('Error marking review:', error);
-            throw error;
-        }
-    }
-
-    // ============ BOOKING MANAGEMENT ============
-    
-    // Get all bookings
-    static async getBookings(params = {}) {
-        try {
-            const token = Cookies.get("accessToken");
-            
-            if (!token) {
-                window.open("/signin", "_blank");
-                return null;
-            }
-
-            const response = await axios.get('/api/admin/bookings', {
-                params,
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            });
-
-            return response;
-        } catch (error) {
-            console.error('Error fetching bookings:', error);
-            throw error;
-        }
-    }
-
-    // Get booking statistics
-    static async getBookingStats() {
-        try {
-            const token = Cookies.get("accessToken");
-            
-            if (!token) {
-                window.open("/signin", "_blank");
-                return null;
-            }
-
-            const response = await axios.get('/api/admin/bookings/stats', {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            });
-
-            return response;
-        } catch (error) {
-            console.error('Error fetching booking stats:', error);
-            throw error;
-        }
-    }
-
-    // Get booking details
-    static async getBookingDetails(bookingId) {
-        try {
-            const token = Cookies.get("accessToken");
-            
-            if (!token) {
-                window.open("/signin", "_blank");
-                return null;
-            }
-
-            const response = await axios.get(`/api/admin/bookings/${bookingId}`, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            });
-
-            return response;
-        } catch (error) {
-            console.error('Error fetching booking details:', error);
-            throw error;
-        }
-    }
-
-    // Update booking status
-    static async updateBookingStatus(bookingId, data) {
-        try {
-            const token = Cookies.get("accessToken");
-            
-            if (!token) {
-                window.open("/signin", "_blank");
-                return null;
-            }
-
-            const response = await axios.patch(`/api/admin/bookings/${bookingId}/status`, data, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            });
-
-            return response;
-        } catch (error) {
-            console.error('Error updating booking status:', error);
             throw error;
         }
     }
@@ -662,6 +457,57 @@ class AdminService {
             throw error;
         }
     }
+    
+       // ================= BOOKING MANAGEMENT =================
+    
+    // Get all bookings
+    static async getBookings(params = {}) {
+        try {
+            const token = Cookies.get("accessToken");
+
+            if (!token) {
+                window.open("/signin", "_blank");
+                return null;
+            }
+
+            const response = await axios.get('/api/admin/bookings', {
+                params,
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+
+            return response;
+        } catch (error) {
+            console.error('Error fetching bookings:', error);
+            throw error;
+        }
+    }
+
+
+    // Get booking details
+    static async getBookingDetails(bookingId) {
+        try {
+            const token = Cookies.get("accessToken");
+
+            if (!token) {
+                window.open("/signin", "_blank");
+                return null;
+            }
+
+            const response = await axios.get(`/api/admin/bookings/${bookingId}`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+
+            return response;
+        } catch (error) {
+            console.error('Error fetching booking details:', error);
+            throw error;
+        }
+    }
+    
 
     // ========== FINANCIAL MANAGEMENT ==========
     
