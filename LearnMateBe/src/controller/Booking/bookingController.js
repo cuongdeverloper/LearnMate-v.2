@@ -100,12 +100,11 @@ exports.createBooking = async (req, res) => {
     const monthlyFee = tutor.pricePerHour * sessionsPerMonth;
     const totalAmount = monthlyFee * numberOfMonths;
 
-    // Thanh toán tháng đầu
-    const initialPayment = monthlyFee;
+
     // Cọc tháng cuối nếu > 1 tháng
     const deposit = numberOfMonths > 1 ? monthlyFee : 0;
     const depositStatus = deposit > 0 ? "held" : "none";
-
+    const initialPayment = monthlyFee + deposit;
     if (learner.balance < initialPayment)
       return res.status(400).json({
         success: false,
