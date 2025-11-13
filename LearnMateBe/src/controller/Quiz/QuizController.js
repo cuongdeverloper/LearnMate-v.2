@@ -66,20 +66,16 @@ exports.createQuizFromStorage = async (req, res) => {
       closeTime,
       topic,
     } = req.body;
+
     const tutor = await Tutor.findOne({ user: req.user.id });
     if (!tutor)
-      return res
-        .status(404)
-        .json({ success: false, message: "Không tìm thấy tutor." });
+      return res.status(404).json({ success: false, message: "Không tìm thấy tutor." });
 
-    const quizStorage = await QuizStorage.findById(quizStorageId).populate(
-      "questions"
-    );
+    const quizStorage = await QuizStorage.findById(quizStorageId).populate("questions");
     if (!quizStorage)
-      return res
-        .status(404)
-        .json({ success: false, message: "Không tìm thấy QuizStorage." });
+      return res.status(404).json({ success: false, message: "Không tìm thấy QuizStorage." });
 
+    // ✅ openTime & closeTime nhập riêng
     const quiz = new Quiz({
       tutorId: tutor._id,
       subjectId: quizStorage.subjectId,
@@ -88,9 +84,9 @@ exports.createQuizFromStorage = async (req, res) => {
       title: title || quizStorage.name,
       description: quizStorage.description || "",
       topic: topic || quizStorage.topic,
-      duration: duration || 1800,
-      openTime: openTime || new Date(),
-      closeTime: closeTime || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      duration: duration || 1800, // thời lượng làm bài, không liên quan open/close
+      openTime: openTime ? new Date(openTime) : new Date(),
+      closeTime: closeTime ? new Date(closeTime) : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
     });
 
     await quiz.save();
@@ -116,11 +112,13 @@ exports.createQuizFromStorage = async (req, res) => {
     });
   } catch (error) {
     console.error("CreateQuizFromStorage Error:", error);
-    res
-      .status(500)
-      .json({ success: false, message: "Lỗi khi tạo quiz từ QuizStorage." });
+    res.status(500).json({
+      success: false,
+      message: "Lỗi khi tạo quiz từ QuizStorage.",
+    });
   }
 };
+
 
 // 🧩 Import câu hỏi từ file Excel
 // Import Excel

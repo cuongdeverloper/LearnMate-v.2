@@ -290,8 +290,7 @@ export default function BookingPage() {
           <img
             src={
               user?.image ||
-              `https://i.pravatar.cc/150?img=${
-                Math.floor(Math.random() * 70) + 1
+              `https://i.pravatar.cc/150?img=${Math.floor(Math.random() * 70) + 1
               }`
             }
             alt={`Ảnh đại diện của ${user?.username || "Gia sư"}`}
@@ -512,9 +511,9 @@ export default function BookingPage() {
                             // Nếu slot có avail nhưng đã book, cũng set class "no-slot"
                             const finalCls =
                               avail &&
-                              (avail.isBooked ||
-                                avail.bookingId ||
-                                bookedSchedule)
+                                (avail.isBooked ||
+                                  avail.bookingId ||
+                                  bookedSchedule)
                                 ? "no-slot"
                                 : cls;
 
@@ -540,6 +539,17 @@ export default function BookingPage() {
 
               <div className="selected-info">
                 <strong>Đã chọn:</strong> {selectedSlots.length} khung giờ
+              </div>
+              <div className="schedule-legend">
+                <div className="legend-item">
+                  <span className="legend-box available"></span> Có thể đặt
+                </div>
+                <div className="legend-item">
+                  <span className="legend-box selected"></span> Đang chọn
+                </div>
+                <div className="legend-item">
+                  <span className="legend-box no-slot"></span> Đã được đặt / Không khả dụng
+                </div>
               </div>
             </div>
 

@@ -15,7 +15,7 @@ const TutorAssignQuiz = () => {
   const [bookings, setBookings] = useState([]);
   const [quizStorages, setQuizStorages] = useState([]);
   const [quizTopics, setQuizTopics] = useState([]);
-
+  const [closeTime, setCloseTime] = useState("");
   const [selectedSubject, setSelectedSubject] = useState(null);
   const [selectedTopic, setSelectedTopic] = useState("");
   const [selectedQuizStorage, setSelectedQuizStorage] = useState(null);
@@ -95,8 +95,8 @@ const TutorAssignQuiz = () => {
 
   // 🔹 Gán quiz cho nhiều booking
   const handleAssignQuiz = async () => {
-    if (!selectedQuizStorage || selectedBookings.length === 0 || !openTime) {
-      toast.error("Vui lòng chọn quiz, học viên và thời gian mở!");
+    if (!selectedQuizStorage || selectedBookings.length === 0 || !openTime || !closeTime) {
+      toast.error("Vui lòng chọn quiz, học viên và thời gian mở/đóng!");
       return;
     }
 
@@ -109,6 +109,7 @@ const TutorAssignQuiz = () => {
           title: quizTitle || selectedQuizStorage.label,
           duration,
           openTime,
+          closeTime,
         });
         if (!res?.success) {
           toast.error(`Gán quiz thất bại cho học viên ${bId}`);
@@ -184,8 +185,8 @@ const TutorAssignQuiz = () => {
                 }}
               >
                 <strong>{b.learner?.username}</strong>
-                <span>{b.subject?.name} - Lớp {b.subject?.classLevel}</span>
-                <span>{new Date(b.startDate).toLocaleDateString()} → {new Date(b.endDate).toLocaleDateString()}</span>
+                <span>{b.subject?.name} - Lớp {b.subject?.classLevel}</span><br/>
+                <span>Thời gian: {new Date(b.startDate).toLocaleDateString()} → {new Date(b.endDate).toLocaleDateString()}</span>
               </div>
             );
           })}
@@ -198,6 +199,15 @@ const TutorAssignQuiz = () => {
           type="datetime-local"
           value={openTime}
           onChange={(e) => setOpenTime(e.target.value)}
+        />
+      </div>
+
+      <div className="form-section">
+        <label>Thời gian đóng</label>
+        <input
+          type="datetime-local"
+          value={closeTime}
+          onChange={(e) => setCloseTime(e.target.value)}
         />
       </div>
 

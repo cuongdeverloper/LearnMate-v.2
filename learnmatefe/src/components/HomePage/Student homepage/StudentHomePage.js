@@ -9,6 +9,7 @@ import Cookies from 'js-cookie'
 import { useEffect } from "react";
 import AOS from 'aos';
 import 'aos/dist/aos.css';
+import NotificationBell from "../../Notification/NotificationBell";
 const StudentHomePage = () => {
   useEffect(() => {
   AOS.init({
@@ -69,11 +70,13 @@ const StudentHomePage = () => {
         <nav className="nav">
           <Link to="/tutor">Tìm gia sư</Link>
           <Link to="/tutor-application">Trở thành gia sư</Link>
+          {isAuthenticated&& <Link to="/messenger">Trò chuyện</Link>}
           {role === "tutor" && <Link to="/TutorDashboard">BookingManagement</Link>}
           {role === "admin" && <Link to="/admin/dashboard">Admin</Link>}
         </nav>
         <div className="right-section">
           <LangLogin />
+          <NotificationBell />
           <div className="profile-dropdown">
             <img
               src={user?.account?.image || "https://i.pravatar.cc/40"}
