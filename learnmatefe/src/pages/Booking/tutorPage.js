@@ -9,7 +9,7 @@ import { toast } from "react-toastify"; // Import toast
 import "../../scss/TutorListPage.scss";
 
 const classSubjectsMap = {
-  1: ["Math", "Tiếng Việt"],
+  1: ["Toán", "Tiếng Việt"],
   2: ["Toán", "Tiếng Việt", "Tiếng Anh"],
   3: ["Toán", "Tiếng Việt", "Tiếng Anh"],
   4: ["Toán", "Tiếng Việt", "Tiếng Anh", "Khoa học"],
