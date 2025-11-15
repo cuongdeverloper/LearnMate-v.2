@@ -69,11 +69,17 @@ exports.createQuizFromStorage = async (req, res) => {
 
     const tutor = await Tutor.findOne({ user: req.user.id });
     if (!tutor)
-      return res.status(404).json({ success: false, message: "Không tìm thấy tutor." });
+      return res
+        .status(404)
+        .json({ success: false, message: "Không tìm thấy tutor." });
 
-    const quizStorage = await QuizStorage.findById(quizStorageId).populate("questions");
+    const quizStorage = await QuizStorage.findById(quizStorageId).populate(
+      "questions"
+    );
     if (!quizStorage)
-      return res.status(404).json({ success: false, message: "Không tìm thấy QuizStorage." });
+      return res
+        .status(404)
+        .json({ success: false, message: "Không tìm thấy QuizStorage." });
 
     // ✅ openTime & closeTime nhập riêng
     const quiz = new Quiz({
@@ -86,7 +92,9 @@ exports.createQuizFromStorage = async (req, res) => {
       topic: topic || quizStorage.topic,
       duration: duration || 1800, // thời lượng làm bài, không liên quan open/close
       openTime: openTime ? new Date(openTime) : new Date(),
-      closeTime: closeTime ? new Date(closeTime) : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      closeTime: closeTime
+        ? new Date(closeTime)
+        : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
     });
 
     await quiz.save();
@@ -119,7 +127,6 @@ exports.createQuizFromStorage = async (req, res) => {
   }
 };
 
-
 // 🧩 Import câu hỏi từ file Excel
 // Import Excel
 exports.importQuestionsToStorage = async (req, res) => {
@@ -140,7 +147,7 @@ exports.importQuestionsToStorage = async (req, res) => {
       });
     }
 
-    const mappedQuestions = questions.map(q => ({
+    const mappedQuestions = questions.map((q) => ({
       tutorId: tutor._id,
       subjectId,
       topic: q.topic?.trim() || "Chung",
@@ -604,7 +611,6 @@ exports.getQuizDetailsById = async (req, res) => {
     quizDetails.questions = questions;
     quizDetails.attempts = quizAttempts;
 
-
     res.status(200).json({ success: true, data: quizDetails });
   } catch (error) {
     console.error("GetQuizById Error:", error);
@@ -615,7 +621,8 @@ exports.getQuizDetailsById = async (req, res) => {
 exports.submitQuiz = async (req, res) => {
   try {
     const { quizId } = req.params;
-    const { answers, startedAt, finishedAt } = req.body;
+    const { answers, startedAt, finishedAt, violationList } = req.body;
+    console.log("answers: ", answers);
 
     const quiz = await Quiz.findById(quizId);
 
@@ -663,8 +670,14 @@ exports.submitQuiz = async (req, res) => {
 
     const results = await Promise.all(
       questions.map(async (question) => {
+        const answerStr = answers[question._id.toString()];
+
         const selectedAnswer =
-          Number.parseInt(answers[question._id.toString()]) + 1;
+          answerStr !== undefined ? Number(answerStr) : null;
+
+        if (selectedAnswer === null || isNaN(selectedAnswer)) {
+          return false;
+        }
 
         const isCorrect = selectedAnswer === question.correctAnswer;
         return isCorrect;
@@ -684,21 +697,32 @@ exports.submitQuiz = async (req, res) => {
       score: (correctAnswers / questions.length) * 100,
       startedAt,
       finishedAt,
+      violationList,
     });
 
     await quizAttempt.save();
 
     await Promise.all(
       questions.map(async (question) => {
-        const selectedAnswer =
-          Number.parseInt(answers[question._id.toString()]) + 1;
+        const answerStr = answers[question._id.toString()];
 
-        const isCorrect = selectedAnswer === question.correctAnswer;
+        const selectedAnswer =
+          answerStr !== undefined ? Number(answerStr) : null;
+
+        let isCorrect = true;
+
+        if (selectedAnswer === null || isNaN(selectedAnswer) || !isCorrect) {
+          isCorrect = false;
+        } else if (selectedAnswer === question.correctAnswer) {
+          isCorrect = true;
+        } else {
+          isCorrect = false;
+        }
 
         const answer = new Answer({
           quizAttemptId: quizAttempt._id,
           questionId: question._id,
-          selectedAnswer: selectedAnswer,
+          selectedAnswer: selectedAnswer || null,
           isCorrect: isCorrect,
         });
 
@@ -718,12 +742,14 @@ exports.submitQuiz = async (req, res) => {
 
     let rank = 1;
     let totalParticipants = 1;
+    let scoreList = [];
+
     if (quiz.quizStorageId) {
       const relatedQuizzes = await Quiz.find({
         quizStorageId: quiz.quizStorageId,
       }).select("newestScore title attempted");
 
-      const scoreList = relatedQuizzes.map((q) => ({
+      scoreList = relatedQuizzes.map((q) => ({
         score: q.newestScore || 0,
         quizId: q._id,
         title: q.title,

@@ -23,6 +23,7 @@ const QuizAttemptSchema = new mongoose.Schema(
     startedAt: { type: Date },
     finishedAt: { type: Date },
     graded: { type: Boolean, default: false },
+    violationList: [String],
   },
   { timestamps: true }
 );

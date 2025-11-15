@@ -18,11 +18,15 @@ export const TASK_LABELS = {
 };
 
 const formatDate = (date) =>
-  new Date(date).toLocaleDateString("vi-VN", {
+  new Date(date).toLocaleString("vi-VN", {
     weekday: "short",
     day: "numeric",
     month: "long",
     year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+    timeZone: "Asia/Ho_Chi_Minh",
   });
 
 const TaskDetailModal = ({ task, isOpen, onClose, courseId }) => {

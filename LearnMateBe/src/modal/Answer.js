@@ -4,7 +4,7 @@ const AnswerSchema = new mongoose.Schema(
   {
     quizAttemptId: { type: mongoose.Schema.Types.ObjectId, ref: "QuizAttempt" },
     questionId: { type: mongoose.Schema.Types.ObjectId, ref: "Question" },
-    selectedAnswer: { type: Number, required: true },
+    selectedAnswer: { type: Number },
     isCorrect: { type: Boolean, default: false },
   },
   { timestamps: true }

@@ -30,11 +30,15 @@ const statusFor = (openTime, deadline, attempted, maxAttempts) => {
 };
 
 const formatDate = (date) =>
-  new Date(date).toLocaleDateString("vi-VN", {
+  new Date(date).toLocaleString("vi-VN", {
     weekday: "short",
     day: "numeric",
     month: "long",
     year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+    timeZone: "Asia/Ho_Chi_Minh",
   });
 
 const QuizzesTab = () => {
@@ -109,7 +113,7 @@ const QuizzesTab = () => {
                   </TableCell>
                   <TableCell>
                     {status === "Upcoming" && (
-                      <Badge variant="secondary" className="text-white">
+                      <Badge variant="upcoming" className="text-white">
                         Upcoming
                       </Badge>
                     )}
@@ -144,6 +148,7 @@ const QuizzesTab = () => {
                         className="text-white"
                         asChild
                         onClick={() => handleSelectQuiz(q._id)}
+                        disabled={q.maxAttempts === q.attempted}
                       >
                         <Link to={`/user/quizzes/${q._id}/take`}>
                           {q.attempted > 0 && q.attempted < q.maxAttempts
@@ -151,26 +156,11 @@ const QuizzesTab = () => {
                               "(còn " +
                               (q.maxAttempts - q.attempted) +
                               " lần thử)"
-                            : q.attempted === 0
-                            ? "Bắt đầu"
-                            : "Xem kết quả"}
+                            : "Bắt đầu"}
                         </Link>
                       </Button>
                     )}
-                    {status === "Completed" && (
-                      <Button
-                        className="text-white"
-                        asChild
-                        variant="secondary"
-                        onClick={() => handleSelectQuiz(q._id)}
-                        disabled={q.attempted === q.maxAttempts}
-                      >
-                        <Link to={`/user/quizzes/${q._id}/result`}>
-                          {q.attempted < q.maxAttempts && "Thử lại"}
-                          {q.attempted >= q.maxAttempts && "Xem kết quả"}
-                        </Link>
-                      </Button>
-                    )}
+
                     {(status == "Active" || status == "Completed") && (
                       <Button
                         asChild

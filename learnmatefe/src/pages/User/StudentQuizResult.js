@@ -84,7 +84,6 @@ const StudentQuizResult = () => {
       </div>
     );
 
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-secondary/10 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-5xl mx-auto">
@@ -200,6 +199,8 @@ const StudentQuizResult = () => {
           const isCorrect =
             Number.parseInt(answer?.selectedAnswer) === q.correctAnswer;
 
+          const isAnswered = answer !== undefined;
+
           const explanation = explanations?.find((e) => e.questionId === q._id)
             ?.explanation?.parts[0]?.text;
 
@@ -218,14 +219,14 @@ const StudentQuizResult = () => {
                     isCorrect ? "text-green-600" : "text-red-600"
                   )}
                 >
-                  {isCorrect ? "Đúng" : "Sai"}
+                  {isAnswered ? (isCorrect ? "Đúng" : "Sai") : "Bỏ trống"}
                 </span>
               </div>
               <div className="space-y-2">
                 {q.options.map((opt, id) => {
                   const isUserAnswer =
-                    Number.parseInt(answer?.selectedAnswer) - 1 === id;
-                  const isRightAnswer = q.correctAnswer - 1 === id;
+                    Number.parseInt(answer?.selectedAnswer) === id;
+                  const isRightAnswer = q.correctAnswer === id;
 
                   return (
                     <div
