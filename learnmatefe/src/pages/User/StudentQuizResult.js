@@ -190,19 +190,47 @@ const StudentQuizResult = () => {
           </div>
         </div>
 
+        <div className="mt-8 rounded-lg border p-6">
+          <div className="font-medium mb-2">Phát hiện gian lận</div>
+          {quizResult?.latestAttempt?.violationList?.length === 0 && (
+            <div className="text-sm text-muted-foreground px-4 py-2">
+              Không phát hiện gian lận
+            </div>
+          )}
+          {quizResult?.latestAttempt?.violationList?.map((v) => (
+            <div className="text-sm text-muted-foreground px-4 py-2">
+              ⚠️ {v}
+            </div>
+          ))}
+        </div>
+
         <div className="font-medium text-2xl mb-6 mt-16">Chi tiết bài thi</div>
         {quizResult?.questions?.map((q, index) => {
           const answer = quizResult?.answers?.filter(
             (a) => a.questionId === q._id
           )[0];
 
-          const isCorrect =
-            Number.parseInt(answer?.selectedAnswer) === q.correctAnswer;
+          let isCorrect = false;
+          let isAnswered = true;
 
-          const isAnswered =
-            answer.selectedAnswer !== null &&
-            answer.selectedAnswer !== "" &&
-            answer.selectedAnswer !== undefined;
+          if (
+            answer.selectedAnswer === null ||
+            answer.selectedAnswer === "" ||
+            answer.selectedAnswer === undefined
+          ) {
+            isAnswered = false;
+          } else {
+            if (answer.selectedAnswer === q.correctAnswer) isCorrect = true;
+          }
+
+          console.log(
+            "question: ",
+            index,
+            " isAnswered: ",
+            isAnswered,
+            " isCorrect: ",
+            isCorrect
+          );
 
           const explanation = explanations?.find((e) => e.questionId === q._id)
             ?.explanation?.parts[0]?.text;
@@ -227,8 +255,7 @@ const StudentQuizResult = () => {
               </div>
               <div className="space-y-2">
                 {q.options.map((opt, id) => {
-                  const isUserAnswer =
-                    Number.parseInt(answer?.selectedAnswer) === id;
+                  const isUserAnswer = answer?.selectedAnswer === id;
                   const isRightAnswer = q.correctAnswer === id;
 
                   return (
