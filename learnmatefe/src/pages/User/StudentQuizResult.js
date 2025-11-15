@@ -214,13 +214,13 @@ const StudentQuizResult = () => {
           let isAnswered = true;
 
           if (
-            answer.selectedAnswer === null ||
-            answer.selectedAnswer === "" ||
-            answer.selectedAnswer === undefined
+            answer?.selectedAnswer === null ||
+            answer?.selectedAnswer === "" ||
+            answer?.selectedAnswer === undefined
           ) {
             isAnswered = false;
           } else {
-            if (answer.selectedAnswer === q.correctAnswer) isCorrect = true;
+            if (answer?.selectedAnswer === q.correctAnswer) isCorrect = true;
           }
 
           console.log(

@@ -722,7 +722,10 @@ exports.submitQuiz = async (req, res) => {
         const answer = new Answer({
           quizAttemptId: quizAttempt._id,
           questionId: question._id,
-          selectedAnswer: selectedAnswer || null,
+          selectedAnswer:
+            selectedAnswer !== null && !isNaN(selectedAnswer)
+              ? selectedAnswer
+              : null,
           isCorrect: isCorrect,
         });
 
