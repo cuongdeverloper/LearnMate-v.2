@@ -56,7 +56,7 @@ const AssignmentsTab = ({ courseTitle }) => {
           </Badge>
         );
       case "Submitted":
-        return <Badge variant="secondary">Submitted</Badge>;
+        return <Badge variant="pending">Submitted</Badge>;
       case "overdue":
         return (
           <Badge variant="overdue" className="gap-1">
