@@ -199,7 +199,10 @@ const StudentQuizResult = () => {
           const isCorrect =
             Number.parseInt(answer?.selectedAnswer) === q.correctAnswer;
 
-          const isAnswered = answer !== undefined;
+          const isAnswered =
+            answer.selectedAnswer !== null &&
+            answer.selectedAnswer !== "" &&
+            answer.selectedAnswer !== undefined;
 
           const explanation = explanations?.find((e) => e.questionId === q._id)
             ?.explanation?.parts[0]?.text;
