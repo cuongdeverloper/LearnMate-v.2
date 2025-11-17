@@ -480,7 +480,7 @@ exports.finishBooking = async (req, res) => {
 
     // ✅ Cập nhật trạng thái booking
     booking.completed = true;
-    booking.status = "completed";
+    booking.status = "approve";
     await booking.save();
 
     // ✅ Cập nhật tất cả schedule liên quan
