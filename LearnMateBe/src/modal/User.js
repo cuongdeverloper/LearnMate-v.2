@@ -2,12 +2,12 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
 const userSchema = new mongoose.Schema({
-  username: { type: String, required: function() { return !this.socialLogin; }},
-  password: { type: String, required: function() { return !this.socialLogin; } },
+  username: { type: String, required: function () { return !this.socialLogin; } },
+  password: { type: String, required: function () { return !this.socialLogin; } },
   role: { type: String, enum: ['student', 'tutor', 'admin'], required: true, default: 'student' },
   email: { type: String, required: true, unique: true },
-  phoneNumber: { type: String ,required: function() { return !this.socialLogin; }},
-  gender: { type: String, enum: ['male', 'female', 'other'], required: function() { return !this.socialLogin; } },
+  phoneNumber: { type: String, required: function () { return !this.socialLogin; } },
+  gender: { type: String, enum: ['male', 'female', 'other'], required: function () { return !this.socialLogin; } },
   type: {
     type: String,
     default: 'Local'
@@ -16,16 +16,16 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
-  image:{
-    type:String
+  image: {
+    type: String
   },
-  balance: { 
+  balance: {
     type: Number,
     default: 0
   },
-  verified:{
-    type:Boolean,
-    default:false
+  verified: {
+    type: Boolean,
+    default: false
   },
   isBlocked: {
     type: Boolean,
@@ -36,19 +36,24 @@ const userSchema = new mongoose.Schema({
   },
   blockedAt: {
     type: Date
-  }
+  },
+  refreshToken: {
+    type: String,
+    default: null
+  },
+  lastAccessTokenVersion: { type: Number, default: 0 }
 }, { timestamps: true });
 
 
 
 
-userSchema.pre('save', async function(next) {
+userSchema.pre('save', async function (next) {
   if (!this.isModified('password')) return next();
   this.password = await bcrypt.hash(this.password, 10);
   next();
 });
 
-userSchema.methods.comparePassword = async function(password) {
+userSchema.methods.comparePassword = async function (password) {
   return await bcrypt.compare(password, this.password);
 };
 
