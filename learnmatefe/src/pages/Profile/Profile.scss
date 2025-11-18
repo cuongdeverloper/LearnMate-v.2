@@ -53,6 +53,8 @@
   padding: 30px;
   background-color: var(--color-background);
   color: var(--color-text);
+  margin-top: 50px;
+  margin-bottom: 77px;
 }
 
 .profile-header {
@@ -160,7 +162,7 @@
   @include button-base(var(--color-primary), white);
 }
 
-.btn-secondary {
+.btn-secondary-profile {
   @include button-base(var(--color-secondary), white);
 }
 
@@ -281,5 +283,3 @@
   }
 }
 
-// 📝 ChangePasswordForm (Nếu bạn muốn style nó riêng)
-// ... thêm styles cho ChangePasswordForm nếu cần
