@@ -53,7 +53,7 @@ const TransactionHistory = () => {
   // Filter states
   const [filters, setFilters] = useState({
     type: 'all',
-    userId: '',
+    search: '',
     dateRange: null
   });
 
@@ -395,13 +395,13 @@ const TransactionHistory = () => {
         <Row gutter={[24, 16]} align="middle">
           <Col xs={24} sm={8} md={6}>
             <div className="filter-group">
-              <Text strong>ID người dùng:</Text>
+            <Text strong>Tìm kiếm:</Text>
               <Input
                 className="filter-select"
-                placeholder="Tìm theo ID..."
+                placeholder="Tìm theo tên, email..."
                 prefix={<SearchOutlined />}
-                value={filters.userId}
-                onChange={(e) => setFilters(prev => ({ ...prev, userId: e.target.value }))}
+                value={filters.search}
+                onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
                 allowClear
               />
             </div>
@@ -435,32 +435,33 @@ const TransactionHistory = () => {
               />
             </div>
           </Col>
-          <Col>
-            <Space>
-              <Button
-                icon={<ReloadOutlined />}
-                onClick={() => {
-                  setFilters({
-                    type: 'all',
-                    userId: '',
-                    dateRange: null
-                  });
-                  fetchTransactions();
-                }}
-              >
-                Làm mới
-              </Button>
-              <Button
-                type="primary"
-                icon={<DownloadOutlined />}
-                onClick={() => {
-                  // TODO: Implement export functionality
-                  console.log('Export transactions');
-                }}
-              >
-                Xuất Excel
-              </Button>
-            </Space>
+          <Col xs={24} sm={8} md={6}>
+            <div className="filter-group filter-actions">
+              <Text strong>&nbsp;</Text>
+              <div className="filter-actions__buttons">
+                <Button
+                  type="primary"
+                  icon={<SearchOutlined />}
+                  onClick={fetchTransactions}
+                  loading={loading}
+                >
+                  Tìm kiếm
+                </Button>
+                <Button
+                  icon={<ReloadOutlined />}
+                  onClick={() => {
+                    setFilters({
+                      status: 'all',
+                      targetType: 'all',
+                      dateRange: null
+                    });
+                    fetchTransactions();
+                  }}
+                >
+                  Làm mới
+                </Button>
+              </div>
+            </div>
           </Col>
         </Row>
       </Card>
@@ -549,26 +550,6 @@ const TransactionHistory = () => {
         </Col>
       </Row>
 
-      {/* Action Buttons */}
-      <div className="action-buttons">
-        <Button
-          type="primary"
-          icon={<ReloadOutlined />}
-          onClick={fetchTransactions}
-          loading={loading}
-        >
-          Làm mới dữ liệu
-        </Button>
-        <Button
-          icon={<DownloadOutlined />}
-          onClick={() => {
-            // TODO: Implement export functionality
-            console.log('Export transactions');
-          }}
-        >
-          Xuất Excel
-        </Button>
-      </div>
 
       {/* Transactions Table */}
       <Card className="table-card">
