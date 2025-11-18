@@ -4,7 +4,7 @@ import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { ApiChangePassword } from "../../Service/ApiService/ApiUser";
-import "./ChangePasswordForm.scss"; // Tên file SCSS giữ nguyên
+import "./ChangePasswordForm.scss";
 
 const ChangePasswordForm = ({ onClose }) => {
   const [form, setForm] = useState({
@@ -36,8 +36,7 @@ const ChangePasswordForm = ({ onClose }) => {
 
     setLoading(true);
     try {
-      // Giả định ApiChangePassword chấp nhận các tham số như đã viết
-      const res = await ApiChangePassword(oldPassword, newPassword, accessToken); 
+      const res = await ApiChangePassword(oldPassword, newPassword, confirmPassword, accessToken);
       toast.success(res.message || "Đổi mật khẩu thành công!");
       setTimeout(() => onClose && onClose(), 1200);
     } catch (err) {
@@ -48,12 +47,12 @@ const ChangePasswordForm = ({ onClose }) => {
   };
 
   return (
-    <form className="user-password-change" onSubmit={handleSubmit}>
-      <h3 className="user-password-change__title">Đổi mật khẩu</h3>
+    <form className="change-password-container" onSubmit={handleSubmit}>
+      <h3 className="change-password-title">Đổi mật khẩu</h3>
 
       {["oldPassword", "newPassword", "confirmPassword"].map((field, idx) => (
-        <div className="user-password-change__field" key={idx}>
-          <label className="user-password-change__label">
+        <div className="change-password-field" key={idx}>
+          <label>
             {field === "oldPassword"
               ? "Mật khẩu cũ"
               : field === "newPassword"
@@ -67,18 +66,17 @@ const ChangePasswordForm = ({ onClose }) => {
             onChange={handleChange}
             required
             autoFocus={idx === 0}
-            className="user-password-change__input"
           />
         </div>
       ))}
 
-      <div className="user-password-change__actions">
+      <div className="change-password-actions">
         <button type="submit" className="btn-primary" disabled={loading}>
           {loading ? "Đang xử lý..." : "Đổi mật khẩu"}
         </button>
         <button
           type="button"
-          className="btn-secondary-profile"
+          className="btn-secondary"
           onClick={onClose}
           disabled={loading}
         >
@@ -86,7 +84,7 @@ const ChangePasswordForm = ({ onClose }) => {
         </button>
       </div>
 
-      <div className="user-password-change__forgot">
+      <div className="change-password-forgot">
         <button
           type="button"
           className="link-forgot"
