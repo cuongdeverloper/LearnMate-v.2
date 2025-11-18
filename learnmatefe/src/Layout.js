@@ -46,6 +46,7 @@ import ReportManagement from "./components/Admin/ReportManagement";
 import "./tailwind.css"
 import WithdrawalManagement from "./components/Admin/WithdrawalManagement";
 import TransactionHistory from "./components/Admin/TransactionHistory";
+import VerifyAccount from "./components/Auth/VerifyAccount";
 
 const AppLayout = ({ children }) => {
   const location = useLocation();
@@ -334,6 +335,7 @@ const Layout = () => {
             }
           />
           <Route path="/payment/result" element={<PaymentResult />} />
+          <Route path="/verify-account" element={<VerifyAccount />} />
           <Route
             path="/review/:bookingId"
             element={

@@ -16,6 +16,7 @@ const NotificationBell = () => {
 
   const loadNotifications = async () => {
     const res = await notificationApi.fetchNotifications(userId);
+    console.log(res)
     if (res.errorCode === 0) {
       setNotifications(res.data.notifications);
       setUnreadCount(res.data.notifications.filter((n) => !n.isRead).length);
