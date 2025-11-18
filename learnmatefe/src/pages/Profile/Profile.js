@@ -165,7 +165,7 @@ const Profile = () => {
               Chỉnh sửa
             </button>
             {!isSocial && (
-              <button onClick={() => setMode("changePassword")} className="btn-secondary">
+              <button onClick={() => setMode("changePassword")} className="btn-secondary-profile">
                 Đổi mật khẩu
               </button>
             )}
